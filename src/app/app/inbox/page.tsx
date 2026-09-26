@@ -8,6 +8,7 @@ import { RiskBadge } from "@/components/ui/RiskBadge";
 import { IntentBadge } from "@/components/ui/IntentBadge";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { EmailDetailView } from "@/components/execuai/EmailDetailView";
 import { initialUnifiedEmails } from "@/lib/data/mockExecuData";
 import {
   UnifiedEmailItem,
@@ -516,126 +517,7 @@ export default function UnifiedInboxPage() {
           {/* Right Email Detail Pane (Desktop & iPad Landscape Split View) */}
           <div className="hidden xl:block xl:col-span-7 space-y-4 sticky top-6">
             {activeEmail && (
-              <div className="p-6 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs space-y-6">
-                {/* Account & Security Banner */}
-                <div className="flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-sm text-white ${
-                        activeEmail.provider === "GMAIL" ? "bg-[#EA4335]" : "bg-[#2264E5]"
-                      }`}
-                    >
-                      {activeEmail.avatarInitials || activeEmail.senderName.substring(0, 2)}
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-                        {activeEmail.senderName}
-                        <span className="text-xs font-normal text-[#64748B]">&lt;{activeEmail.senderEmail}&gt;</span>
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs text-[#64748B]">
-                        <span>{activeEmail.senderRole}</span>
-                        <span>•</span>
-                        <span className="text-[#2E936F] font-semibold flex items-center gap-0.5">
-                          <span className="material-symbols-outlined text-[14px]">verified</span>
-                          DKIM & SPF Verified
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <span className="text-xs text-[#94A3B8] font-medium block">{activeEmail.timestamp}</span>
-                    <span
-                      className={`inline-block mt-1 text-[10px] font-extrabold px-2 py-0.5 rounded ${
-                        activeEmail.provider === "GMAIL"
-                          ? "bg-[#FFF1F2] text-[#E11D48]"
-                          : "bg-[#EFF6FF] text-[#2563EB]"
-                      }`}
-                    >
-                      Routed via {activeEmail.accountLabel} ({activeEmail.accountEmail})
-                    </span>
-                  </div>
-                </div>
-
-                {/* Email Subject & Triage Badges */}
-                <div className="space-y-3">
-                  <h2 className="text-xl font-bold text-[#0F172A] leading-tight">{activeEmail.subject}</h2>
-                  <div className="flex items-center flex-wrap gap-2">
-                    <PriorityBadge priority={activeEmail.priority} />
-                    <IntentBadge intent={activeEmail.intent} />
-                    <RiskBadge risk={activeEmail.risk} />
-                    <button
-                      onClick={(e) => toggleUnread(e, activeEmail.id)}
-                      className="text-xs text-[#64748B] hover:text-[#0F172A] underline font-medium ml-auto"
-                    >
-                      Mark as {activeEmail.unread ? "Read" : "Unread"}
-                    </button>
-                  </div>
-                </div>
-
-                {/* AI Executive Summary Card */}
-                {activeEmail.aiSummary && (
-                  <Card variant="ai">
-                    <div className="flex items-center justify-between pb-2 border-b border-[#FAB60A]/30">
-                      <div className="flex items-center gap-2 text-[#795600] font-bold text-xs">
-                        <span className="material-symbols-outlined text-[18px]">psychology</span>
-                        <span>ExecuAI Triage Summary</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-[#795600] uppercase tracking-wider">
-                        Confidence: 99.4%
-                      </span>
-                    </div>
-                    <p className="text-xs text-[#0F172A] pt-2 font-medium leading-relaxed">
-                      {activeEmail.aiSummary}
-                    </p>
-                  </Card>
-                )}
-
-                {/* Full Body Text */}
-                <div className="p-5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0F172A] leading-relaxed whitespace-pre-line font-normal space-y-4">
-                  {activeEmail.body}
-                </div>
-
-                {/* Executive Quick Actions */}
-                <div className="pt-2 border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    {activeEmail.aiDraftAvailable ? (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        leftIcon={<span className="material-symbols-outlined text-[16px]">auto_fix_high</span>}
-                      >
-                        Review AI Prepared Draft
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        leftIcon={<span className="material-symbols-outlined text-[16px]">reply</span>}
-                      >
-                        Compose Reply
-                      </Button>
-                    )}
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      leftIcon={<span className="material-symbols-outlined text-[16px]">gavel</span>}
-                    >
-                      Escalate to Decision Center
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm">
-                      Forward
-                    </Button>
-                    <Button variant="danger" size="sm">
-                      Quarantine Thread
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <EmailDetailView email={activeEmail} />
             )}
           </div>
         </div>
@@ -644,15 +526,9 @@ export default function UnifiedInboxPage() {
       {/* Mobile Reading View Modal / Drawer */}
       {isMobileDetailOpen && activeEmail && (
         <div className="fixed inset-0 z-50 xl:hidden bg-black/60 backdrop-blur-xs flex flex-col justify-end p-0 sm:p-4">
-          <div className="bg-white w-full max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl p-6 space-y-5 shadow-2xl animate-in slide-in-from-bottom duration-200">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-              <span
-                className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${
-                  activeEmail.provider === "GMAIL" ? "bg-[#FFF1F2] text-[#E11D48]" : "bg-[#EFF6FF] text-[#2563EB]"
-                }`}
-              >
-                {activeEmail.accountLabel} ({activeEmail.accountEmail})
-              </span>
+          <div className="bg-white w-full max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl p-4 sm:p-6 space-y-5 shadow-2xl animate-in slide-in-from-bottom duration-200">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
+              <span className="text-xs font-bold text-[#0F172A]">Email Thread & AI Analysis</span>
               <button
                 onClick={() => setIsMobileDetailOpen(false)}
                 className="w-8 h-8 rounded-full bg-[#F1F5F9] text-[#0F172A] flex items-center justify-center font-bold"
@@ -661,50 +537,11 @@ export default function UnifiedInboxPage() {
               </button>
             </div>
 
-            <div className="space-y-2">
-              <h2 className="text-lg font-bold text-[#0F172A]">{activeEmail.subject}</h2>
-              <div className="flex items-center gap-2 text-xs text-[#64748B]">
-                <span className="font-bold text-[#0F172A]">{activeEmail.senderName}</span>
-                <span>•</span>
-                <span>{activeEmail.timestamp}</span>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-1.5">
-              <PriorityBadge priority={activeEmail.priority} size="sm" />
-              <IntentBadge intent={activeEmail.intent} size="sm" />
-              <RiskBadge risk={activeEmail.risk} size="sm" />
-            </div>
-
-            {activeEmail.aiSummary && (
-              <Card variant="ai">
-                <p className="text-xs text-[#0F172A] font-medium leading-relaxed">
-                  {activeEmail.aiSummary}
-                </p>
-              </Card>
-            )}
-
-            <div className="p-4 rounded-xl bg-[#F8FAFC] text-xs text-[#0F172A] whitespace-pre-line leading-relaxed">
-              {activeEmail.body}
-            </div>
-
-            <div className="pt-2 flex flex-col gap-2">
-              {activeEmail.aiDraftAvailable ? (
-                <Button variant="primary" fullWidth size="md">
-                  Review AI Draft
-                </Button>
-              ) : (
-                <Button variant="secondary" fullWidth size="md">
-                  Compose Reply
-                </Button>
-              )}
-              <Button variant="ghost" fullWidth size="md" onClick={() => setIsMobileDetailOpen(false)}>
-                Back to Inbox List
-              </Button>
-            </div>
+            <EmailDetailView email={activeEmail} onBack={() => setIsMobileDetailOpen(false)} />
           </div>
         </div>
       )}
     </div>
   );
 }
+

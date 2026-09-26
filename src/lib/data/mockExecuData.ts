@@ -1,4 +1,4 @@
-import { DecisionItem, TelemetryCounts } from "../types/execuai";
+import { DecisionItem, TelemetryCounts, UnifiedEmailItem } from "../types/execuai";
 
 export const initialTelemetryCounts: TelemetryCounts = {
   critical: 3,
@@ -133,8 +133,6 @@ export const initialDecisionItems: DecisionItem[] = [
   },
 ];
 
-import { UnifiedEmailItem } from "../types/execuai";
-
 export const initialUnifiedEmails: UnifiedEmailItem[] = [
   {
     id: "EMAIL-1001",
@@ -145,10 +143,14 @@ export const initialUnifiedEmails: UnifiedEmailItem[] = [
     senderEmail: "elena@apexlaw.com",
     senderRole: "General Counsel, Apex Law",
     avatarInitials: "ER",
+    recipients: {
+      to: ["ceo@company.com"],
+      cc: ["legal-team@company.com", "board-secretary@company.com"],
+    },
     subject: "Series B Definitive Agreements & IP Indemnity Clause Review",
     snippet: "Please review clause 14.2 regarding third-party indemnities before tomorrow's board ratification meeting...",
     body: "Dear Alexander,\n\nI have reviewed the latest Series B Definitive Agreements returned by target lead counsel. Section 14.2 contains an uncapped IP indemnity clause that transfers unlimited liability to our balance sheet.\n\nKey Recommendations:\n1. Require a liability cap equal to 2x aggregate investment amount ($10M).\n2. Exclude secondary software derivative claims.\n\nPlease confirm if you would like me to redline this section immediately.",
-    timestamp: "10:42 AM",
+    timestamp: "10:42 AM EST",
     priority: "CRITICAL",
     intent: "LEGAL",
     risk: "HIGH_RISK",
@@ -157,6 +159,61 @@ export const initialUnifiedEmails: UnifiedEmailItem[] = [
     hasAttachment: true,
     aiDraftAvailable: true,
     aiSummary: "Legal risk: Uncapped IP liability clause identified in Series B agreement. Requires immediate executive approval before redlining.",
+    aiRationale: {
+      plainLanguageReason: "High risk because this email contains contract language transferring uncapped liability and requests formal CEO approval before redlining.",
+      requiresHumanApproval: true,
+      humanApprovalReason: "Human approval required. Automated draft dispatch blocked to prevent binding legal commitment.",
+      detectedFactors: [
+        {
+          icon: "gavel",
+          title: "Contract language detected",
+          detail: "Detected Section 14.2 uncapped IP indemnity clause in Series_B_Definitive_Draft_v4.pdf.",
+        },
+        {
+          icon: "rate_review",
+          title: "Approval requested",
+          detail: "Sender explicitly requests affirmative CEO authorization to execute redline changes.",
+        },
+        {
+          icon: "payments",
+          title: "Financial exposure detected",
+          detail: "Uncapped liability cap omitted ($10M investment value at stake).",
+        },
+        {
+          icon: "verified_user",
+          title: "External sender",
+          detail: "Verified external domain: elena@apexlaw.com (DKIM & DMARC valid).",
+        },
+      ],
+    },
+    threadHistory: [
+      {
+        id: "MSG-101",
+        senderName: "Alexander Vance (You)",
+        senderEmail: "ceo@company.com",
+        senderRole: "CEO, ExecuAI",
+        avatarInitials: "AV",
+        recipients: { to: ["elena@apexlaw.com"] },
+        timestamp: "Yesterday at 4:15 PM",
+        body: "Elena, please send over the latest revised draft of the Series B agreement as soon as target counsel returns it.",
+        isFromUser: true,
+      },
+      {
+        id: "MSG-102",
+        senderName: "Elena Rostova",
+        senderEmail: "elena@apexlaw.com",
+        senderRole: "General Counsel, Apex Law",
+        avatarInitials: "ER",
+        recipients: { to: ["ceo@company.com"], cc: ["legal-team@company.com", "board-secretary@company.com"] },
+        timestamp: "10:42 AM EST",
+        body: "Dear Alexander,\n\nI have reviewed the latest Series B Definitive Agreements returned by target lead counsel. Section 14.2 contains an uncapped IP indemnity clause that transfers unlimited liability to our balance sheet.\n\nKey Recommendations:\n1. Require a liability cap equal to 2x aggregate investment amount ($10M).\n2. Exclude secondary software derivative claims.\n\nPlease confirm if you would like me to redline this section immediately.",
+        isFromUser: false,
+        attachments: [
+          { name: "Series_B_Definitive_Draft_v4.pdf", size: "2.4 MB", type: "PDF Document" },
+          { name: "Indemnity_Risk_Summary_Note.docx", size: "480 KB", type: "Word Document" },
+        ],
+      },
+    ],
   },
   {
     id: "EMAIL-1002",
@@ -167,10 +224,14 @@ export const initialUnifiedEmails: UnifiedEmailItem[] = [
     senderEmail: "m.brody@nordicenterprises.com",
     senderRole: "Managing Director, Nordic APAC",
     avatarInitials: "MB",
+    recipients: {
+      to: ["director@company.com"],
+      cc: ["finance@company.com"],
+    },
     subject: "Revised Enterprise Master Services Agreement & ₹50L Quotation Confirmation",
     snippet: "We have updated the commercial pricing schedule in Schedule C reflecting our Q3 enterprise discussion...",
     body: "Hi Alexander,\n\nAttached is the revised Enterprise MSA along with Schedule C reflecting the total revised quotation of ₹50,00,000 for full-year deployment across 5 regional nodes.\n\nPlease review and let us know if we have sign-off to issue the binding billing mandate.",
-    timestamp: "10:15 AM",
+    timestamp: "10:15 AM EST",
     priority: "URGENT",
     intent: "FINANCE",
     risk: "HIGH_RISK",
@@ -179,6 +240,44 @@ export const initialUnifiedEmails: UnifiedEmailItem[] = [
     hasAttachment: true,
     aiDraftAvailable: true,
     aiSummary: "Financial Assent Required: ₹50L quote exceeds auto-approval limits ($10k cap). Binding contract assent risk.",
+    aiRationale: {
+      plainLanguageReason: "High risk because this email contains a financial amount (₹50,00,000) and asks for commercial sign-off.",
+      requiresHumanApproval: true,
+      humanApprovalReason: "Human approval required. Commercial quote exceeds $10,000 single-executive auto-approval threshold.",
+      detectedFactors: [
+        {
+          icon: "payments",
+          title: "Financial amount detected",
+          detail: "Extracted commercial quote of ₹50,00,000 ($60,000 equivalent) in Schedule C.",
+        },
+        {
+          icon: "rule",
+          title: "Approval requested",
+          detail: "Sender seeks binding commercial sign-off to initiate billing mandate.",
+        },
+        {
+          icon: "domain",
+          title: "External sender",
+          detail: "Verified sender: m.brody@nordicenterprises.com.",
+        },
+      ],
+    },
+    threadHistory: [
+      {
+        id: "MSG-201",
+        senderName: "Marcus Brody",
+        senderEmail: "m.brody@nordicenterprises.com",
+        senderRole: "Managing Director, Nordic APAC",
+        avatarInitials: "MB",
+        recipients: { to: ["director@company.com"], cc: ["finance@company.com"] },
+        timestamp: "10:15 AM EST",
+        body: "Hi Alexander,\n\nAttached is the revised Enterprise MSA along with Schedule C reflecting the total revised quotation of ₹50,00,000 for full-year deployment across 5 regional nodes.\n\nPlease review and let us know if we have sign-off to issue the binding billing mandate.",
+        isFromUser: false,
+        attachments: [
+          { name: "Nordic_MSA_ScheduleC_Quote.pdf", size: "1.8 MB", type: "PDF Document" },
+        ],
+      },
+    ],
   },
   {
     id: "EMAIL-1003",
@@ -189,10 +288,14 @@ export const initialUnifiedEmails: UnifiedEmailItem[] = [
     senderEmail: "s.jenkins@apexglobal.io",
     senderRole: "VP Operations, Apex Global",
     avatarInitials: "SJ",
+    recipients: {
+      to: ["alexander.founder@gmail.com"],
+      cc: ["support-escalations@company.com"],
+    },
     subject: "Urgent Client Escalation: Q2 SLA Outage Rebate Penalty Claim",
     snippet: "Our production cluster experienced a 45-minute outage on Tuesday impacting 12 enterprise accounts...",
     body: "Alexander,\n\nFollowing Tuesday's API outage, Apex Global has submitted a formal SLA rebate claim for 15% of annual contract value. Our customer success lead recommends offering a 5% service credit instead of cash rebate.\n\nWe need your guidance on whether to escalate to legal or approve the credit.",
-    timestamp: "09:55 AM",
+    timestamp: "09:55 AM EST",
     priority: "CRITICAL",
     intent: "CLIENT",
     risk: "REVIEW",
@@ -201,6 +304,23 @@ export const initialUnifiedEmails: UnifiedEmailItem[] = [
     hasAttachment: false,
     aiDraftAvailable: true,
     aiSummary: "Client Escalation: SLA penalty rebate claim. Drafted response proposing 5% service credit.",
+    aiRationale: {
+      plainLanguageReason: "Review required because this email involves a client escalation rebate claim (15% ACV) and requires strategic executive direction.",
+      requiresHumanApproval: true,
+      humanApprovalReason: "Human approval required. Strategic client relationship exception.",
+      detectedFactors: [
+        {
+          icon: "warning",
+          title: "Client escalation detected",
+          detail: "Formal SLA penalty claim submitted following Q2 API downtime.",
+        },
+        {
+          icon: "help_outline",
+          title: "Executive guidance requested",
+          detail: "Requires choice between 5% service credit vs legal escalation.",
+        },
+      ],
+    },
   },
   {
     id: "EMAIL-1004",

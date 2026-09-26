@@ -63,6 +63,34 @@ export interface DecisionItem {
   slaMinutesRemaining?: number;
 }
 
+export interface ThreadMessage {
+  id: string;
+  senderName: string;
+  senderEmail: string;
+  senderRole?: string;
+  avatarInitials?: string;
+  recipients: {
+    to: string[];
+    cc?: string[];
+    bcc?: string[];
+  };
+  timestamp: string;
+  body: string;
+  isFromUser?: boolean;
+  attachments?: Array<{ name: string; size: string; type: string }>;
+}
+
+export interface AiClassificationRationale {
+  plainLanguageReason: string;
+  detectedFactors: Array<{
+    icon: string;
+    title: string;
+    detail: string;
+  }>;
+  requiresHumanApproval: boolean;
+  humanApprovalReason?: string;
+}
+
 export interface UnifiedEmailItem {
   id: string;
   provider: MailboxProvider;
@@ -72,6 +100,11 @@ export interface UnifiedEmailItem {
   senderEmail: string;
   senderRole?: string;
   avatarInitials?: string;
+  recipients?: {
+    to: string[];
+    cc?: string[];
+    bcc?: string[];
+  };
   subject: string;
   snippet: string;
   body: string;
@@ -84,6 +117,8 @@ export interface UnifiedEmailItem {
   hasAttachment?: boolean;
   aiDraftAvailable?: boolean;
   aiSummary?: string;
+  aiRationale?: AiClassificationRationale;
+  threadHistory?: ThreadMessage[];
 }
 
 export interface TelemetryCounts {
@@ -95,4 +130,5 @@ export interface TelemetryCounts {
   totalSyncedAccounts: number;
   lastSyncedAgo: string;
 }
+
 
