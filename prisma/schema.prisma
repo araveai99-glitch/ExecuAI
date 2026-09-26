@@ -1,0 +1,314 @@
+// Prisma Schema for ExecuAI - AI Executive Email Assistant
+// Tenant Isolated Database Architecture
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. ORGANIZATIONS (Tenant Scoping)
+model Organization {
+  id                   String                 @id @default(uuid())
+  name                 String
+  slug                 String                 @unique
+  createdAt            DateTime               @default(now()) @map("created_at")
+  updatedAt            DateTime               @updatedAt @map("updated_at")
+
+  users                User[]
+  emailAccounts        EmailAccount[]
+  userRules            UserRule[]
+  communicationProfiles CommunicationProfile[]
+  auditLogs            AuditLog[]
+
+  @@map("organizations")
+}
+
+// 2. USERS
+model User {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  email          String        @unique
+  fullName       String        @map("full_name")
+  role           String        @default("Executive CEO")
+  passwordHash   String?       @map("password_hash")
+  avatarUrl      String?       @map("avatar_url")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  emailAccounts  EmailAccount[]
+  drafts         Draft[]
+  auditLogs      AuditLog[]
+  feedback       Feedback[]
+
+  @@map("users")
+}
+
+// 3. EMAIL ACCOUNTS (Belongs to Organization & User)
+model EmailAccount {
+  id                 String          @id @default(uuid())
+  organizationId     String          @map("organization_id")
+  userId             String          @map("user_id")
+  accountLabel       String          @map("account_label") // e.g. "Gmail #1", "Zoho #1"
+  provider           MailboxProvider
+  emailAddress       String          @map("email_address")
+  status             AccountStatus   @default(CONNECTED)
+  lastSyncedAt       DateTime?       @map("last_synced_at")
+  syncError          String?         @map("sync_error")
+  encryptedTokens    String          @map("encrypted_tokens") // AES-256 Encrypted OAuth Tokens (Never raw)
+  oauthScopes        String[]        @map("oauth_scopes")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  organization       Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailThreads       EmailThread[]
+  emails             Email[]
+
+  @@unique([organizationId, emailAddress])
+  @@map("email_accounts")
+}
+
+// 4. EMAIL THREADS (Belongs to Email Account)
+model EmailThread {
+  id             String        @id @default(uuid())
+  emailAccountId String        @map("email_account_id")
+  providerThreadId String      @map("provider_thread_id")
+  subject        String
+  snippet        String?
+  lastMessageAt  DateTime      @map("last_message_at")
+  isUnread       Boolean       @default(true) @map("is_unread")
+  isFlagged      Boolean       @default(false) @map("is_flagged")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  emailAccount   EmailAccount  @relation(fields: [emailAccountId], references: [id], onDelete: Cascade)
+  emails         Email[]
+  drafts         Draft[]
+
+  @@map("email_threads")
+}
+
+// 5. EMAILS (Belongs to Email Account & Thread)
+model Email {
+  id                 String               @id @default(uuid())
+  emailAccountId     String               @map("email_account_id")
+  threadId           String               @map("thread_id")
+  providerMessageId  String               @map("provider_message_id")
+  senderName         String               @map("sender_name")
+  senderEmail        String               @map("sender_email")
+  senderRole         String?              @map("sender_role")
+  recipientsTo       String[]             @map("recipients_to")
+  recipientsCc       String[]             @map("recipients_cc")
+  subject            String
+  snippet            String
+  bodyText           String               @map("body_text")
+  sentAt             DateTime             @map("sent_at")
+  isFromUser         Boolean              @default(false) @map("is_from_user")
+  hasAttachment      Boolean              @default(false) @map("has_attachment")
+  createdAt          DateTime             @default(now()) @map("created_at")
+
+  emailAccount       EmailAccount         @relation(fields: [emailAccountId], references: [id], onDelete: Cascade)
+  thread             EmailThread          @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  attachments        EmailAttachment[]
+  classification     EmailClassification?
+  riskAssessment     RiskAssessment?
+
+  @@map("emails")
+}
+
+// 6. EMAIL ATTACHMENTS
+model EmailAttachment {
+  id          String   @id @default(uuid())
+  emailId     String   @map("email_id")
+  filename    String
+  fileSize    Int      @map("file_size")
+  mimeType    String   @map("mime_type")
+  storageUrl  String?  @map("storage_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  email       Email    @relation(fields: [emailId], references: [id], onDelete: Cascade)
+
+  @@map("email_attachments")
+}
+
+// 7. EMAIL CLASSIFICATIONS (3D Triage)
+model EmailClassification {
+  id                    String         @id @default(uuid())
+  emailId               String         @unique @map("email_id")
+  priority              PriorityLevel
+  intent                IntentCategory
+  riskLevel             RiskLevel      @map("risk_level")
+  confidenceScore       Float          @map("confidence_score")
+  plainLanguageRationale String        @map("plain_language_rationale")
+  detectedFactorsJson   String         @map("detected_factors_json") // JSON string of detected factors
+  createdAt             DateTime       @default(now()) @map("created_at")
+
+  email                 Email          @relation(fields: [emailId], references: [id], onDelete: Cascade)
+
+  @@map("email_classifications")
+}
+
+// 8. RISK ASSESSMENTS
+model RiskAssessment {
+  id                    String        @id @default(uuid())
+  emailId               String        @unique @map("email_id")
+  requiresHumanApproval Boolean       @default(true) @map("requires_human_approval")
+  humanApprovalReason   String        @map("human_approval_reason")
+  blockedSystemActions  String[]      @map("blocked_system_actions")
+  detectedSignals       String[]      @map("detected_signals")
+  evaluatedAt           DateTime      @default(now()) @map("evaluated_at")
+
+  email                 Email         @relation(fields: [emailId], references: [id], onDelete: Cascade)
+
+  @@map("risk_assessments")
+}
+
+// 9. DRAFTS
+model Draft {
+  id                     String       @id @default(uuid())
+  userId                 String       @map("user_id")
+  threadId               String       @map("thread_id")
+  draftSubject           String       @map("draft_subject")
+  draftBody              String       @map("draft_body")
+  tone                   String       @default("professional")
+  length                 String       @default("medium")
+  status                 DraftStatus  @default(DRAFT_PREPARED)
+  approvedByUserId       String?      @map("approved_by_user_id")
+  approvedAt             DateTime?    @map("approved_at")
+  dispatchedAt           DateTime?    @map("dispatched_at")
+  providerDraftId        String?      @map("provider_draft_id")
+  createdAt              DateTime     @default(now()) @map("created_at")
+  updatedAt              DateTime     @updatedAt @map("updated_at")
+
+  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  thread                 EmailThread  @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@map("drafts")
+}
+
+// 10. USER RULES
+model UserRule {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  title          String
+  description    String
+  isActive       Boolean      @default(true) @map("is_active")
+  category       String       @default("Legal")
+  ruleConditions String       @map("rule_conditions") // JSON string of condition criteria
+  ruleActions    String       @map("rule_actions")    // JSON string of action triggers
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("user_rules")
+}
+
+// 11. COMMUNICATION PROFILES (Executive Voice Tuning)
+model CommunicationProfile {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  profileName    String       @map("profile_name")
+  defaultTone    String       @default("professional") @map("default_tone")
+  defaultLength  String       @default("medium") @map("default_length")
+  salutation     String       @default("Dear [Name],")
+  signOff        String       @default("Best regards,\nAlexander Vance")
+  formality      String       @default("Formal")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("communication_profiles")
+}
+
+// 12. AUDIT LOGS (Cryptographic Activity Ledger)
+model AuditLog {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  userId         String?      @map("user_id")
+  actionEvent    String       @map("action_event")
+  actorName      String       @map("actor_name")
+  resourceContext String      @map("resource_context")
+  resultSummary  String       @map("result_summary")
+  logNonceHash   String       @map("log_nonce_hash") // Cryptographic log hash
+  ipAddress      String?      @map("ip_address")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+// 13. FEEDBACK
+model Feedback {
+  id             String       @id @default(uuid())
+  userId         String       @map("user_id")
+  targetType     String       @map("target_type") // "CLASSIFICATION" | "DRAFT"
+  targetId       String       @map("target_id")
+  rating         Int          // 1 to 5 stars
+  comments       String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("feedback")
+}
+
+// ENUMS
+enum MailboxProvider {
+  GMAIL
+  ZOHO
+}
+
+enum AccountStatus {
+  CONNECTED
+  SYNCING
+  PAUSED
+  ERROR
+  RECONNECT_REQUIRED
+}
+
+enum PriorityLevel {
+  CRITICAL
+  URGENT
+  IMPORTANT
+  NORMAL
+  LOW
+  SPAM
+}
+
+enum IntentCategory {
+  CLIENT
+  SALES
+  VENDOR
+  INTERNAL
+  FINANCE
+  HR
+  LEGAL
+  MEETING
+  SUPPORT
+  NEWSLETTER
+  MARKETING
+  PERSONAL
+  OTHER
+}
+
+enum RiskLevel {
+  SAFE
+  REVIEW
+  REVIEW_REQUIRED
+  HIGH_RISK
+  CONFIDENTIAL
+}
+
+enum DraftStatus {
+  DRAFT_PREPARED
+  EDITED
+  APPROVED
+  CONTROLLED_SEND_QUEUED
+  DISPATCHED
+}
