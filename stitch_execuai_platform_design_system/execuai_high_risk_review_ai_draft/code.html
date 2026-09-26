@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"tertiary-fixed-dim":"#ffbb16","primary-fixed-dim":"#79d9b0","border-strong":"#CBD5E1","on-primary":"#ffffff","background":"#f8f9ff","on-secondary-fixed":"#111c2d","tertiary":"#795600","on-tertiary-fixed":"#271900","surface-card":"#FFFFFF","inverse-on-surface":"#eaf1ff","error":"#ba1a1a","on-primary-fixed-variant":"#00513a","accent-warm":"#F7D7B0","on-surface-variant":"#3e4943","surface-dim":"#cbdbf5","on-error-container":"#93000a","outline":"#6e7a73","primary-container":"#188461","surface-container-low":"#eff4ff","primary":"#00694b","surface-bright":"#f8f9ff","on-background":"#0b1c30","secondary-fixed":"#d8e3fb","text-primary":"#0F172A","primary-fixed":"#95f6cb","secondary-container":"#d5e0f8","status-danger-surface":"#FFF1F2","error-container":"#ffdad6","surface-container":"#e5eeff","status-danger":"#E11D48","ai-highlight":"#FFEC69","on-surface":"#0b1c30","tertiary-fixed":"#ffdea6","on-error":"#ffffff","on-primary-container":"#f5fff7","on-tertiary-container":"#fffbff","secondary":"#545f73","on-secondary-container":"#586377","surface-container-lowest":"#ffffff","accent-warm-surface":"#FDF8F3","status-warning-surface":"#FEF7E6","on-secondary":"#ffffff","surface-canvas":"#F8FAFC","secondary-fixed-dim":"#bcc7de","surface":"#f8f9ff","surface-variant":"#d3e4fe","outline-variant":"#bdc9c1","tertiary-container":"#986d00","border-subtle":"#E2E8F0","inverse-surface":"#213145","ai-surface":"#FFFDEB","surface-tint":"#006c4d","text-tertiary":"#94A3B8","on-primary-fixed":"#002115","surface-container-high":"#dce9ff","on-secondary-fixed-variant":"#3c475a","on-tertiary":"#ffffff","text-secondary":"#475569","on-tertiary-fixed-variant":"#5e4200","surface-container-highest":"#d3e4fe","status-warning":"#FAB60A","inverse-primary":"#79d9b0"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-sm":"0.5rem","space-lg":"1.5rem","space-xl":"2rem","margin":"2rem","margin-mobile":"1rem","gutter":"1.5rem","gutter-mobile":"1rem","space-2xl":"3rem","space-xs":"0.25rem","space-md":"1rem"},"fontFamily":{"label-md":["Inter"],"title-sm":["Inter"],"headline-xl":["Inter"],"label-xs":["Inter"],"body-lg":["Inter"],"body-md":["Inter"],"label-sm":["Inter"],"headline-xl-mobile":["Inter"],"body-sm":["Inter"],"headline-lg":["Inter"],"headline-md":["Inter"]},"fontSize":{"label-md":["0.875rem",{"lineHeight":"1.25rem","letterSpacing":"-0.005em","fontWeight":"500"}],"title-sm":["1rem",{"lineHeight":"1.5rem","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-xl":["2.25rem",{"lineHeight":"2.75rem","letterSpacing":"-0.025em","fontWeight":"700"}],"label-xs":["0.6875rem",{"lineHeight":"0.875rem","letterSpacing":"0.04em","fontWeight":"600"}],"body-lg":["1.125rem",{"lineHeight":"1.75rem","letterSpacing":"-0.01em","fontWeight":"400"}],"body-md":["0.875rem",{"lineHeight":"1.375rem","letterSpacing":"0","fontWeight":"400"}],"label-sm":["0.75rem",{"lineHeight":"1rem","letterSpacing":"0.02em","fontWeight":"500"}],"headline-xl-mobile":["1.75rem",{"lineHeight":"2.25rem","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["0.8125rem",{"lineHeight":"1.25rem","letterSpacing":"0","fontWeight":"400"}],"headline-lg":["1.5rem",{"lineHeight":"2rem","letterSpacing":"-0.02em","fontWeight":"600"}],"headline-md":["1.25rem",{"lineHeight":"1.75rem","letterSpacing":"-0.015em","fontWeight":"600"}]}}}};</script></head><body class="bg-surface-canvas font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-64 bg-surface-card z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col flex-1 overflow-y-auto"><div class="h-16 px-space-md flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="ExecuAI Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1VL2aYVgd3EDYMS_lCu5Erf3TMtKpp8q785CbRCmLW5oS5eN7KkEbmOWKfbCKWHDh7mo-Q1GUFzNswKgzIZbyyqo9sdQMtvmzGCPy95nZ0L1S0VKUkQoFD_LaTolssUZlgO3HQJc5lNsJL0YcZPiNrONifZvqt-W3UWH5cbkxs27yn7y-IecAl40iHqLTR_1DAOJ0epZvrCd5YBd0EHv4vqZN-igdxaxevrEzOZ0gBz-csCm0dfNoULPJI"/><span class="font-headline-md text-headline-md tracking-tight text-on-surface">ExecuAI</span></div><span class="font-label-xs text-label-xs uppercase px-space-xs py-0.5 rounded-lg bg-surface-container text-on-surface-variant font-semibold">v2.4</span></div><div class="px-space-md py-space-sm"><div class="p-space-sm rounded-xl bg-surface-canvas flex flex-col gap-space-xs"><div class="flex items-center justify-between"><span class="font-label-xs text-label-xs uppercase tracking-wider text-text-secondary">Connected Mailboxes</span><span class="w-2 h-2 rounded-full bg-primary"></span></div><div class="flex items-center gap-space-xs"><div class="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-card shadow-[0_1px_4px_rgba(0,0,0,0.02)]"><span class="font-label-xs text-label-xs font-bold text-on-surface">G</span><span class="font-label-xs text-label-xs text-text-secondary">exec@corp.com</span></div><div class="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-card shadow-[0_1px_4px_rgba(0,0,0,0.02)]"><span class="font-label-xs text-label-xs font-bold text-on-surface">Z</span><span class="font-label-xs text-label-xs text-text-secondary">board@vance.io</span></div></div></div></div><nav class="flex-1 px-space-sm py-space-sm space-y-1" data-active-classes="bg-primary-container text-on-primary font-title-sm"><a class="flex items-center justify-between px-space-md py-2.5 rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">space_dashboard</span><span>Dashboard</span></div></a><a class="flex items-center justify-between px-space-md py-2.5 rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="unified-inbox" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">move_to_inbox</span><span>Unified Inbox</span></div><span class="font-label-xs text-label-xs px-2 py-0.5 rounded-full bg-surface-container text-on-surface font-semibold">14</span></a><a class="flex items-center justify-between px-space-md py-2.5 rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="decision-center" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">gavel</span><span>Decision Center</span></div><span class="font-label-xs text-label-xs px-2 py-0.5 rounded-full bg-status-danger-surface text-status-danger font-semibold">5 Gates</span></a><a aria-current="page" class="flex items-center justify-between px-space-md py-2.5 rounded-xl transition-colors bg-primary-container text-on-primary font-title-sm" data-path="drafts" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">edit_note</span><span>Drafts</span></div><span class="font-label-xs text-label-xs px-2 py-0.5 rounded-full bg-surface-container text-text-secondary">3</span></a><a class="flex items-center justify-between px-space-md py-2.5 rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="accounts" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">supervisor_account</span><span>Accounts</span></div></a><a class="flex items-center justify-between px-space-md py-2.5 rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="analytics" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">insights</span><span>Analytics</span></div></a><div class="pt-space-md pb-space-xs px-space-md"><span class="font-label-xs text-label-xs uppercase tracking-wider text-text-tertiary font-semibold">Governance</span></div><a class="flex items-center justify-between px-space-md py-2.5 rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="rules-and-policies" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">policy</span><span>Rules &amp; Policies</span></div></a><a class="flex items-center justify-between px-space-md py-2.5 rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="security-and-audit-log" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">verified_user</span><span>Security &amp; Audit</span></div></a><a class="flex items-center justify-between px-space-md py-2.5 rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="settings" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">settings</span><span>Settings</span></div></a></nav></div><div class="p-space-md bg-surface-canvas"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col min-w-0 flex-1"><span class="font-label-md text-label-md font-semibold text-on-surface truncate">Alexander Vance</span><span class="font-label-xs text-label-xs text-text-secondary truncate">Chief Executive Officer</span></div><span class="material-symbols-outlined text-on-surface-variant text-[18px]">unfold_more</span></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-card/90 backdrop-blur-xl z-40 shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full px-space-lg flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md flex-1 max-w-xl"><div class="relative w-full"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary text-[20px]">search</span><input class="w-full h-10 pl-10 pr-space-md bg-surface-canvas rounded-xl font-body-sm text-body-sm text-on-surface placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Search emails, people, or topics..." type="text"/></div></div><div class="flex items-center gap-space-md"><div class="hidden lg:flex items-center p-1 bg-surface-canvas rounded-xl"><button class="px-3 py-1 rounded-lg font-label-xs text-label-xs bg-surface-card text-on-surface font-semibold shadow-[0_1px_4px_rgba(0,0,0,0.02)]">All Accounts</button><button class="px-3 py-1 rounded-lg font-label-xs text-label-xs text-text-secondary hover:text-on-surface transition-colors">Gmail</button><button class="px-3 py-1 rounded-lg font-label-xs text-label-xs text-text-secondary hover:text-on-surface transition-colors">Zoho</button></div><div class="flex items-center gap-space-xs px-2.5 py-1 rounded-full bg-surface-container-low"><span class="w-2 h-2 rounded-full bg-primary"></span><span class="font-label-xs text-label-xs font-semibold text-primary">3 Mailboxes Synced</span></div><div class="flex items-center gap-2"><button class="w-9 h-9 rounded-xl bg-surface-canvas flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span></button><button class="w-9 h-9 rounded-xl bg-surface-canvas flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[20px]">shield_locked</span></button></div><div class="flex items-center gap-2 pl-2"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-16 bg-surface-canvas min-h-screen"><div class="flex flex-col w-full">
+<!-- Executive Context Bar -->
+<div class="w-full bg-surface-card shadow-sm px-space-xl py-space-md mb-space-md">
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-space-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-9 h-9 rounded-xl bg-status-danger-surface flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-status-danger text-[22px]">gavel</span>
+</div>
+<div>
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-md text-headline-md text-on-surface">Decision Gate #E-4091</span>
+<span class="font-label-xs text-label-xs uppercase px-2 py-0.5 rounded-full bg-status-danger-surface text-status-danger font-semibold">Autonomous Send Blocked</span>
+<span class="font-label-xs text-label-xs uppercase px-2 py-0.5 rounded-full bg-status-warning-surface text-status-warning font-semibold">Human In The Loop</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary mt-0.5">High-Value Contract Acceptance &amp; Financial Liability Review • Requires CEO clearance before dispatch</p>
+</div>
+</div>
+<div class="flex items-center gap-space-sm shrink-0">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container-low">
+<span class="w-2 h-2 rounded-full bg-status-danger animate-pulse"></span>
+<span class="font-label-xs text-label-xs font-semibold text-text-secondary">Execution SLA: 42m remaining</span>
+</div>
+<button class="px-3 py-1.5 rounded-xl bg-surface-container font-label-xs text-label-xs text-on-surface-variant hover:bg-surface-dim transition-colors flex items-center gap-1" id="toggleMetadata">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Telemetry</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Main Split Studio Surface -->
+<div class="px-space-xl pb-space-2xl grid grid-cols-1 xl:grid-cols-12 gap-space-lg">
+<!-- LEFT PANE: Original Inbound & Deep Explainability (5 cols) -->
+<div class="xl:col-span-5 flex flex-col gap-space-md">
+<!-- Inbound Email Viewer Card -->
+<div class="bg-surface-card rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-xs text-label-xs uppercase tracking-wider font-semibold text-text-tertiary">Origin Payload</span>
+<span class="px-2 py-0.5 rounded-lg bg-surface-container font-label-xs text-label-xs font-bold text-on-surface flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+              G • ceo@company.com
+            </span>
+</div>
+<span class="font-label-xs text-label-xs text-text-tertiary">Received Today, 11:24 AM IST</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface tracking-tight">Revised Enterprise Master Services Agreement &amp; ₹50L Quotation Confirmation</h2>
+<div class="mt-space-sm pt-space-sm bg-surface-canvas rounded-xl p-space-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-fixed flex items-center justify-center font-title-sm text-title-sm font-semibold shrink-0">
+                MB
+              </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md font-semibold text-on-surface truncate">Marcus Brody</span>
+<span class="font-body-sm text-body-sm text-text-secondary truncate">m.brody@nordicenterprises.com</span>
+</div>
+</div>
+<span class="font-label-xs text-label-xs px-2 py-0.5 rounded-full bg-surface-card text-text-secondary font-medium shrink-0">DKIM / DMARC Valid</span>
+</div>
+</div>
+<!-- Email Body Content -->
+<div class="rounded-xl bg-surface-canvas p-space-md text-on-surface font-body-md text-body-md space-y-space-sm leading-relaxed">
+<p>Dear Alexander,</p>
+<p>
+            Following our negotiation call, attached is the revised MSA. <mark class="bg-ai-highlight/40 px-1 py-0.5 rounded font-medium text-on-surface">Please confirm acceptance of the ₹50,00,000 annual licensing fee and 30-day payment term</mark> so we can issue the final invoice today and finalize seat provisions for Q3.
+          </p>
+<p>
+            If you agree to the payment schedule outlined in Section 8.2, please reply confirming this rate so our revenue recognition team can release deployment credentials.
+          </p>
+<p class="pt-space-xs text-text-secondary">
+            Best,<br/>
+<span class="font-semibold text-on-surface">Marcus Brody</span><br/>
+            Managing Director, Nordic Enterprises APAC
+          </p>
+</div>
+<!-- Attachment Pill -->
+<div class="flex items-center justify-between p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-primary text-[22px]">picture_as_pdf</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md font-semibold text-on-surface truncate">Nordic_MSA_RevB_ExecutedDraft_ScheduleC.pdf</span>
+<span class="font-label-xs text-label-xs text-text-tertiary">2.4 MB • Parsed by ExecuAI Contract Engine</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-text-secondary text-[20px]">download</span>
+</div>
+</div>
+<!-- Deep AI Explainability Card (Yellow/Warning Accent) -->
+<div class="bg-ai-surface rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md border-l-4 border-l-status-warning">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-status-warning text-[22px]" style="font-variation-settings: 'FILL' 1;">security</span>
+<span class="font-title-sm text-title-sm text-on-surface">Deep AI Explainability &amp; Risk Surface</span>
+</div>
+<span class="font-label-xs text-label-xs font-semibold px-2 py-0.5 rounded-full bg-status-warning-surface text-status-warning">Audit ID #EX-882</span>
+</div>
+<!-- Three Independent Dimensions -->
+<div class="grid grid-cols-3 gap-space-xs">
+<!-- Priority Dimension -->
+<div class="bg-surface-card rounded-lg p-2.5 flex flex-col justify-between shadow-sm">
+<span class="font-label-xs text-label-xs text-text-tertiary uppercase">Dimension I</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface mt-1">Priority</span>
+<div class="mt-2">
+<span class="font-label-xs text-label-xs font-bold px-2 py-0.5 rounded-full bg-status-danger-surface text-status-danger inline-block">URGENT</span>
+<p class="font-label-xs text-label-xs text-text-secondary mt-1 leading-snug">Close-of-quarter target window expiring</p>
+</div>
+</div>
+<!-- Intent Dimension -->
+<div class="bg-surface-card rounded-lg p-2.5 flex flex-col justify-between shadow-sm">
+<span class="font-label-xs text-label-xs text-text-tertiary uppercase">Dimension II</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface mt-1">Intent</span>
+<div class="mt-2">
+<span class="font-label-xs text-label-xs font-bold px-2 py-0.5 rounded-sm bg-surface-container text-on-surface uppercase inline-block">FINANCE</span>
+<p class="font-label-xs text-label-xs text-text-secondary mt-1 leading-snug">Binding quote approval &amp; invoice trigger</p>
+</div>
+</div>
+<!-- Risk Dimension -->
+<div class="bg-surface-card rounded-lg p-2.5 flex flex-col justify-between shadow-sm">
+<span class="font-label-xs text-label-xs text-text-tertiary uppercase">Dimension III</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface mt-1">Risk Gate</span>
+<div class="mt-2">
+<span class="font-label-xs text-label-xs font-bold px-2 py-0.5 rounded-full bg-status-warning-surface text-status-warning inline-block">HIGH RISK</span>
+<p class="font-label-xs text-label-xs text-text-secondary mt-1 leading-snug">Autonomous send permanently locked</p>
+</div>
+</div>
+</div>
+<!-- Explainable AI 'Why?' Breakdown List -->
+<div class="flex flex-col gap-2 pt-space-xs">
+<span class="font-label-xs text-label-xs uppercase font-semibold text-text-secondary tracking-wider">Explainability Engine Breakdown</span>
+<div class="space-y-2">
+<div class="flex items-start gap-2.5 bg-surface-card p-2.5 rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-status-danger text-[18px] shrink-0 mt-0.5">currency_rupee</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Financial Commitment Detection</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Extracted clause value: <code class="font-bold text-on-surface bg-surface-container-low px-1 py-0.5 rounded">₹50,00,000</code> ($60k equiv). Exceeds single-executive auto-authorization threshold of ₹10,00,000.</span>
+</div>
+</div>
+<div class="flex items-start gap-2.5 bg-surface-card p-2.5 rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-status-warning text-[18px] shrink-0 mt-0.5">assignment_late</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Legal Acceptance Request</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Detected strict semantic patterns: <mark class="bg-ai-highlight/50 px-1 rounded">"confirm acceptance"</mark> and <mark class="bg-ai-highlight/50 px-1 rounded">"issue final invoice"</mark>. Under Indian Contract Act §8, affirmative digital reply constitutes enforceable contract.</span>
+</div>
+</div>
+<div class="flex items-start gap-2.5 bg-surface-card p-2.5 rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">verified_user</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Counterparty Domain Authenticity</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Domain verification verified (<code class="text-text-primary">nordicenterprises.com</code>). MX records and TLS encryption confirmed. Zero spoofing indicators.</span>
+</div>
+</div>
+<div class="flex items-start gap-2.5 bg-status-danger-surface p-2.5 rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-status-danger text-[18px] shrink-0 mt-0.5">gavel</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-status-danger">Executive Policy Violation</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Triggered Rule #4: <span class="font-medium text-status-danger">"Never execute or formally assent to commercial terms &gt;₹10L without explicit human dual-verification."</span></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Telemetry Details (Collapsible target) -->
+<div class="hidden pt-space-xs flex flex-col gap-1.5 bg-surface-card p-space-sm rounded-lg shadow-sm font-body-sm text-body-sm" id="telemetryDetails">
+<div class="flex justify-between text-text-secondary"><span class="font-medium">Model Inference Path:</span><span>Llama-3-ExecGuard-70B</span></div>
+<div class="flex justify-between text-text-secondary"><span class="font-medium">Hallucination Risk Score:</span><span class="font-semibold text-primary">0.02% (Clinical Safe)</span></div>
+<div class="flex justify-between text-text-secondary"><span class="font-medium">Audit Cryptographic Nonce:</span><span class="font-mono text-xs">0x7F89B...912C</span></div>
+</div>
+</div>
+</div>
+<!-- RIGHT PANE: AI Draft Studio & Executive Decision Terminal (7 cols) -->
+<div class="xl:col-span-7 flex flex-col gap-space-md">
+<div class="bg-surface-card rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md flex-1">
+<!-- Header & State -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-space-sm pb-space-sm">
+<div>
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-md text-headline-md text-on-surface">Executive AI Response Studio</span>
+<span class="material-symbols-outlined text-primary text-[20px]">auto_awesome</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary">Synthesized response drafted using Alexander Vance voice profile &amp; fiscal governance guardrails.</p>
+</div>
+<div class="flex items-center gap-space-xs self-start sm:self-auto">
+<span class="w-2 h-2 rounded-full bg-status-warning animate-ping"></span>
+<span class="font-label-xs text-label-xs font-semibold px-2.5 py-1 rounded-full bg-status-warning-surface text-status-warning">
+              Draft Prepared — Awaiting Your Review
+            </span>
+</div>
+</div>
+<!-- Tone & Length Strategy Selectors -->
+<div class="bg-surface-canvas p-space-sm rounded-xl flex flex-wrap items-center justify-between gap-space-sm">
+<!-- Tone Group -->
+<div class="flex items-center gap-1.5">
+<span class="font-label-xs text-label-xs uppercase font-semibold text-text-tertiary mr-1">Tone:</span>
+<button class="tone-btn px-3 py-1 rounded-lg font-label-xs text-label-xs font-semibold bg-surface-card text-on-surface shadow-sm transition-all" data-tone="professional">
+              Professional (Active)
+            </button>
+<button class="tone-btn px-3 py-1 rounded-lg font-label-xs text-label-xs text-text-secondary hover:text-on-surface hover:bg-surface-card/60 transition-all" data-tone="concise">
+              Concise
+            </button>
+<button class="tone-btn px-3 py-1 rounded-lg font-label-xs text-label-xs text-text-secondary hover:text-on-surface hover:bg-surface-card/60 transition-all" data-tone="friendly">
+              Friendly
+            </button>
+<button class="tone-btn px-3 py-1 rounded-lg font-label-xs text-label-xs text-text-secondary hover:text-on-surface hover:bg-surface-card/60 transition-all" data-tone="formal">
+              Formal
+            </button>
+</div>
+<!-- Length Group -->
+<div class="flex items-center gap-1.5">
+<span class="font-label-xs text-label-xs uppercase font-semibold text-text-tertiary mr-1">Length:</span>
+<button class="length-btn px-2.5 py-1 rounded-lg font-label-xs text-label-xs text-text-secondary hover:text-on-surface transition-all" data-len="short">Short</button>
+<button class="length-btn px-2.5 py-1 rounded-lg font-label-xs text-label-xs font-semibold bg-surface-card text-on-surface shadow-sm transition-all" data-len="medium">Medium (Active)</button>
+<button class="length-btn px-2.5 py-1 rounded-lg font-label-xs text-label-xs text-text-secondary hover:text-on-surface transition-all" data-len="detailed">Detailed</button>
+</div>
+</div>
+<!-- Editable Draft Surface -->
+<div class="flex flex-col flex-1 relative rounded-xl bg-surface-canvas p-space-md shadow-sm">
+<div class="flex items-center justify-between pb-space-sm mb-space-sm text-text-secondary">
+<div class="flex items-center gap-space-sm text-body-sm font-body-sm">
+<span class="font-medium text-on-surface">To:</span> Marcus Brody &lt;m.brody@nordicenterprises.com&gt;
+            </div>
+<div class="flex items-center gap-1 text-text-tertiary">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span class="font-label-xs text-label-xs">Click text to edit inline</span>
+</div>
+</div>
+<!-- Live Editable Text Area -->
+<div aria-multiline="true" class="flex-1 font-body-md text-body-md text-on-surface outline-none leading-relaxed space-y-space-sm focus:bg-surface-card/40 p-space-xs rounded transition-colors" contenteditable="true" id="draftEditor" role="textbox">
+<p>Hi Marcus,</p>
+<p>Thank you for providing the revised Master Services Agreement and updated Schedule C.</p>
+<p>I have received the revised terms reflecting the ₹50,00,000 annual licensing schedule. Our finance team is reviewing the 30-day payment timeline alongside our standard net-45 procurement cycle.</p>
+<p>I will provide our formal confirmation by tomorrow afternoon once our CFO concludes the final fiscal sign-off.</p>
+<p class="pt-2">Best regards,<br/><span class="font-semibold">Alexander Vance</span><br/><span class="text-text-secondary text-body-sm">CEO, ExecuAI</span></p>
+</div>
+<!-- Word / Character / Leverage Count Bar -->
+<div class="pt-space-sm mt-space-sm flex items-center justify-between font-label-xs text-label-xs text-text-tertiary">
+<div class="flex items-center gap-space-md">
+<span id="wordCount">68 words</span>
+<span>•</span>
+<span class="text-primary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">shield</span> Legal non-committal rating: 100%
+              </span>
+</div>
+<span class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+              Auto-saved to Executive Queue
+            </span>
+</div>
+</div>
+<!-- AI Safety Audit / Policy Assurance Note -->
+<div class="bg-surface-container-low p-space-md rounded-xl flex items-start gap-space-sm">
+<div class="w-7 h-7 rounded-lg bg-primary-container text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">AI Safety &amp; Leverage Verification Passed</span>
+<p class="font-body-sm text-body-sm text-text-secondary mt-0.5">
+              Draft verified: Contains <strong class="text-on-surface">no binding commitments</strong>. Acknowledges receipt without assenting to ₹50L quotation or 30-day payment term. Defers authorization to CFO review, securing valuable counterparty leverage while preserving vendor goodwill.
+            </p>
+</div>
+</div>
+<!-- Decision Action Footer -->
+<div class="pt-space-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-space-sm">
+<!-- Secondary Hazard Triggers -->
+<div class="flex items-center gap-space-xs order-2 sm:order-1">
+<button class="px-3 py-2 rounded-lg bg-status-danger-surface text-status-danger hover:bg-error-container hover:text-on-error-container transition-colors font-label-md text-label-md flex items-center gap-1.5" id="btnReject">
+<span class="material-symbols-outlined text-[18px]">block</span>
+<span>Do Not Respond / Archive</span>
+</button>
+<button class="px-3 py-2 rounded-lg bg-surface-canvas text-on-surface-variant hover:bg-surface-container transition-colors font-label-md text-label-md flex items-center gap-1.5" id="btnRegenerate">
+<span class="material-symbols-outlined text-[18px]">cached</span>
+<span>Regenerate</span>
+</button>
+</div>
+<!-- Primary Authoritative Execution Triggers -->
+<div class="flex items-center gap-space-sm order-1 sm:order-2">
+<button class="px-4 py-2 rounded-lg bg-surface-card text-on-surface hover:bg-surface-canvas transition-colors font-label-md text-label-md shadow-sm flex items-center gap-1.5" id="btnFullEditor">
+<span class="material-symbols-outlined text-[18px]">open_in_new</span>
+<span>Full Editor</span>
+</button>
+<!-- Primary Approve & Send -->
+<button class="px-5 py-2.5 rounded-lg bg-primary text-on-primary hover:bg-primary-container transition-all font-title-sm text-title-sm shadow-md flex items-center gap-2 group" id="btnApproveSend">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">lock</span>
+<span>Approve &amp; Send via Gmail</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Quick Executive Prompt Instruction Panel -->
+<div class="bg-surface-card rounded-xl shadow-sm p-space-md flex items-center gap-space-md">
+<span class="material-symbols-outlined text-primary text-[24px] shrink-0">prompt_suggestion</span>
+<div class="flex-1 relative">
+<input class="w-full h-10 px-space-md bg-surface-canvas rounded-xl font-body-sm text-body-sm text-on-surface placeholder:text-text-tertiary focus:outline-none focus:bg-surface-card transition-colors" id="executiveInstruction" placeholder="Instruct ExecuAI: e.g. 'Push payment terms to net-60' or 'Request 10% volume discount'..." type="text"/>
+</div>
+<button class="px-4 py-2 rounded-xl bg-surface-container text-on-surface hover:bg-primary hover:text-on-primary transition-all font-label-sm text-label-sm font-semibold shrink-0" id="applyInstructionBtn">
+          Refine Draft
+        </button>
+</div>
+</div>
+</div>
+<!-- Dispatch Verification Dialog (Safety Modal Simulation) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/60 backdrop-blur-xs hidden" id="sendModal">
+<div class="bg-surface-card rounded-xl p-space-xl max-w-lg w-full mx-space-md shadow-2xl flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">verified</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Confirm Executive Transmission</h3>
+<p class="font-body-sm text-body-sm text-text-secondary">Cryptographic authorization via Alexander Vance</p>
+</div>
+</div>
+<div class="bg-surface-canvas p-space-md rounded-xl space-y-2 text-body-sm font-body-sm">
+<div class="flex justify-between"><span class="text-text-secondary">Destination:</span><span class="font-semibold text-on-surface">m.brody@nordicenterprises.com</span></div>
+<div class="flex justify-between"><span class="text-text-secondary">Origin Mailbox:</span><span class="font-semibold text-on-surface">ceo@company.com (Gmail)</span></div>
+<div class="flex justify-between"><span class="text-text-secondary">Commitment Status:</span><span class="text-primary font-semibold">Non-Binding / Under Fiscal Review</span></div>
+</div>
+<div class="p-space-sm bg-status-warning-surface rounded-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-status-warning text-[18px]">info</span>
+<span class="font-label-xs text-label-xs text-on-surface">A permanent audit record will be logged in the Security Center.</span>
+</div>
+<div class="flex items-center justify-end gap-space-sm pt-space-xs">
+<button class="px-4 py-2 rounded-lg bg-surface-canvas text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors" id="cancelModalBtn">
+          Cancel &amp; Edit
+        </button>
+<button class="px-5 py-2 rounded-lg bg-primary text-on-primary font-title-sm text-title-sm hover:bg-primary-container transition-colors shadow-sm flex items-center gap-1.5" id="confirmSendBtn">
+<span class="material-symbols-outlined text-[18px]">send</span>
+<span>Execute Dispatch</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Notification Toast -->
+<div class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl bg-on-background text-on-primary shadow-xl translate-y-20 opacity-0 transition-all duration-300 pointer-events-none" id="toastNotification">
+<span class="material-symbols-outlined text-primary-fixed text-[20px]" id="toastIcon">check_circle</span>
+<span class="font-label-md text-label-md" id="toastMessage">Response successfully dispatched via Gmail.</span>
+</div>
+</div>
+<script>
+  // Simple Micro-Interactions & State Simulation
+  const draftEditor = document.getElementById('draftEditor');
+  const wordCount = document.getElementById('wordCount');
+  const toneButtons = document.querySelectorAll('.tone-btn');
+  const lengthButtons = document.querySelectorAll('.length-btn');
+  const toggleMetadataBtn = document.getElementById('toggleMetadata');
+  const telemetryDetails = document.getElementById('telemetryDetails');
+  const sendModal = document.getElementById('sendModal');
+  const btnApproveSend = document.getElementById('btnApproveSend');
+  const cancelModalBtn = document.getElementById('cancelModalBtn');
+  const confirmSendBtn = document.getElementById('confirmSendBtn');
+  const toastNotification = document.getElementById('toastNotification');
+  const toastMessage = document.getElementById('toastMessage');
+  const toastIcon = document.getElementById('toastIcon');
+  const btnRegenerate = document.getElementById('btnRegenerate');
+  const applyInstructionBtn = document.getElementById('applyInstructionBtn');
+  const executiveInstruction = document.getElementById('executiveInstruction');
+  const btnReject = document.getElementById('btnReject');
+
+  // Live Word Counter
+  const updateCounts = () => {
+    if (!draftEditor || !wordCount) return;
+    const text = draftEditor.innerText || '';
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    wordCount.textContent = `${words} words`;
+  };
+
+  draftEditor?.addEventListener('input', updateCounts);
+
+  // Toggle Telemetry
+  toggleMetadataBtn?.addEventListener('click', () => {
+    telemetryDetails?.classList.toggle('hidden');
+  });
+
+  // Tone Switching
+  toneButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      toneButtons.forEach(b => {
+        b.classList.remove('bg-surface-card', 'text-on-surface', 'shadow-sm', 'font-semibold');
+        b.classList.add('text-text-secondary');
+      });
+      btn.classList.add('bg-surface-card', 'text-on-surface', 'shadow-sm', 'font-semibold');
+      btn.classList.remove('text-text-secondary');
+      
+      const tone = btn.getAttribute('data-tone');
+      showToast(`Recalibrating draft tone to: ${tone.toUpperCase()}`, 'sync');
+      
+      // Update draft text based on tone
+      if (tone === 'concise') {
+        draftEditor.innerHTML = `
+          <p>Hi Marcus,</p>
+          <p>Received the revised MSA and ₹50,00,000 schedule. Our finance team is reviewing the 30-day payment terms against our standard procurement policy.</p>
+          <p>I will follow up tomorrow afternoon following CFO sign-off.</p>
+          <p class="pt-2">Alexander Vance<br><span class="text-text-secondary text-body-sm">CEO, ExecuAI</span></p>
+        `;
+      } else if (tone === 'formal') {
+        draftEditor.innerHTML = `
+          <p>Dear Mr. Brody,</p>
+          <p>We acknowledge receipt of the updated Master Services Agreement containing the ₹50,00,000 licensing fee structure.</p>
+          <p>The proposed 30-day settlement window is currently undergoing formal legal and treasury review to evaluate alignment with standard fiscal governance.</p>
+          <p>We shall transmit our formal disposition by 16:00 IST tomorrow following the Chief Financial Officer's review.</p>
+          <p class="pt-2">Sincerely,<br><span class="font-semibold">Alexander Vance</span><br><span class="text-text-secondary text-body-sm">Chief Executive Officer, ExecuAI</span></p>
+        `;
+      } else {
+        draftEditor.innerHTML = `
+          <p>Hi Marcus,</p>
+          <p>Thank you for providing the revised Master Services Agreement and updated Schedule C.</p>
+          <p>I have received the revised terms reflecting the ₹50,00,000 annual licensing schedule. Our finance team is reviewing the 30-day payment timeline alongside our standard net-45 procurement cycle.</p>
+          <p>I will provide our formal confirmation by tomorrow afternoon once our CFO concludes the final fiscal sign-off.</p>
+          <p class="pt-2">Best regards,<br><span class="font-semibold">Alexander Vance</span><br><span class="text-text-secondary text-body-sm">CEO, ExecuAI</span></p>
+        `;
+      }
+      updateCounts();
+    });
+  });
+
+  // Length Switching
+  lengthButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      lengthButtons.forEach(b => {
+        b.classList.remove('bg-surface-card', 'text-on-surface', 'shadow-sm', 'font-semibold');
+        b.classList.add('text-text-secondary');
+      });
+      btn.classList.add('bg-surface-card', 'text-on-surface', 'shadow-sm', 'font-semibold');
+      btn.classList.remove('text-text-secondary');
+      showToast(`Draft length set to: ${btn.getAttribute('data-len')}`, 'tune');
+    });
+  });
+
+  // Instruction Prompt
+  const handleInstruction = () => {
+    const val = executiveInstruction?.value.trim();
+    if (!val) return;
+    showToast(`Applying instruction: "${val}"...`, 'auto_fix_high');
+    draftEditor.innerHTML = `
+      <p>Hi Marcus,</p>
+      <p>Thank you for sending over the revised contract terms.</p>
+      <p>While we note the ₹50,00,000 quote, we require net-60 terms or a 10% volume commitment concession to match our enterprise budget allocation for this quarter.</p>
+      <p>Our CFO will review this revised framework tomorrow afternoon and I will reconnect with our final sign-off then.</p>
+      <p class="pt-2">Best regards,<br><span class="font-semibold">Alexander Vance</span><br><span class="text-text-secondary text-body-sm">CEO, ExecuAI</span></p>
+    `;
+    executiveInstruction.value = '';
+    updateCounts();
+  };
+
+  applyInstructionBtn?.addEventListener('click', handleInstruction);
+  executiveInstruction?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleInstruction();
+  });
+
+  // Regenerate Button
+  btnRegenerate?.addEventListener('click', () => {
+    showToast('Regenerating alternative executive response...', 'refresh');
+  });
+
+  // Reject / Archive
+  btnReject?.addEventListener('click', () => {
+    if (confirm('Archive this thread and block automatic replies?')) {
+      showToast('Thread flagged as high-risk and archived.', 'archive');
+    }
+  });
+
+  // Modal Flow
+  btnApproveSend?.addEventListener('click', () => {
+    sendModal?.classList.remove('hidden');
+  });
+
+  cancelModalBtn?.addEventListener('click', () => {
+    sendModal?.classList.add('hidden');
+  });
+
+  confirmSendBtn?.addEventListener('click', () => {
+    sendModal?.classList.add('hidden');
+    showToast('Approved & Dispatched via Gmail. Security log created.', 'mark_email_read');
+    btnApproveSend.innerHTML = `<span class="material-symbols-outlined text-[20px]">done_all</span><span>Dispatched</span>`;
+    btnApproveSend.classList.replace('bg-primary', 'bg-surface-container');
+    btnApproveSend.classList.replace('text-on-primary', 'text-text-secondary');
+    btnApproveSend.disabled = true;
+  });
+
+  // Toast Functionality
+  function showToast(message, icon = 'check_circle') {
+    if (!toastNotification || !toastMessage || !toastIcon) return;
+    toastMessage.textContent = message;
+    toastIcon.textContent = icon;
+    toastNotification.classList.remove('translate-y-20', 'opacity-0');
+    toastNotification.classList.add('translate-y-0', 'opacity-100');
+    
+    setTimeout(() => {
+      toastNotification.classList.remove('translate-y-0', 'opacity-100');
+      toastNotification.classList.add('translate-y-20', 'opacity-0');
+    }, 3200);
+  }
+</script></main></div></body></html>
