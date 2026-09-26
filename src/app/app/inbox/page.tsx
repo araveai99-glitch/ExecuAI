@@ -331,8 +331,8 @@ export default function UnifiedInboxPage() {
 
       {/* Main Content Workbench */}
       {viewState === "LOADING" && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-          <div className="xl:col-span-5 space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-5 space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="p-4 rounded-xl border border-[#E2E8F0] bg-white space-y-3 shadow-xs">
                 <div className="flex items-center justify-between">
@@ -348,7 +348,7 @@ export default function UnifiedInboxPage() {
               </div>
             ))}
           </div>
-          <div className="hidden xl:block xl:col-span-7 p-6 rounded-2xl bg-white border border-[#E2E8F0] space-y-4">
+          <div className="hidden lg:block lg:col-span-7 p-6 rounded-2xl bg-white border border-[#E2E8F0] space-y-4">
             <Skeleton width="240px" height="24px" radius="6px" />
             <Skeleton width="140px" height="16px" radius="4px" />
             <Skeleton width="100%" height="200px" radius="12px" />
@@ -420,9 +420,9 @@ export default function UnifiedInboxPage() {
       )}
 
       {viewState === "NORMAL" && filteredEmails.length > 0 && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-          {/* Left Email Stream List (Stacked list for mobile/tablet, 5-col stream for desktop) */}
-          <div className="xl:col-span-5 space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Email Stream List (Stacked list for mobile/tablet, 5-col stream for desktop/iPad landscape) */}
+          <div className="lg:col-span-5 space-y-3">
             <div className="flex items-center justify-between text-xs text-[#64748B] px-1 font-semibold">
               <span>Showing {filteredEmails.length} emails</span>
               <span>Sorted by Recency</span>
@@ -515,7 +515,7 @@ export default function UnifiedInboxPage() {
           </div>
 
           {/* Right Email Detail Pane (Desktop & iPad Landscape Split View) */}
-          <div className="hidden xl:block xl:col-span-7 space-y-4 sticky top-6">
+          <div className="hidden lg:block lg:col-span-7 space-y-4 sticky top-6">
             {activeEmail && (
               <EmailDetailView email={activeEmail} />
             )}
@@ -523,9 +523,9 @@ export default function UnifiedInboxPage() {
         </div>
       )}
 
-      {/* Mobile Reading View Modal / Drawer */}
+      {/* Mobile Reading View Modal / Drawer (<1024px) */}
       {isMobileDetailOpen && activeEmail && (
-        <div className="fixed inset-0 z-50 xl:hidden bg-black/60 backdrop-blur-xs flex flex-col justify-end p-0 sm:p-4">
+        <div className="fixed inset-0 z-50 lg:hidden bg-black/60 backdrop-blur-xs flex flex-col justify-end p-0 sm:p-4">
           <div className="bg-white w-full max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl p-4 sm:p-6 space-y-5 shadow-2xl animate-in slide-in-from-bottom duration-200">
             <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
               <span className="text-xs font-bold text-[#0F172A]">Email Thread & AI Analysis</span>
