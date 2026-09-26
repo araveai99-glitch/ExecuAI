@@ -138,6 +138,27 @@ export interface DraftItem {
   humanApprovalReason: string;
 }
 
+export type AccountStatus =
+  | "CONNECTED"
+  | "SYNCING"
+  | "PAUSED"
+  | "ERROR"
+  | "RECONNECT_REQUIRED";
+
+export interface AccountItem {
+  id: string;
+  accountLabel: string; // "Gmail #1", "Gmail #2", "Zoho #1"
+  provider: MailboxProvider;
+  emailAddress: string;
+  status: AccountStatus;
+  lastSync: string;
+  syncError?: string;
+  scopes: string[];
+  connectedDate: string;
+  unreadCount: number;
+  totalSyncedThreads: number;
+}
+
 export interface TelemetryCounts {
   critical: number;
   urgent: number;
@@ -147,6 +168,7 @@ export interface TelemetryCounts {
   totalSyncedAccounts: number;
   lastSyncedAgo: string;
 }
+
 
 
 
