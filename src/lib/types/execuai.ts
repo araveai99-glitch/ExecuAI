@@ -121,6 +121,23 @@ export interface UnifiedEmailItem {
   threadHistory?: ThreadMessage[];
 }
 
+export type DraftTone = "professional" | "concise" | "friendly" | "formal";
+export type DraftLength = "short" | "medium" | "detailed";
+
+export interface DraftItem {
+  id: string;
+  emailId: string;
+  originalEmail: UnifiedEmailItem;
+  currentTone: DraftTone;
+  currentLength: DraftLength;
+  draftSubject: string;
+  draftBody: string;
+  status: "DRAFT_PREPARED" | "EDITED" | "APPROVED" | "CONTROLLED_SEND_QUEUED" | "DISPATCHED";
+  lastSavedAgo: string;
+  requiresHumanApproval: boolean;
+  humanApprovalReason: string;
+}
+
 export interface TelemetryCounts {
   critical: number;
   urgent: number;
@@ -130,5 +147,6 @@ export interface TelemetryCounts {
   totalSyncedAccounts: number;
   lastSyncedAgo: string;
 }
+
 
 
