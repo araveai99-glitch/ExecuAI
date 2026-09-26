@@ -6,6 +6,7 @@ export interface ButtonProps
   variant?: "primary" | "secondary" | "danger" | "warning" | "ghost" | "link";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
+  fullWidth?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
 }
@@ -17,6 +18,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "primary",
       size = "md",
       isLoading = false,
+      fullWidth = false,
       leftIcon,
       rightIcon,
       children,
@@ -54,9 +56,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         disabled={disabled || isLoading}
-        className={cn(baseStyles, variants[variant], sizes[size], className)}
+        className={cn(baseStyles, variants[variant], sizes[size], fullWidth && "w-full", className)}
         {...props}
       >
+
         {isLoading ? (
           <span className="material-symbols-outlined animate-spin text-[18px]">
             progress_activity

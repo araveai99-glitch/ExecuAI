@@ -183,7 +183,7 @@ export default function DecisionCenterPage() {
                 >
                   <div
                     className={`absolute left-0 top-0 bottom-0 w-1.5 ${
-                      item.risk === "HIGH_RISK" ? "bg-[#E11D48]" : item.risk === "REVIEW_REQUIRED" ? "bg-[#FAB60A]" : "bg-[#2E936F]"
+                      item.risk === "HIGH_RISK" ? "bg-[#E11D48]" : (item.risk === "REVIEW_REQUIRED" || item.risk === "REVIEW") ? "bg-[#FAB60A]" : "bg-[#2E936F]"
                     }`}
                   />
 

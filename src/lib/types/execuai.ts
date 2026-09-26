@@ -5,23 +5,31 @@ export type PriorityLevel =
   | "URGENT"
   | "IMPORTANT"
   | "NORMAL"
-  | "LOW";
+  | "LOW"
+  | "SPAM";
 
 export type IntentCategory =
-  | "LEGAL"
-  | "FINANCE"
   | "CLIENT"
-  | "MEETING"
-  | "VENDOR"
-  | "HR"
   | "SALES"
-  | "INTERNAL";
+  | "VENDOR"
+  | "INTERNAL"
+  | "FINANCE"
+  | "HR"
+  | "LEGAL"
+  | "MEETING"
+  | "SUPPORT"
+  | "NEWSLETTER"
+  | "MARKETING"
+  | "PERSONAL"
+  | "OTHER";
 
 export type RiskLevel =
-  | "HIGH_RISK"
-  | "REVIEW_REQUIRED"
   | "SAFE"
+  | "REVIEW"
+  | "REVIEW_REQUIRED"
+  | "HIGH_RISK"
   | "CONFIDENTIAL";
+
 
 export type ActionCategory =
   | "CONTRACT_APPROVAL"
@@ -55,6 +63,29 @@ export interface DecisionItem {
   slaMinutesRemaining?: number;
 }
 
+export interface UnifiedEmailItem {
+  id: string;
+  provider: MailboxProvider;
+  accountEmail: string;
+  accountLabel: string; // "Gmail #1", "Gmail #2", "Zoho #1"
+  senderName: string;
+  senderEmail: string;
+  senderRole?: string;
+  avatarInitials?: string;
+  subject: string;
+  snippet: string;
+  body: string;
+  timestamp: string;
+  priority: PriorityLevel;
+  intent: IntentCategory;
+  risk: RiskLevel;
+  unread: boolean;
+  flagged: boolean;
+  hasAttachment?: boolean;
+  aiDraftAvailable?: boolean;
+  aiSummary?: string;
+}
+
 export interface TelemetryCounts {
   critical: number;
   urgent: number;
@@ -64,3 +95,4 @@ export interface TelemetryCounts {
   totalSyncedAccounts: number;
   lastSyncedAgo: string;
 }
+

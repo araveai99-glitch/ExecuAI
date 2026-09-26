@@ -12,12 +12,15 @@ export type PriorityLevel =
 export interface PriorityBadgeProps {
   priority: PriorityLevel;
   className?: string;
+  size?: "sm" | "md";
 }
 
 export const PriorityBadge: React.FC<PriorityBadgeProps> = ({
   priority,
   className,
+  size = "md",
 }) => {
+
   const configs: Record<
     PriorityLevel,
     { label: string; styles: string; icon?: string }

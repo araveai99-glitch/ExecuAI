@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 
 export type RiskLevel =
   | "SAFE"
+  | "REVIEW"
   | "REVIEW_REQUIRED"
   | "HIGH_RISK"
   | "CONFIDENTIAL";
@@ -11,13 +12,16 @@ export interface RiskBadgeProps {
   risk: RiskLevel;
   className?: string;
   showIcon?: boolean;
+  size?: "sm" | "md";
 }
 
 export const RiskBadge: React.FC<RiskBadgeProps> = ({
   risk,
   className,
   showIcon = true,
+  size = "md",
 }) => {
+
   const configs: Record<
     RiskLevel,
     { label: string; styles: string; icon: string }
@@ -26,6 +30,11 @@ export const RiskBadge: React.FC<RiskBadgeProps> = ({
       label: "Safe to Draft",
       styles: "bg-[#EFF4FF] text-[#2E936F] border border-[#79d9b0]/30 font-semibold",
       icon: "verified",
+    },
+    REVIEW: {
+      label: "Review Required",
+      styles: "bg-[#FEF7E6] text-[#795600] border border-[#FDE68A] font-semibold",
+      icon: "gavel",
     },
     REVIEW_REQUIRED: {
       label: "Review Required",
@@ -43,6 +52,7 @@ export const RiskBadge: React.FC<RiskBadgeProps> = ({
       icon: "lock",
     },
   };
+
 
   const config = configs[risk] || configs.SAFE;
 

@@ -18,12 +18,15 @@ export type IntentCategory =
 export interface IntentBadgeProps {
   intent: IntentCategory | string;
   className?: string;
+  size?: "sm" | "md";
 }
 
 export const IntentBadge: React.FC<IntentBadgeProps> = ({
   intent,
   className,
+  size = "md",
 }) => {
+
   const formattedLabel = String(intent).replace("_", " ");
 
   return (
