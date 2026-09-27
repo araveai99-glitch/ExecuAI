@@ -4,207 +4,172 @@ import * as React from "react";
 import Link from "next/link";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
-import { ParticleCanvas } from "@/components/interactive/ParticleCanvas";
-import { ScrollReveal } from "@/components/interactive/ScrollReveal";
-import { TiltCard } from "@/components/interactive/TiltCard";
-import { MagneticButton } from "@/components/interactive/MagneticButton";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { Button } from "@/components/ui/Button";
 
 export default function FeaturesPage() {
   return (
-    <div className="min-h-screen bg-[#090D16] flex flex-col font-sans text-white relative overflow-hidden selection:bg-[#f15e1c]/30">
-      <ParticleCanvas particleCount={40} className="opacity-40" />
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-[#0F172A]">
       <PublicHeader />
 
-      <main className="flex-1 pt-24 relative z-10">
-        {/* HERO */}
-        <section className="py-20 sm:py-24 relative">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#f15e1c]/15 blur-[120px] rounded-full pointer-events-none" />
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
-            <ScrollReveal direction="down">
-              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f15e1c]/10 border border-[#f15e1c]/30 text-xs font-bold uppercase tracking-widest text-[#f15e1c] glow-orange">
-                <span className="w-2 h-2 rounded-full bg-[#f15e1c] animate-pulse" />
-                Platform Capabilities & AI Architecture
-              </span>
-            </ScrollReveal>
+      <main id="main-content" className="flex-1 pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full space-y-12">
+        <Breadcrumbs items={[{ label: "Features & Capabilities" }]} />
 
-            <ScrollReveal delay={0.1}>
-              <h1 className="text-4xl sm:text-6xl font-extrabold text-white tracking-tight font-heading leading-tight max-w-4xl mx-auto">
-                Engineered for <span className="bg-gradient-to-r from-[#f15e1c] via-[#fab60a] to-[#2e936f] bg-clip-text text-transparent">Precision Executive</span> Communication
-              </h1>
-            </ScrollReveal>
+        {/* HERO HEADER */}
+        <div className="space-y-4 text-center max-w-3xl mx-auto">
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFF2EC] border border-[#F15E1C]/30 text-xs font-bold uppercase tracking-widest text-[#F15E1C]">
+            <span className="w-2 h-2 rounded-full bg-[#F15E1C] animate-pulse" />
+            Platform Capabilities & AI Architecture
+          </span>
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-[#0F172A] font-heading tracking-tight leading-tight">
+            Engineered for Precision Executive Communication
+          </h1>
+          <p className="text-base text-[#475569] leading-relaxed">
+            ExecuAI combines multi-mailbox ingestion, 3-dimensional classification, forensic explainability, and an application-level Safety Gate to streamline high-volume inboxes safely.
+          </p>
+        </div>
 
-            <ScrollReveal delay={0.2}>
-              <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                ExecuAI combines multi-mailbox ingestion, 3-dimensional classification, forensic explainability, and an application-level Safety Gate to streamline high-volume inboxes safely.
+        {/* FEATURE MATRIX LIST */}
+        <div className="space-y-8">
+          {/* Feature 1: Multi-Mailbox Sync */}
+          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-[#FFF2EC] text-[#F15E1C] font-bold flex items-center justify-center border border-[#F15E1C]/20 text-lg">
+                01
+              </div>
+              <h2 className="text-2xl font-bold text-[#0F172A] font-heading">
+                Multi-Mailbox Connection Hub
+              </h2>
+              <p className="text-sm text-[#475569] leading-relaxed">
+                Link multiple Gmail and Zoho mailboxes into one unified SaaS workspace using OAuth 2.0 PKCE authentication. Read and Draft permissions allow ExecuAI to sync and prepare responses without needing full password credentials or automated external send rights.
               </p>
-            </ScrollReveal>
-          </div>
-        </section>
+              <ul className="space-y-2 text-xs text-[#334155] font-semibold">
+                <li className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-[#E8F4F0] text-[#2E936F] font-bold flex items-center justify-center text-[10px]">✓</span>
+                  <span>Supports work Gmail, personal Gmail, and Zoho Mail accounts simultaneously.</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-[#E8F4F0] text-[#2E936F] font-bold flex items-center justify-center text-[10px]">✓</span>
+                  <span>Every email retains provider, account ID, and thread origin markers.</span>
+                </li>
+              </ul>
+            </div>
 
-        {/* FEATURE MATRIX GRID */}
-        <section className="py-16 sm:py-24 relative border-t border-slate-800/80">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
-            {/* Feature 1: Multi-Mailbox Sync */}
-            <ScrollReveal direction="up">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-                <div className="lg:col-span-6 space-y-6">
-                  <div className="w-12 h-12 rounded-2xl bg-[#f7d7b0]/10 text-[#f15e1c] font-bold flex items-center justify-center border border-[#f15e1c]/30 glow-orange">
-                    <span className="material-symbols-outlined text-[24px]">mark_email_unread</span>
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight font-heading">
-                    1. Multi-Mailbox Connection Hub
-                  </h2>
-                  <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                    Link multiple Gmail and Zoho mailboxes into one unified SaaS workspace using OAuth 2.0 PKCE authentication. Read and Draft permissions allow ExecuAI to sync and prepare responses without needing full password credentials or automated external send rights.
-                  </p>
-                  <ul className="space-y-3 text-sm text-slate-300">
-                    <li className="flex items-center gap-3">
-                      <span className="w-5 h-5 rounded-full bg-[#2e936f]/20 text-[#2e936f] font-bold text-xs flex items-center justify-center border border-[#2e936f]/30">✓</span>
-                      <span>Supports work Gmail, personal Gmail, and Zoho Mail accounts simultaneously.</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <span className="w-5 h-5 rounded-full bg-[#2e936f]/20 text-[#2e936f] font-bold text-xs flex items-center justify-center border border-[#2e936f]/30">✓</span>
-                      <span>Every email retains provider, account ID, and thread origin markers.</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="lg:col-span-6">
-                  <TiltCard className="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl shadow-2xl space-y-4 glow-orange">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Connected Mailboxes Status</span>
-                      <span className="text-xs font-bold text-[#2e936f] flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-[#2e936f] animate-ping" />
-                        Live OAuth Sync
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80">
-                      <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-xl bg-[#f15e1c] text-white font-extrabold text-sm flex items-center justify-center shadow-md">G</span>
-                        <div>
-                          <div className="text-sm font-bold text-white">ceo@company.com</div>
-                          <div className="text-[11px] text-slate-400">Google Workspace OAuth 2.0</div>
-                        </div>
-                      </div>
-                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#2e936f]/20 border border-[#2e936f]/30 text-[#2e936f]">Connected</span>
-                    </div>
-                    <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80">
-                      <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-xl bg-[#2e936f] text-white font-extrabold text-sm flex items-center justify-center shadow-md">Z</span>
-                        <div>
-                          <div className="text-sm font-bold text-white">board@vance.io</div>
-                          <div className="text-[11px] text-slate-400">Zoho Mail OAuth 2.0</div>
-                        </div>
-                      </div>
-                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#2e936f]/20 border border-[#2e936f]/30 text-[#2e936f]">Connected</span>
-                    </div>
-                  </TiltCard>
-                </div>
+            <div className="lg:col-span-5 p-5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#94A3B8]">Mailbox Sync Status</span>
+                <span className="text-xs font-bold text-[#2E936F] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#2E936F] animate-ping" />
+                  Live OAuth
+                </span>
               </div>
-            </ScrollReveal>
-
-            {/* Feature 2: 3D Triage */}
-            <ScrollReveal direction="up" delay={0.1}>
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-                <div className="lg:col-span-6 lg:order-2 space-y-6">
-                  <div className="w-12 h-12 rounded-2xl bg-[#2e936f]/10 text-[#2e936f] font-bold flex items-center justify-center border border-[#2e936f]/30 glow-green">
-                    <span className="material-symbols-outlined text-[24px]">filter_alt</span>
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight font-heading">
-                    2. 3-Dimensional Email Triage Engine
-                  </h2>
-                  <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                    Instead of combining email status into a single generic rating, ExecuAI analyzes every email across three non-overlapping dimensions: Priority Level, Intent Category, and Risk Gate.
-                  </p>
-                  <div className="grid grid-cols-3 gap-3 pt-2 text-center text-xs">
-                    <div className="p-4 rounded-2xl bg-slate-900/60 border border-[#f15e1c]/30">
-                      <div className="font-bold text-[#f15e1c] text-sm">Priority</div>
-                      <div className="text-slate-400 text-xs mt-1">Critical / Urgent</div>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-slate-900/60 border border-[#2e936f]/30">
-                      <div className="font-bold text-[#2e936f] text-sm">Intent</div>
-                      <div className="text-slate-400 text-xs mt-1">Legal / Finance</div>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-slate-900/60 border border-[#fab60a]/30">
-                      <div className="font-bold text-[#fab60a] text-sm">Risk Gate</div>
-                      <div className="text-slate-400 text-xs mt-1">High Risk Gate</div>
-                    </div>
+              <div className="p-3 rounded-xl bg-white border border-[#E2E8F0] flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-7 h-7 rounded-lg bg-[#F15E1C] text-white font-bold text-xs flex items-center justify-center">G</span>
+                  <div>
+                    <div className="text-xs font-bold text-[#0F172A]">ceo@company.com</div>
+                    <div className="text-[10px] text-[#64748B]">Google Workspace OAuth</div>
                   </div>
                 </div>
-                <div className="lg:col-span-6 lg:order-1">
-                  <TiltCard className="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl shadow-2xl space-y-4">
-                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Sample Classified Payload</div>
-                    <div className="p-5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-white text-sm">Elena Rostova (Apex Law)</span>
-                        <span className="text-xs text-slate-500">14m ago</span>
-                      </div>
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        Series B Definitive Agreements & IP Indemnity Clause Review...
-                      </p>
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        <span className="px-2.5 py-1 rounded-lg bg-[#f15e1c]/20 border border-[#f15e1c]/30 text-[#f15e1c] text-xs font-bold">Critical</span>
-                        <span className="px-2.5 py-1 rounded-lg bg-[#2e936f]/20 border border-[#2e936f]/30 text-[#2e936f] text-xs font-bold">Legal</span>
-                        <span className="px-2.5 py-1 rounded-lg bg-[#fab60a]/20 border border-[#fab60a]/30 text-[#fab60a] text-xs font-bold">High Risk Gate</span>
-                      </div>
-                    </div>
-                  </TiltCard>
-                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#E8F4F0] text-[#2E936F]">Connected</span>
               </div>
-            </ScrollReveal>
-
-            {/* Feature 3: Safety Gate & Decision Center */}
-            <ScrollReveal direction="up" delay={0.2}>
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-                <div className="lg:col-span-6 space-y-6">
-                  <div className="w-12 h-12 rounded-2xl bg-[#fab60a]/10 text-[#fab60a] font-bold flex items-center justify-center border border-[#fab60a]/30">
-                    <span className="material-symbols-outlined text-[24px]">gavel</span>
+              <div className="p-3 rounded-xl bg-white border border-[#E2E8F0] flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-7 h-7 rounded-lg bg-[#2E936F] text-white font-bold text-xs flex items-center justify-center">Z</span>
+                  <div>
+                    <div className="text-xs font-bold text-[#0F172A]">board@vance.io</div>
+                    <div className="text-[10px] text-[#64748B]">Zoho Mail OAuth</div>
                   </div>
-                  <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight font-heading">
-                    3. Safety Gate & Executive Decision Center
-                  </h2>
-                  <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                    Financial commitments, contracts, quotations, legal notices, and HR matters automatically engage the Safety Gate. Autonomous sending is blocked, and the email is routed to the Decision Center where the executive reviews detected signals before approving.
-                  </p>
                 </div>
-                <div className="lg:col-span-6">
-                  <TiltCard className="p-8 rounded-3xl bg-slate-900/80 border border-[#f15e1c]/40 backdrop-blur-xl shadow-2xl space-y-4 glow-orange">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#f15e1c] uppercase tracking-widest flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#f15e1c] animate-pulse" />
-                        Safety Gate Engaged
-                      </span>
-                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#f15e1c] text-white">Blocked</span>
-                    </div>
-                    <p className="text-xs sm:text-sm text-slate-200 leading-relaxed bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
-                      Extracted clause value: <strong className="text-[#fab60a]">₹50,00,000</strong>. Financial liability threshold exceeded. Autonomous reply blocked by Policy Rule #4.
-                    </p>
-                  </TiltCard>
-                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#E8F4F0] text-[#2E936F]">Connected</span>
               </div>
-            </ScrollReveal>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="py-20 bg-gradient-to-b from-[#090D16] to-[#04060A] text-white text-center border-t border-slate-800 relative">
-          <div className="max-w-[1400px] mx-auto px-4 space-y-6">
-            <h2 className="text-3xl sm:text-5xl font-extrabold font-heading tracking-tight">Ready to Experience Executive Precision?</h2>
-            <p className="text-slate-400 max-w-xl mx-auto text-sm sm:text-base">
-              Connect your mailboxes in minutes and see how ExecuAI transforms your daily email workflow.
-            </p>
-            <div className="pt-4 flex justify-center">
-              <Link href="/onboarding">
-                <MagneticButton className="px-8 py-4 rounded-xl bg-gradient-to-r from-[#f15e1c] to-[#fab60a] text-white font-bold text-base shadow-xl hover:shadow-[#f15e1c]/25 transition-all">
-                  Get Started Free
-                </MagneticButton>
-              </Link>
             </div>
           </div>
-        </section>
+
+          {/* Feature 2: 3D Triage */}
+          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-[#E8F4F0] text-[#2E936F] font-bold flex items-center justify-center border border-[#2E936F]/20 text-lg">
+                02
+              </div>
+              <h2 className="text-2xl font-bold text-[#0F172A] font-heading">
+                3-Dimensional Email Triage Engine
+              </h2>
+              <p className="text-sm text-[#475569] leading-relaxed">
+                Instead of combining email status into a single generic rating, ExecuAI analyzes every email across three non-overlapping dimensions: Priority Level, Intent Category, and Risk Gate.
+              </p>
+              <div className="grid grid-cols-3 gap-3 pt-2 text-center text-xs">
+                <div className="p-3 rounded-xl bg-[#FFF2EC] border border-[#F15E1C]/30 font-bold text-[#F15E1C]">
+                  Priority Level
+                </div>
+                <div className="p-3 rounded-xl bg-[#E8F4F0] border border-[#2E936F]/30 font-bold text-[#2E936F]">
+                  Intent Category
+                </div>
+                <div className="p-3 rounded-xl bg-[#FEF6E0] border border-[#FAB60A]/30 font-bold text-[#855D00]">
+                  Risk Gate
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 p-5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-3">
+              <div className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider">Sample Classified Ingestion</div>
+              <div className="p-4 rounded-xl bg-white border border-[#E2E8F0] space-y-2 text-xs">
+                <div className="font-bold text-[#0F172A]">Elena Rostova (Apex Law)</div>
+                <p className="text-[#64748B]">Series B Definitive Agreements & IP Indemnity Clause Review...</p>
+                <div className="flex gap-1.5 pt-1">
+                  <span className="px-2 py-0.5 rounded bg-[#FFF2EC] text-[#F15E1C] font-extrabold text-[10px]">Critical</span>
+                  <span className="px-2 py-0.5 rounded bg-[#E8F4F0] text-[#2E936F] font-extrabold text-[10px]">Legal</span>
+                  <span className="px-2 py-0.5 rounded bg-[#FEF6E0] text-[#855D00] font-extrabold text-[10px]">High Risk Gate</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature 3: Safety Gate Protocol */}
+          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-[#FEF6E0] text-[#FAB60A] font-bold flex items-center justify-center border border-[#FAB60A]/30 text-lg">
+                03
+              </div>
+              <h2 className="text-2xl font-bold text-[#0F172A] font-heading">
+                Safety Gate & Decision Center
+              </h2>
+              <p className="text-sm text-[#475569] leading-relaxed">
+                Financial commitments, contracts, quotations, legal notices, and HR matters automatically engage the Safety Gate. Autonomous sending is blocked, and the email is routed to the Decision Center where the executive reviews detected signals before approving.
+              </p>
+            </div>
+
+            <div className="lg:col-span-5 p-5 rounded-2xl bg-[#FFF2EC] border border-[#F15E1C]/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#F15E1C] uppercase tracking-wider">Safety Gate Protocol</span>
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-[#F15E1C] text-white">Blocked</span>
+              </div>
+              <p className="text-xs text-[#0F172A] leading-relaxed font-semibold">
+                Extracted clause exposure: <strong>₹50,00,000</strong>. Financial liability threshold exceeded (₹10L limit). Autonomous send locked; routed to Executive Decision Center.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* BOTTOM CTA */}
+        <div className="p-8 rounded-3xl bg-white border border-[#E2E8F0] text-center space-y-4 shadow-sm">
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A] font-heading">
+            Ready to Connect Your Mailboxes?
+          </h2>
+          <p className="text-sm text-[#475569] max-w-md mx-auto">
+            Experience clean multi-mailbox triage and human-in-the-loop executive safety gates today.
+          </p>
+          <div className="pt-2 flex justify-center">
+            <Link href="/onboarding">
+              <Button variant="primary" size="lg">
+                Get Started Free →
+              </Button>
+            </Link>
+          </div>
+        </div>
       </main>
 
       <PublicFooter />
     </div>
   );
 }
-
