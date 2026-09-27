@@ -4,140 +4,173 @@ import * as React from "react";
 import Link from "next/link";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
-import { ParticleCanvas } from "@/components/interactive/ParticleCanvas";
-import { ScrollReveal } from "@/components/interactive/ScrollReveal";
-import { TiltCard } from "@/components/interactive/TiltCard";
-import { MagneticButton } from "@/components/interactive/MagneticButton";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { Button } from "@/components/ui/Button";
 
 export default function HowItWorksPage() {
+  const [activeStep, setActiveStep] = React.useState<number>(1);
+
   const steps = [
     {
+      id: 1,
       num: "01",
-      title: "Connect Email Accounts Securely",
-      desc: "Authorize your Gmail and Zoho mailboxes via standard OAuth 2.0 PKCE. ExecuAI requests Read and Draft permissions. We never ask for or store your email password.",
-      detail: "Supports multiple Gmail accounts plus Zoho accounts under one user profile.",
-      accent: "#f15e1c",
+      title: "Connect Accounts",
+      subtitle: "OAuth 2.0 PKCE Least Privilege",
+      desc: "Link Gmail and Zoho Mail accounts securely using provider OAuth 2.0. No passwords are stored; ExecuAI uses read & draft tokens.",
+      icon: "hub",
+      previewTitle: "Mailbox Connection Matrix",
+      previewDetail: "2 Gmail Accounts + 1 Zoho Account Synchronized",
+      badge: "OAuth PKCE Active",
+      badgeColor: "bg-[#E8F4F0] text-[#2E936F]",
     },
     {
+      id: 2,
       num: "02",
-      title: "Email Ingestion & Data Normalization",
-      desc: "Inbound emails are retrieved asynchronously and parsed into a common internal Email object containing provider, account ID, message ID, sender, recipients, subject, body, and attachments.",
-      detail: "The AI engine sees a unified model regardless of whether the source was Gmail or Zoho.",
-      accent: "#2e936f",
+      title: "3D Ingestion & Triage",
+      subtitle: "Multi-Axis Signal Extraction",
+      desc: "Incoming emails are classified across Priority (Critical/Urgent), Intent (Legal/Finance), and Risk Gate (High/Low Exposure).",
+      icon: "filter_alt",
+      previewTitle: "3D Matrix Classification",
+      previewDetail: "Elena Rostova → Legal Contract → High Risk Gate Detected",
+      badge: "ISO 42001 Classification",
+      badgeColor: "bg-[#FFF2EC] text-[#F15E1C]",
     },
     {
+      id: 3,
       num: "03",
-      title: "AI Understanding & 3D Triage",
-      desc: "The AI internal engine analyzes the email context across three distinct dimensions: Priority (Critical to Low), Intent (Legal, Finance, Client, etc.), and Risk (Safe to High Risk).",
-      detail: "Produces explicit explainability reasons rather than obscure numeric confidence scores.",
-      accent: "#fab60a",
+      title: "Safety Gate Lockdown",
+      subtitle: "Deterministic Policy Verification",
+      desc: "Financial commitments >₹10L, contracts, or M&A terms engage the Safety Gate. Autonomous sending is programmatically locked.",
+      icon: "gavel",
+      previewTitle: "Safety Gate Policy Lock",
+      previewDetail: "Exposure ₹50,00,000 exceeds safety threshold → routed to Decision Center",
+      badge: "Autonomous Send Blocked",
+      badgeColor: "bg-[#FEF6E0] text-[#855D00]",
     },
     {
+      id: 4,
       num: "04",
-      title: "Deterministic Safety Gate Check",
-      desc: "Application-level policy rules check for high-risk signals like financial values (₹50L+), legal contracts, NDAs, HR issues, or security OTPs.",
-      detail: "High-risk items trigger an immediate autonomous reply blocker.",
-      accent: "#f15e1c",
-    },
-    {
-      num: "05",
-      title: "Draft Preparation or Mandatory Human Review",
-      desc: "Safe emails receive personalized draft replies matching your executive tone. High-risk emails are routed directly to your Decision Center workspace.",
-      detail: "AI prepares the routine work; consequential decisions stay under human control.",
-      accent: "#2e936f",
-    },
-    {
-      num: "06",
-      title: "Executive Approval & Controlled Send",
-      desc: "The executive reviews, edits, or approves the draft. Upon approval, the backend Send Service executes provider send APIs and logs an entry in the immutable audit trail.",
-      detail: "The LLM itself never directly controls the external email send function.",
-      accent: "#fab60a",
+      title: "Executive Decision & Dispatch",
+      subtitle: "Human-in-the-Loop Approval",
+      desc: "Review synthesized AI drafts in your tone, edit paragraph clauses if needed, and grant 1-click execution to send from your origin mailbox.",
+      icon: "task_alt",
+      previewTitle: "Executive Dispatch Studio",
+      previewDetail: "Draft approved by Alexander Vance → Sent via Gmail OAuth",
+      badge: "Executive Cleared",
+      badgeColor: "bg-[#E8F4F0] text-[#2E936F]",
     },
   ];
 
+  const current = steps.find((s) => s.id === activeStep) || steps[0];
+
   return (
-    <div className="min-h-screen bg-[#090D16] flex flex-col font-sans text-white relative overflow-hidden selection:bg-[#f15e1c]/30">
-      <ParticleCanvas particleCount={35} className="opacity-30" />
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-[#0F172A]">
       <PublicHeader />
 
-      <main className="flex-1 pt-24 relative z-10">
-        {/* HERO */}
-        <section className="py-20 sm:py-24 relative">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-[#2e936f]/15 blur-[120px] rounded-full pointer-events-none" />
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
-            <ScrollReveal direction="down">
-              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2e936f]/10 border border-[#2e936f]/30 text-xs font-bold uppercase tracking-widest text-[#2e936f] glow-green">
-                <span className="w-2 h-2 rounded-full bg-[#2e936f] animate-pulse" />
-                End-to-End Workflow Architecture
+      <main id="main-content" className="flex-1 pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full space-y-12">
+        <Breadcrumbs items={[{ label: "How It Works" }]} />
+
+        {/* HEADER */}
+        <div className="space-y-4 text-center max-w-3xl mx-auto">
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFF2EC] border border-[#F15E1C]/30 text-xs font-bold uppercase tracking-widest text-[#F15E1C]">
+            <span className="w-2 h-2 rounded-full bg-[#F15E1C] animate-pulse" />
+            4-Step Executive Workflow
+          </span>
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-[#0F172A] font-heading tracking-tight">
+            How ExecuAI Triages & Governs Inboxes
+          </h1>
+          <p className="text-base text-[#475569] leading-relaxed">
+            Click any step below to see how ExecuAI transforms incoming email chaos into clear executive decisions.
+          </p>
+        </div>
+
+        {/* STEP NAVIGATION TABS (Horizontal on Desktop, Stacked on Mobile) */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          {steps.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setActiveStep(s.id)}
+              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-2 ${
+                activeStep === s.id
+                  ? "bg-white border-[#F15E1C] ring-2 ring-[#F15E1C]/20 shadow-md"
+                  : "bg-white/60 border-[#E2E8F0] hover:border-[#F15E1C]/40"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-extrabold px-2.5 py-0.5 rounded-lg ${
+                    activeStep === s.id
+                      ? "bg-[#F15E1C] text-white"
+                      : "bg-[#F8FAFC] text-[#64748B]"
+                  }`}
+                >
+                  {s.num}
+                </span>
+                <span className="material-symbols-outlined text-[20px] text-[#F15E1C]">
+                  {s.icon}
+                </span>
+              </div>
+              <div>
+                <div className="text-sm font-bold text-[#0F172A] font-heading">
+                  {s.title}
+                </div>
+                <div className="text-[11px] text-[#64748B] truncate">
+                  {s.subtitle}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* ACTIVE STEP INTERACTIVE WORKFLOW PREVIEW */}
+        <div className="p-6 sm:p-10 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-extrabold text-[#F15E1C] bg-[#FFF2EC] px-3 py-1 rounded-full border border-[#F15E1C]/30">
+                Step {current.num} of 04
               </span>
-            </ScrollReveal>
-
-            <ScrollReveal delay={0.1}>
-              <h1 className="text-4xl sm:text-6xl font-extrabold text-white tracking-tight font-heading leading-tight max-w-4xl mx-auto">
-                How ExecuAI Works <span className="bg-gradient-to-r from-[#2e936f] via-[#fab60a] to-[#f15e1c] bg-clip-text text-transparent">Step-by-Step</span>
-              </h1>
-            </ScrollReveal>
-
-            <ScrollReveal delay={0.2}>
-              <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                Understand → Prioritize → Protect → Assist → Ask → Act
-              </p>
-            </ScrollReveal>
-          </div>
-        </section>
-
-        {/* STEPS LIST */}
-        <section className="py-16 sm:py-24 border-t border-slate-800/80">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            {steps.map((s, idx) => (
-              <ScrollReveal key={s.num} delay={idx * 0.08} direction="up">
-                <TiltCard className="p-6 sm:p-8 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl shadow-xl flex flex-col sm:flex-row items-start gap-6 hover:border-[#f15e1c]/40 transition-all">
-                  <div
-                    className="w-14 h-14 rounded-2xl font-extrabold text-xl flex items-center justify-center shrink-0 border"
-                    style={{
-                      backgroundColor: `${s.accent}15`,
-                      color: s.accent,
-                      borderColor: `${s.accent}40`,
-                    }}
-                  >
-                    {s.num}
-                  </div>
-                  <div className="space-y-3 flex-1">
-                    <h3 className="text-xl sm:text-2xl font-bold text-white font-heading">{s.title}</h3>
-                    <p className="text-sm text-slate-300 leading-relaxed">{s.desc}</p>
-                    <div className="pt-2">
-                      <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs font-medium text-slate-300">
-                        <span className="text-[#fab60a] font-bold">💡 Architecture Detail:</span>
-                        <span>{s.detail}</span>
-                      </span>
-                    </div>
-                  </div>
-                </TiltCard>
-              </ScrollReveal>
-            ))}
-          </div>
-        </section>
-
-        {/* FINAL CTA */}
-        <section className="py-20 bg-gradient-to-b from-[#090D16] to-[#04060A] text-white text-center border-t border-slate-800 relative">
-          <div className="max-w-[1400px] mx-auto px-4 space-y-6">
-            <h2 className="text-3xl sm:text-5xl font-extrabold font-heading tracking-tight">Ready to Connect Your Mailboxes?</h2>
-            <p className="text-slate-400 max-w-xl mx-auto text-sm sm:text-base">
-              Set up your OAuth connections and start experiencing deterministic safety triage today.
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${current.badgeColor}`}>
+                {current.badge}
+              </span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A] font-heading">
+              {current.title}
+            </h2>
+            <p className="text-sm text-[#475569] leading-relaxed">
+              {current.desc}
             </p>
-            <div className="pt-4 flex justify-center">
+            <div className="pt-2">
               <Link href="/onboarding">
-                <MagneticButton className="px-8 py-4 rounded-xl bg-gradient-to-r from-[#f15e1c] to-[#fab60a] text-white font-bold text-base shadow-xl hover:shadow-[#f15e1c]/25 transition-all">
-                  Start Setting Up ExecuAI
-                </MagneticButton>
+                <Button variant="primary" size="sm">
+                  Try This Workflow Live →
+                </Button>
               </Link>
             </div>
           </div>
-        </section>
+
+          <div className="lg:col-span-6 p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#94A3B8]">
+                {current.previewTitle}
+              </span>
+              <span className="material-symbols-outlined text-[18px] text-[#2E936F]">
+                verified
+              </span>
+            </div>
+            <div className="p-4 rounded-xl bg-white border border-[#E2E8F0] space-y-2">
+              <div className="text-xs font-bold text-[#0F172A]">
+                {current.previewDetail}
+              </div>
+              <p className="text-[11px] text-[#64748B]">
+                Automated Safety Gate check executed. Policy enforcement rules verified against ISO 42001 governance specs.
+              </p>
+            </div>
+          </div>
+        </div>
       </main>
 
       <PublicFooter />
     </div>
   );
 }
-

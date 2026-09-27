@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/lib/auth-context";
 import { SkipToContent } from "@/components/ui/SkipToContent";
 import { CookieConsent } from "@/components/ui/CookieConsent";
 import { BackToTop } from "@/components/ui/BackToTop";
@@ -62,11 +63,13 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-[#FFF2EC] selection:text-[#F15E1C]">
-        <SkipToContent />
-        {children}
-        <CookieConsent />
-        <BackToTop />
-        <FloatingContact />
+        <AuthProvider>
+          <SkipToContent />
+          {children}
+          <CookieConsent />
+          <BackToTop />
+          <FloatingContact />
+        </AuthProvider>
       </body>
     </html>
   );

@@ -22,17 +22,17 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   className,
 }) => {
   const items: MobileNavItem[] = [
-    { id: "dashboard", label: "Home", href: "/dashboard", icon: "space_dashboard" },
-    { id: "unified-inbox", label: "Inbox", href: "/inbox", icon: "move_to_inbox", badge: 14 },
-    { id: "decision-center", label: "Decisions", href: "/decisions", icon: "gavel", badge: 5 },
-    { id: "drafts", label: "Drafts", href: "/drafts", icon: "edit_note", badge: 3 },
-    { id: "more", label: "More", href: "/settings", icon: "menu" },
+    { id: "dashboard", label: "Home", href: "/app/dashboard", icon: "space_dashboard" },
+    { id: "unified-inbox", label: "Inbox", href: "/app/inbox", icon: "move_to_inbox", badge: 14 },
+    { id: "decision-center", label: "Decisions", href: "/app/decisions", icon: "gavel", badge: 5 },
+    { id: "drafts", label: "Drafts", href: "/app/drafts", icon: "edit_note", badge: 3 },
+    { id: "settings", label: "Settings", href: "/app/settings", icon: "settings" },
   ];
 
   return (
     <nav
       className={cn(
-        "fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-[#E2E8F0] z-50 flex items-center justify-around px-2 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] lg:hidden font-sans",
+        "fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-[#E2E8F0] z-50 flex items-center justify-around px-2 shadow-md lg:hidden font-sans env-safe-bottom",
         className
       )}
     >
@@ -44,12 +44,12 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
             href={item.href}
             onClick={() => onNavigate?.(item.id)}
             className={cn(
-              "flex flex-col items-center justify-center flex-1 py-1.5 text-[10px] font-semibold transition-all relative min-h-[48px] cursor-pointer",
+              "flex flex-col items-center justify-center flex-1 py-1 text-[10px] font-semibold transition-all relative min-h-[44px] cursor-pointer",
               isActive ? "text-[#F15E1C] font-bold" : "text-[#475569] hover:text-[#0F172A]"
             )}
           >
             <div className="relative">
-              <span className="material-symbols-outlined text-[22px]">
+              <span className="material-symbols-outlined text-[20px]">
                 {item.icon}
               </span>
               {item.badge !== undefined && (
@@ -65,4 +65,3 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     </nav>
   );
 };
-

@@ -4,124 +4,169 @@ import * as React from "react";
 import Link from "next/link";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
-import { ParticleCanvas } from "@/components/interactive/ParticleCanvas";
-import { ScrollReveal } from "@/components/interactive/ScrollReveal";
-import { TiltCard } from "@/components/interactive/TiltCard";
-import { MagneticButton } from "@/components/interactive/MagneticButton";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { Button } from "@/components/ui/Button";
 
 export default function UseCasesPage() {
-  const useCases = [
-    {
-      role: "Founders & CEOs",
-      badge: "Multiple Accounts + Investor Relations",
-      title: "Managing Board Updates, Financing Terms & Client Escalations",
-      problem: "CEOs manage corporate Gmail, investor Gmail, and subsidiary Zoho accounts. High-priority investor updates get buried under routine vendor receipts and newsletters.",
-      solution: "ExecuAI aggregates all mailboxes into one Decision Center. Safe routine replies receive auto-drafts, while Series B term sheets and client escalations are flagged as Critical.",
+  const [activeTab, setActiveTab] = React.useState<"ceo" | "cfo" | "legal" | "board">("ceo");
+
+  const useCases = {
+    ceo: {
+      role: "CEOs & Founders",
+      icon: "engineering",
+      headline: "Filter Out Noise & Protect Focus Time",
+      desc: "CEOs receive hundreds of daily emails across personal, investor, and corporate Gmail accounts. ExecuAI isolates urgent operational decisions while auto-drafting routine responses.",
+      sampleSender: "Investor Relations (Sequoia APAC)",
+      sampleSubject: "Series B Term Sheet Confirmation & Board Allocation",
+      priority: "CRITICAL",
+      intent: "INVESTOR",
+      risk: "HIGH_RISK",
+      exposure: "Equity / Governance",
+      safetyAction: "Routed to Executive Decision Center for 1-click clearance.",
     },
-    {
-      role: "General Counsel & Legal Partners",
-      badge: "Risk Engine + Contract Redlines",
-      title: "Protecting Against Uncapped Liabilities & Binding Commitments",
-      problem: "Legal counsel receives contracts, NDAs, and agreements via email. A wrong reply or accidental assent can trigger enforceable contractual liabilities.",
-      solution: "ExecuAI Safety Gate automatically scans for terms like 'irrevocably agrees' or 'indemnify'. Automatic replies are strictly blocked, routing the document for human redline review.",
+    cfo: {
+      role: "CFOs & Finance Office",
+      icon: "payments",
+      headline: "Detect Financial Commitments & Wire Risk",
+      desc: "Automatically flag invoices, purchase orders, and expenditure quotes exceeding your configured Safety Gate threshold (e.g. ₹10 Lakhs or $50,000).",
+      sampleSender: "AWS Cloud Infrastructure Accounts",
+      sampleSubject: "Annual Reserved Instance Invoice & ₹50L Renewal",
+      priority: "URGENT",
+      intent: "FINANCE",
+      risk: "HIGH_RISK",
+      exposure: "₹50,00,000 Commitment",
+      safetyAction: "Autonomous send blocked; expenditure verification locked.",
     },
-    {
-      role: "CFOs & Finance Directors",
-      badge: "Financial Commitment Thresholds",
-      title: "Reviewing Quotations, Invoice Approvals & Payment Schedules",
-      problem: "Finance leaders receive large quotations (e.g. ₹50L+), purchase orders, and wire requests mixed with low-priority vendor inquiries.",
-      solution: "ExecuAI extracts financial figures. Amounts exceeding single-executive threshold rules require explicit clearance in the Decision Center before invoice credentials release.",
+    legal: {
+      role: "General Counsel & Legal",
+      icon: "gavel",
+      headline: "Enforce Indemnity & Contract Guardrails",
+      desc: "Detect incoming MSAs, NDAs, IP indemnities, and litigation notices before reply drafts are dispatched.",
+      sampleSender: "Apex Law Partners (General Counsel)",
+      sampleSubject: "Definitive Master Services Agreement Clause 14.2",
+      priority: "CRITICAL",
+      intent: "LEGAL",
+      risk: "HIGH_RISK",
+      exposure: "Indemnity Cap Required",
+      safetyAction: "Draft synthesized with clause 14.2 cap modification.",
     },
-    {
-      role: "Managing Directors & Agency Leaders",
-      badge: "High-Volume Triage + Team Delegation",
-      title: "Sorting Client Requests Without Surrendering Inbox Control",
-      problem: "Managing directors spend 3+ hours daily reading and triaging client emails, writing repetitive acknowledgements.",
-      solution: "ExecuAI auto-triages routine meeting requests and status updates into safe drafts, cutting triage time by 75% while keeping final send authority under human control.",
+    board: {
+      role: "Venture Directors & Board",
+      icon: "account_balance",
+      headline: "Unify Subsidiary & Subsidiary Zoho Mailboxes",
+      desc: "Directors serving on multiple boards can connect multiple subsidiary Zoho Mail accounts into a single decision stream.",
+      sampleSender: "Portfolio Operations (Vance Capital)",
+      sampleSubject: "Q3 Quarterly Governance Audit & ESOP Grant Review",
+      priority: "URGENT",
+      intent: "GOVERNANCE",
+      risk: "REVIEW_REQUIRED",
+      exposure: "Board Approval",
+      safetyAction: "Prepared for executive review & batch approval.",
     },
-  ];
+  };
+
+  const active = useCases[activeTab];
 
   return (
-    <div className="min-h-screen bg-[#090D16] flex flex-col font-sans text-white relative overflow-hidden selection:bg-[#f15e1c]/30">
-      <ParticleCanvas particleCount={35} className="opacity-30" />
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-[#0F172A]">
       <PublicHeader />
 
-      <main className="flex-1 pt-24 relative z-10">
-        {/* HERO */}
-        <section className="py-20 sm:py-24 relative">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[300px] bg-[#fab60a]/15 blur-[120px] rounded-full pointer-events-none" />
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
-            <ScrollReveal direction="down">
-              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#fab60a]/10 border border-[#fab60a]/30 text-xs font-bold uppercase tracking-widest text-[#fab60a]">
-                <span className="w-2 h-2 rounded-full bg-[#fab60a] animate-pulse" />
-                Real-World Executive Scenarios
-              </span>
-            </ScrollReveal>
+      <main id="main-content" className="flex-1 pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full space-y-12">
+        <Breadcrumbs items={[{ label: "Executive Use Cases" }]} />
 
-            <ScrollReveal delay={0.1}>
-              <h1 className="text-4xl sm:text-6xl font-extrabold text-white tracking-tight font-heading leading-tight max-w-4xl mx-auto">
-                Tailored Solutions for <span className="bg-gradient-to-r from-[#fab60a] via-[#f15e1c] to-[#2e936f] bg-clip-text text-transparent">Senior Leadership</span>
-              </h1>
-            </ScrollReveal>
+        {/* HEADER */}
+        <div className="space-y-4 text-center max-w-3xl mx-auto">
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFF2EC] border border-[#F15E1C]/30 text-xs font-bold uppercase tracking-widest text-[#F15E1C]">
+            <span className="w-2 h-2 rounded-full bg-[#F15E1C] animate-pulse" />
+            Tailored Executive Scenarios
+          </span>
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-[#0F172A] font-heading tracking-tight">
+            How Executive Roles Use ExecuAI
+          </h1>
+          <p className="text-base text-[#475569] leading-relaxed">
+            Select your leadership role below to explore real email payloads, 3D classification, and Safety Gate policy outcomes.
+          </p>
+        </div>
 
-            <ScrollReveal delay={0.2}>
-              <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                Discover how ExecuAI protects time and enforces governance across distinct corporate roles.
-              </p>
-            </ScrollReveal>
-          </div>
-        </section>
+        {/* ROLE TABS */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {(Object.keys(useCases) as Array<keyof typeof useCases>).map((key) => {
+            const item = useCases[key];
+            const isSelected = activeTab === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setActiveTab(key)}
+                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
+                  isSelected
+                    ? "bg-white border-[#F15E1C] ring-2 ring-[#F15E1C]/20 shadow-md"
+                    : "bg-white/60 border-[#E2E8F0] hover:border-[#F15E1C]/40"
+                }`}
+              >
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg ${
+                    isSelected ? "bg-[#F15E1C] text-white" : "bg-[#F8FAFC] text-[#64748B]"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[#0F172A] font-heading">
+                    {item.role}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
-        {/* USE CASES CARDS */}
-        <section className="py-16 sm:py-24 border-t border-slate-800/80">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {useCases.map((uc, idx) => (
-                <ScrollReveal key={uc.role} delay={idx * 0.1} direction="up">
-                  <TiltCard className="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl shadow-2xl space-y-6 flex flex-col justify-between hover:border-[#f15e1c]/40 transition-all h-full">
-                    <div className="space-y-4">
-                      <span className="inline-block px-3 py-1 rounded-full bg-[#f15e1c]/15 border border-[#f15e1c]/30 text-[#f15e1c] text-xs font-bold uppercase tracking-wider">
-                        {uc.badge}
-                      </span>
-                      <h3 className="text-2xl font-bold text-white font-heading">{uc.title}</h3>
-                      
-                      <div className="p-4 rounded-2xl bg-slate-950/80 border border-[#f15e1c]/30 text-xs space-y-1">
-                        <span className="font-bold uppercase tracking-wider text-[#f15e1c]">The Challenge:</span>
-                        <p className="text-slate-300 leading-relaxed">{uc.problem}</p>
-                      </div>
-
-                      <div className="p-4 rounded-2xl bg-slate-950/80 border border-[#2e936f]/30 text-xs space-y-1">
-                        <span className="font-bold uppercase tracking-wider text-[#2e936f]">ExecuAI Solution:</span>
-                        <p className="text-slate-300 leading-relaxed">{uc.solution}</p>
-                      </div>
-                    </div>
-                  </TiltCard>
-                </ScrollReveal>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="py-20 bg-gradient-to-b from-[#090D16] to-[#04060A] text-white text-center border-t border-slate-800 relative">
-          <div className="max-w-[1400px] mx-auto px-4 space-y-6">
-            <h2 className="text-3xl sm:text-5xl font-extrabold font-heading tracking-tight">See ExecuAI in Action for Your Role</h2>
-            <p className="text-slate-400 max-w-xl mx-auto text-sm sm:text-base">
-              Talk to our executive solutions team for a custom walkthrough tailored to your inbox volume.
+        {/* ACTIVE SCENARIO CARD */}
+        <div className="p-6 sm:p-10 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-6 space-y-4">
+            <span className="text-xs font-extrabold text-[#F15E1C] uppercase tracking-wider bg-[#FFF2EC] px-3 py-1 rounded-full border border-[#F15E1C]/30">
+              {active.role} Scenario
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A] font-heading">
+              {active.headline}
+            </h2>
+            <p className="text-sm text-[#475569] leading-relaxed">
+              {active.desc}
             </p>
-            <div className="pt-4 flex justify-center">
-              <Link href="/contact">
-                <MagneticButton className="px-8 py-4 rounded-xl bg-gradient-to-r from-[#f15e1c] to-[#fab60a] text-white font-bold text-base shadow-xl hover:shadow-[#f15e1c]/25 transition-all">
-                  Request Custom Executive Demo
-                </MagneticButton>
+            <div className="pt-2">
+              <Link href="/onboarding">
+                <Button variant="primary" size="sm">
+                  Get Started for {active.role} →
+                </Button>
               </Link>
             </div>
           </div>
-        </section>
+
+          <div className="lg:col-span-6 p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2 text-xs">
+              <span className="font-bold text-[#94A3B8] uppercase tracking-wider">Inbound Email Payload</span>
+              <span className="font-bold text-[#F15E1C]">Safety Gate Active</span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-white border border-[#E2E8F0] space-y-2 text-xs">
+              <div className="font-bold text-[#0F172A]">{active.sampleSender}</div>
+              <p className="text-[#475569]">{active.sampleSubject}</p>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                <span className="px-2 py-0.5 rounded bg-[#FFF2EC] text-[#F15E1C] font-extrabold text-[10px]">{active.priority}</span>
+                <span className="px-2 py-0.5 rounded bg-[#E8F4F0] text-[#2E936F] font-extrabold text-[10px]">{active.intent}</span>
+                <span className="px-2 py-0.5 rounded bg-[#FEF6E0] text-[#855D00] font-extrabold text-[10px]">{active.risk}</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#FFF2EC] border border-[#F15E1C]/30 text-xs text-[#0F172A] space-y-1">
+              <div className="font-bold text-[#F15E1C]">Policy Outcome:</div>
+              <p className="text-[11px] text-[#475569]">{active.safetyAction}</p>
+            </div>
+          </div>
+        </div>
       </main>
 
       <PublicFooter />
     </div>
   );
 }
-

@@ -1,125 +1,114 @@
-"use client";
-
 import * as React from "react";
-import Link from "next/link";
+import type { Metadata } from "next";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
-import { ParticleCanvas } from "@/components/interactive/ParticleCanvas";
-import { ScrollReveal } from "@/components/interactive/ScrollReveal";
-import { TiltCard } from "@/components/interactive/TiltCard";
-import { MagneticButton } from "@/components/interactive/MagneticButton";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+
+export const metadata: Metadata = {
+  title: "Security & Safety Gate Protocol | ExecuAI Governance",
+  description:
+    "Explore ExecuAI's zero-trust security architecture, ISO 42001 AI guardrails, OAuth 2.0 PKCE token isolation, and deterministic Safety Gate protections.",
+};
 
 export default function SecurityPage() {
-  const securityPillars = [
-    {
-      title: "1. Zero Password Storage & OAuth 2.0 PKCE",
-      desc: "Users never enter their Gmail or Zoho account passwords into ExecuAI. Mailbox authentication is conducted directly through Google and Zoho OAuth 2.0 standard authorization flows using least-privilege Read and Draft scopes.",
-      icon: "key",
-      accent: "#f15e1c",
-    },
-    {
-      title: "2. Encrypted Tokens & Tenant Isolation",
-      desc: "OAuth refresh tokens and credentials are encrypted using AES-256 before storage in PostgreSQL. Multi-tenant database design isolates customer data using strict organization_id boundaries.",
-      icon: "shield_locked",
-      accent: "#2e936f",
-    },
-    {
-      title: "3. Application-Level Safety Gate Architecture",
-      desc: "The AI Large Language Model operates strictly in a read and draft generation capacity. The LLM has zero direct programmatic capability to execute external send functions. All sends pass through application safety logic.",
-      icon: "gavel",
-      accent: "#fab60a",
-    },
-    {
-      title: "4. Cryptographic Audit Trail & Telemetry",
-      desc: "Every critical action — email ingestion, AI classification, risk signal detection, draft editing, human approval, and API transmission — is recorded in an immutable audit log with cryptographic timestamps.",
-      icon: "receipt_long",
-      accent: "#f15e1c",
-    },
-    {
-      title: "5. Data Control & Deletion Rights",
-      desc: "Subscribers maintain full ownership of their data. Account disconnection instantly revokes OAuth access tokens and Purges synchronized thread metadata upon customer request.",
-      icon: "delete_sweep",
-      accent: "#2e936f",
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#090D16] flex flex-col font-sans text-white relative overflow-hidden selection:bg-[#f15e1c]/30">
-      <ParticleCanvas particleCount={35} className="opacity-30" />
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-[#0F172A]">
       <PublicHeader />
 
-      <main className="flex-1 pt-24 relative z-10">
-        {/* HERO */}
-        <section className="py-20 sm:py-24 relative">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[300px] bg-[#2e936f]/15 blur-[120px] rounded-full pointer-events-none" />
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
-            <ScrollReveal direction="down">
-              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2e936f]/10 border border-[#2e936f]/30 text-xs font-bold uppercase tracking-widest text-[#2e936f] glow-green">
-                <span className="w-2 h-2 rounded-full bg-[#2e936f] animate-pulse" />
-                Security & Trust Architecture
-              </span>
-            </ScrollReveal>
+      <main id="main-content" className="flex-1 pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full space-y-12">
+        <Breadcrumbs items={[{ label: "Security & Governance" }]} />
 
-            <ScrollReveal delay={0.1}>
-              <h1 className="text-4xl sm:text-6xl font-extrabold text-white tracking-tight font-heading leading-tight max-w-4xl mx-auto">
-                Enterprise Privacy & <span className="bg-gradient-to-r from-[#2e936f] via-[#fab60a] to-[#f15e1c] bg-clip-text text-transparent">Human-in-the-Loop</span> Governance
-              </h1>
-            </ScrollReveal>
+        {/* HERO HEADER */}
+        <div className="space-y-4 text-center max-w-3xl mx-auto">
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8F4F0] border border-[#2E936F]/30 text-xs font-bold uppercase tracking-widest text-[#2E936F]">
+            <span className="w-2 h-2 rounded-full bg-[#2E936F] animate-pulse" />
+            ISO 42001 & OAuth 2.0 Governance
+          </span>
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-[#0F172A] font-heading tracking-tight">
+            Security Architecture & Safety Gate Protocol
+          </h1>
+          <p className="text-base text-[#475569] leading-relaxed">
+            ExecuAI operates under a zero-trust model: AI prepares draft responses, but human executives retain 100% control over email execution.
+          </p>
+        </div>
 
-            <ScrollReveal delay={0.2}>
-              <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                ExecuAI is engineered with strict cryptographic isolation and deterministic safety controls. We communicate only supported capabilities.
-              </p>
-            </ScrollReveal>
-          </div>
-        </section>
-
-        {/* PILLARS */}
-        <section className="py-16 sm:py-24 border-t border-slate-800/80">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            {securityPillars.map((p, idx) => (
-              <ScrollReveal key={p.title} delay={idx * 0.08} direction="up">
-                <TiltCard className="p-6 sm:p-8 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl shadow-xl flex flex-col sm:flex-row items-start gap-6 hover:border-[#2e936f]/40 transition-all">
-                  <div
-                    className="w-14 h-14 rounded-2xl font-bold flex items-center justify-center shrink-0 border"
-                    style={{
-                      backgroundColor: `${p.accent}15`,
-                      color: p.accent,
-                      borderColor: `${p.accent}40`,
-                    }}
-                  >
-                    <span className="material-symbols-outlined text-[26px]">{p.icon}</span>
-                  </div>
-                  <div className="space-y-2 flex-1">
-                    <h3 className="text-xl font-bold text-white font-heading">{p.title}</h3>
-                    <p className="text-sm text-slate-300 leading-relaxed">{p.desc}</p>
-                  </div>
-                </TiltCard>
-              </ScrollReveal>
-            ))}
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="py-20 bg-gradient-to-b from-[#090D16] to-[#04060A] text-white text-center border-t border-slate-800 relative">
-          <div className="max-w-[1400px] mx-auto px-4 space-y-6">
-            <h2 className="text-3xl sm:text-5xl font-extrabold font-heading tracking-tight">Have Specific Security Questions?</h2>
-            <p className="text-slate-400 max-w-xl mx-auto text-sm sm:text-base">
-              Speak with our security architects to review your tenant isolation or compliance requirements.
-            </p>
-            <div className="pt-4 flex justify-center">
-              <Link href="/contact">
-                <MagneticButton className="px-8 py-4 rounded-xl bg-gradient-to-r from-[#2e936f] to-[#fab60a] text-white font-bold text-base shadow-xl hover:shadow-[#2e936f]/25 transition-all">
-                  Speak With Security Team
-                </MagneticButton>
-              </Link>
+        {/* 4 SECURITY PILLARS GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-4">
+            <div className="w-10 h-10 rounded-xl bg-[#FFF2EC] text-[#F15E1C] font-bold flex items-center justify-center border border-[#F15E1C]/20 text-lg">
+              <span className="material-symbols-outlined text-[22px]">gavel</span>
             </div>
+            <h2 className="text-xl font-bold text-[#0F172A] font-heading">
+              1. Deterministic Safety Gate Protocol
+            </h2>
+            <p className="text-xs sm:text-sm text-[#475569] leading-relaxed">
+              Financial commitments above configured thresholds (e.g. ₹10 Lakhs), contracts, NDAs, legal notices, and corporate governance inquiries automatically lock autonomous transmission and route directly to your Decision Center.
+            </p>
           </div>
-        </section>
+
+          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-4">
+            <div className="w-10 h-10 rounded-xl bg-[#E8F4F0] text-[#2E936F] font-bold flex items-center justify-center border border-[#2E936F]/20 text-lg">
+              <span className="material-symbols-outlined text-[22px]">key</span>
+            </div>
+            <h2 className="text-xl font-bold text-[#0F172A] font-heading">
+              2. OAuth 2.0 PKCE Token Isolation
+            </h2>
+            <p className="text-xs sm:text-sm text-[#475569] leading-relaxed">
+              You never enter or store Gmail or Zoho passwords on ExecuAI. Authentication uses official Google and Zoho OAuth 2.0 authorization with least-privilege Read & Draft scopes.
+            </p>
+          </div>
+
+          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-4">
+            <div className="w-10 h-10 rounded-xl bg-[#FEF6E0] text-[#FAB60A] font-bold flex items-center justify-center border border-[#FAB60A]/20 text-lg">
+              <span className="material-symbols-outlined text-[22px]">database</span>
+            </div>
+            <h2 className="text-xl font-bold text-[#0F172A] font-heading">
+              3. Zero AI Foundation Model Training
+            </h2>
+            <p className="text-xs sm:text-sm text-[#475569] leading-relaxed">
+              Customer emails and metadata are strictly isolated per tenant using PostgreSQL Row Level Security (RLS). Your executive data is <strong>never</strong> used to train public LLM foundation models.
+            </p>
+          </div>
+
+          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-4">
+            <div className="w-10 h-10 rounded-xl bg-[#FFF2EC] text-[#F15E1C] font-bold flex items-center justify-center border border-[#F15E1C]/20 text-lg">
+              <span className="material-symbols-outlined text-[22px]">receipt_long</span>
+            </div>
+            <h2 className="text-xl font-bold text-[#0F172A] font-heading">
+              4. Immutable Cryptographic Audit Logs
+            </h2>
+            <p className="text-xs sm:text-sm text-[#475569] leading-relaxed">
+              Every email ingestion, 3D classification, Safety Gate trigger, draft edit, and executive dispatch action is recorded in an immutable audit log with cryptographic timestamps.
+            </p>
+          </div>
+        </div>
+
+        {/* SECURITY CONTACT BOX */}
+        <div className="p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm text-center space-y-4">
+          <h2 className="text-2xl font-bold text-[#0F172A] font-heading">
+            Need a Formal Enterprise Security Briefing?
+          </h2>
+          <p className="text-xs sm:text-sm text-[#475569] max-w-lg mx-auto leading-relaxed">
+            Our Security & Compliance team provides SOC 2 Type II reports, ISO 42001 documentation, and custom enterprise SLA review.
+          </p>
+          <div className="pt-2 flex justify-center gap-3">
+            <Link href="/contact">
+              <Button variant="primary" size="sm">
+                Request Security Briefing →
+              </Button>
+            </Link>
+            <Link href="/privacy">
+              <Button variant="secondary" size="sm">
+                Read Privacy Policy
+              </Button>
+            </Link>
+          </div>
+        </div>
       </main>
 
       <PublicFooter />
     </div>
   );
 }
-
