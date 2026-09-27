@@ -20,7 +20,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             ref={ref}
             disabled={disabled}
             className={cn(
-              "w-4 h-4 rounded border-[#CBD5E1] text-[#2E936F] focus:ring-[#2E936F] focus:ring-offset-0 cursor-pointer accent-[#2E936F] disabled:opacity-50",
+              "w-4 h-4 rounded border-[#CBD5E1] text-[#F15E1C] focus:ring-[#F15E1C] focus:ring-offset-0 cursor-pointer accent-[#F15E1C] disabled:opacity-50",
               className
             )}
             {...props}
@@ -46,3 +46,4 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 );
 
 Checkbox.displayName = "Checkbox";
+

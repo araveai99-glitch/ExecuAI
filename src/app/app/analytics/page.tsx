@@ -18,13 +18,13 @@ export default function AnalyticsPage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight font-heading">
                 Triage & AI Performance Analytics
               </h1>
-              <span className="bg-[#EFF4FF] text-[#2E936F] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#79d9b0]/30">
+              <span className="bg-[#2e936f]/10 text-[#2e936f] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#2e936f]/20">
                 Live Data Stream
               </span>
-              <span className="bg-[#E5EEFF] text-[#2563EB] text-xs px-2.5 py-0.5 rounded-full font-bold">
+              <span className="bg-[#f7d7b0]/50 text-[#0F172A] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#f7d7b0]">
                 ISO 42001 Validated
               </span>
             </div>
@@ -82,7 +82,7 @@ export default function AnalyticsPage() {
       {/* Realism Disclaimer (No Fabricated Accuracy Claim) */}
       <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#CBD5E1] text-xs space-y-1">
         <div className="flex items-center gap-2 text-[#0F172A] font-bold">
-          <span className="material-symbols-outlined text-[18px] text-[#2E936F]">analytics</span>
+          <span className="material-symbols-outlined text-[18px] text-[#2e936f]">analytics</span>
           <span>Empirical Data Transparency Guarantee</span>
         </div>
         <p className="text-[#64748B] leading-relaxed">
@@ -96,42 +96,42 @@ export default function AnalyticsPage() {
         <Card variant="default">
           <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Emails Processed</span>
           <div className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] mt-1">1,480</div>
-          <span className="text-xs text-[#2E936F] font-semibold block mt-1">Across 3 connected mailboxes</span>
+          <span className="text-xs text-[#2e936f] font-semibold block mt-1">Across 3 connected mailboxes</span>
         </Card>
 
         {/* 2. Critical Emails */}
         <Card variant="default">
           <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Critical Emails</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-[#E11D48] mt-1">12</div>
-          <span className="text-xs text-[#E11D48] font-semibold block mt-1">Requires immediate response</span>
+          <div className="text-2xl sm:text-3xl font-extrabold text-[#f15e1c] mt-1">12</div>
+          <span className="text-xs text-[#f15e1c] font-semibold block mt-1">Requires immediate response</span>
         </Card>
 
         {/* 3. Urgent Emails */}
         <Card variant="default">
           <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Urgent Emails</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-[#795600] mt-1">28</div>
-          <span className="text-xs text-[#795600] font-semibold block mt-1">High priority action items</span>
+          <div className="text-2xl sm:text-3xl font-extrabold text-[#fab60a] mt-1">28</div>
+          <span className="text-xs text-[#855d00] font-semibold block mt-1">High priority action items</span>
         </Card>
 
         {/* 4. High-Risk Emails */}
         <Card variant="default">
           <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">High-Risk Emails</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-[#E11D48] mt-1">18</div>
-          <span className="text-xs text-[#E11D48] font-bold block mt-1">Auto-reply blocked</span>
+          <div className="text-2xl sm:text-3xl font-extrabold text-[#f15e1c] mt-1">18</div>
+          <span className="text-xs text-[#f15e1c] font-bold block mt-1">Auto-reply blocked</span>
         </Card>
 
         {/* 5. Drafts Generated */}
         <Card variant="default">
           <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Drafts Generated</span>
           <div className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] mt-1">342</div>
-          <span className="text-xs text-[#2563EB] font-semibold block mt-1">Synthesized by AI engine</span>
+          <span className="text-xs text-[#f15e1c] font-semibold block mt-1">Synthesized by AI engine</span>
         </Card>
 
         {/* 6. Drafts Approved */}
         <Card variant="default">
           <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Drafts Approved</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-[#2E936F] mt-1">298</div>
-          <span className="text-xs text-[#2E936F] font-semibold block mt-1">87.1% Approval rate</span>
+          <div className="text-2xl sm:text-3xl font-extrabold text-[#2e936f] mt-1">298</div>
+          <span className="text-xs text-[#2e936f] font-semibold block mt-1">87.1% Approval rate</span>
         </Card>
 
         {/* 7. Drafts Edited */}

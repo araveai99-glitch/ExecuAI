@@ -21,38 +21,36 @@ export const RiskBadge: React.FC<RiskBadgeProps> = ({
   showIcon = true,
   size = "md",
 }) => {
-
   const configs: Record<
     RiskLevel,
     { label: string; styles: string; icon: string }
   > = {
     SAFE: {
       label: "Safe to Draft",
-      styles: "bg-[#EFF4FF] text-[#2E936F] border border-[#79d9b0]/30 font-semibold",
+      styles: "bg-[#E8F4F0] text-[#2E936F] border border-[#2E936F]/30 font-semibold",
       icon: "verified",
     },
     REVIEW: {
       label: "Review Required",
-      styles: "bg-[#FEF7E6] text-[#795600] border border-[#FDE68A] font-semibold",
+      styles: "bg-[#FEF6E0] text-[#795600] border border-[#FAB60A]/50 font-semibold",
       icon: "gavel",
     },
     REVIEW_REQUIRED: {
       label: "Review Required",
-      styles: "bg-[#FEF7E6] text-[#795600] border border-[#FDE68A] font-semibold",
+      styles: "bg-[#FEF6E0] text-[#795600] border border-[#FAB60A]/50 font-semibold",
       icon: "gavel",
     },
     HIGH_RISK: {
       label: "High Risk Gate Active",
-      styles: "bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3] font-bold",
+      styles: "bg-[#FFF2EC] text-[#F15E1C] border border-[#FDE8DF] font-bold",
       icon: "security",
     },
     CONFIDENTIAL: {
       label: "Confidential",
-      styles: "bg-[#E5EEFF] text-[#0F172A] border border-[#CBD5E1] font-semibold",
+      styles: "bg-[#FDF7F0] text-[#795600] border border-[#F7D7B0] font-semibold",
       icon: "lock",
     },
   };
-
 
   const config = configs[risk] || configs.SAFE;
 
@@ -73,3 +71,4 @@ export const RiskBadge: React.FC<RiskBadgeProps> = ({
     </span>
   );
 };
+

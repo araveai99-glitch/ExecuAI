@@ -133,7 +133,7 @@ export default function AccountsManagementPage() {
     <div className="space-y-6 max-w-full overflow-x-hidden pb-12">
       {/* Toast Notice */}
       {toastMessage && (
-        <div className="p-4 rounded-xl bg-[#2E936F] text-white text-xs font-bold shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="p-4 rounded-xl bg-[#2e936f] text-white text-xs font-bold shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">check_circle</span>
             <span>{toastMessage}</span>
@@ -149,11 +149,11 @@ export default function AccountsManagementPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">Connected Accounts Studio</h1>
-              <span className="bg-[#EFF4FF] text-[#2E936F] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#79d9b0]/30">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight font-heading">Connected Accounts Studio</h1>
+              <span className="bg-[#2e936f]/10 text-[#2e936f] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#2e936f]/20">
                 {accounts.length} Active Connectors
               </span>
-              <span className="bg-[#E5EEFF] text-[#2563EB] text-xs px-2.5 py-0.5 rounded-full font-bold">
+              <span className="bg-[#f7d7b0]/50 text-[#0F172A] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#f7d7b0]">
                 OAuth 2.0 PKCE Enforced
               </span>
             </div>
@@ -185,13 +185,13 @@ export default function AccountsManagementPage() {
         </div>
 
         {/* Core Product Concept Banner (Unified Workspace Message) */}
-        <div className="p-4 rounded-xl bg-[#EFF4FF] border border-[#79d9b0]/40 space-y-1 text-xs">
-          <div className="flex items-center gap-2 text-[#2E936F] font-bold">
+        <div className="p-4 rounded-xl bg-[#f7d7b0]/30 border border-[#f15e1c]/20 space-y-1 text-xs">
+          <div className="flex items-center gap-2 text-[#f15e1c] font-bold">
             <span className="material-symbols-outlined text-[18px]">hub</span>
             <span>Unified Workspace Architecture</span>
           </div>
           <p className="text-[#0F172A] leading-relaxed">
-            All connected Gmail and Zoho mailboxes automatically feed into <span className="font-extrabold text-[#2E936F]">ONE unified executive workspace</span>. Your Decision Center, Unified Inbox, and AI Draft Assistant operate seamlessly across all connected accounts without forcing context switching.
+            All connected Gmail and Zoho mailboxes automatically feed into <span className="font-extrabold text-[#f15e1c]">ONE unified executive workspace</span>. Your Decision Center, Unified Inbox, and AI Draft Assistant operate seamlessly across all connected accounts without forcing context switching.
           </p>
         </div>
       </section>

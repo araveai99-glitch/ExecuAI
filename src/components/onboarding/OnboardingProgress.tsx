@@ -32,25 +32,25 @@ export const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
   const progressPercent = Math.round(((currentIndex + 1) / onboardingSteps.length) * 100);
 
   return (
-    <div className={cn("w-full bg-white border-b border-[#E2E8F0] px-4 py-3 sm:px-8", className)}>
+    <div className={cn("w-full bg-white border-b border-[#E2E8F0] px-4 py-3 sm:px-8 font-sans", className)}>
       <div className="max-w-4xl mx-auto space-y-2">
         {/* Step Header */}
         <div className="flex items-center justify-between text-xs font-semibold text-[#475569]">
           <div className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-[#2E936F] text-white text-[10px] font-bold flex items-center justify-center">
+            <span className="w-5 h-5 rounded-full bg-[#F15E1C] text-white text-[10px] font-bold flex items-center justify-center shadow-xs">
               {currentStep.stepNumber}
             </span>
             <span className="text-[#0F172A] font-bold">
               Step {currentStep.stepNumber} of {onboardingSteps.length}: {currentStep.label}
             </span>
           </div>
-          <span className="text-[#2E936F] font-bold">{progressPercent}% Completed</span>
+          <span className="text-[#F15E1C] font-bold">{progressPercent}% Completed</span>
         </div>
 
         {/* Progress Rail */}
-        <div className="w-full h-1.5 bg-[#EFF4FF] rounded-full overflow-hidden">
+        <div className="w-full h-1.5 bg-[#FFF2EC] rounded-full overflow-hidden border border-[#FDE8DF]">
           <div
-            className="h-full bg-[#2E936F] transition-all duration-300 rounded-full"
+            className="h-full bg-[#F15E1C] transition-all duration-300 rounded-full"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -68,7 +68,7 @@ export const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
                   isDone
                     ? "text-[#2E936F] font-bold"
                     : isCurrent
-                    ? "text-[#0F172A] font-bold"
+                    ? "text-[#F15E1C] font-bold"
                     : "text-[#94A3B8]"
                 )}
               >
@@ -86,3 +86,4 @@ export const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
     </div>
   );
 };
+

@@ -41,12 +41,12 @@ export default function DraftsPage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">AI Drafts Studio</h1>
-              <span className="bg-[#EFF4FF] text-[#2E936F] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#79d9b0]/30">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight font-heading">AI Drafts Studio</h1>
+              <span className="bg-[#2e936f]/10 text-[#2e936f] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#2e936f]/20">
                 {draftEmails.length} Prepared Drafts
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFF1F2] text-[#E11D48] text-xs font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48] animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#fff2ec] text-[#f15e1c] text-xs font-bold border border-[#f15e1c]/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#f15e1c] animate-pulse" />
                 Human Approval Mandatory
               </span>
             </div>
@@ -79,14 +79,14 @@ export default function DraftsPage() {
                   onClick={() => setSelectedEmailId(item.id)}
                   className={`p-3 rounded-xl border text-left transition-all max-w-xs cursor-pointer ${
                     isSelected
-                      ? "bg-white border-[#2E936F] shadow-xs ring-1 ring-[#2E936F]"
+                      ? "bg-white border-[#f15e1c] shadow-xs ring-1 ring-[#f15e1c]"
                       : "bg-[#F8FAFC] border-[#E2E8F0] hover:bg-white"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2 mb-1 text-[10px]">
                     <span
                       className={`font-extrabold px-2 py-0.5 rounded ${
-                        item.provider === "GMAIL" ? "bg-[#FFF1F2] text-[#E11D48]" : "bg-[#EFF6FF] text-[#2563EB]"
+                        item.provider === "GMAIL" ? "bg-[#fff2ec] text-[#f15e1c]" : "bg-[#2e936f]/10 text-[#2e936f]"
                       }`}
                     >
                       {item.accountLabel}

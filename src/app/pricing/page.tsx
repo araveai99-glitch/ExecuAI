@@ -4,7 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
-import { Button } from "@/components/ui/Button";
+import { ParticleCanvas } from "@/components/interactive/ParticleCanvas";
+import { ScrollReveal } from "@/components/interactive/ScrollReveal";
+import { TiltCard } from "@/components/interactive/TiltCard";
+import { MagneticButton } from "@/components/interactive/MagneticButton";
 
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = React.useState(true);
@@ -79,125 +82,145 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-[#0F172A]">
+    <div className="min-h-screen bg-[#090D16] flex flex-col font-sans text-white relative overflow-hidden selection:bg-[#f15e1c]/30">
+      <ParticleCanvas particleCount={35} className="opacity-30" />
       <PublicHeader />
 
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-24 relative z-10">
         {/* HERO */}
-        <section className="py-16 sm:py-20 bg-white border-b border-[#E2E8F0]">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#2E936F]">
-              Transparent SaaS Pricing
-            </span>
-            <h1 className="text-3xl sm:text-5xl font-extrabold text-[#0F172A] tracking-tight">
-              Invest in Time Protection & Risk Governance
-            </h1>
-            <p className="text-sm sm:text-base text-[#475569] max-w-2xl mx-auto">
-              Choose the plan matching your connected mailbox volume. All plans include full 3D Triage and the Safety Gate Engine.
-            </p>
+        <section className="py-20 sm:py-24 relative">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[300px] bg-[#f15e1c]/15 blur-[120px] rounded-full pointer-events-none" />
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
+            <ScrollReveal direction="down">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f15e1c]/10 border border-[#f15e1c]/30 text-xs font-bold uppercase tracking-widest text-[#f15e1c] glow-orange">
+                <span className="w-2 h-2 rounded-full bg-[#f15e1c] animate-pulse" />
+                Transparent SaaS Pricing
+              </span>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.1}>
+              <h1 className="text-4xl sm:text-6xl font-extrabold text-white tracking-tight font-heading leading-tight max-w-4xl mx-auto">
+                Invest in <span className="bg-gradient-to-r from-[#f15e1c] via-[#fab60a] to-[#2e936f] bg-clip-text text-transparent">Time Protection</span> & Governance
+              </h1>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.2}>
+              <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                Choose the plan matching your connected mailbox volume. All plans include full 3D Triage and the Safety Gate Engine.
+              </p>
+            </ScrollReveal>
 
             {/* Billing Toggle */}
-            <div className="inline-flex items-center bg-[#F8FAFC] p-1.5 rounded-xl border border-[#E2E8F0] gap-2">
-              <button
-                onClick={() => setIsAnnual(false)}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                  !isAnnual ? "bg-white text-[#0F172A] shadow-xs" : "text-[#475569]"
-                }`}
-              >
-                Monthly Billing
-              </button>
-              <button
-                onClick={() => setIsAnnual(true)}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  isAnnual ? "bg-[#2E936F] text-white shadow-xs" : "text-[#475569]"
-                }`}
-              >
-                <span>Annual Billing</span>
-                <span className="bg-white text-[#2E936F] text-[10px] px-1.5 py-0.2 rounded-full font-extrabold">
-                  Save 20%
-                </span>
-              </button>
-            </div>
+            <ScrollReveal delay={0.3}>
+              <div className="inline-flex items-center bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 gap-2 shadow-xl backdrop-blur-md">
+                <button
+                  onClick={() => setIsAnnual(false)}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    !isAnnual ? "bg-slate-800 text-white shadow-md border border-slate-700" : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Monthly Billing
+                </button>
+                <button
+                  onClick={() => setIsAnnual(true)}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                    isAnnual ? "bg-gradient-to-r from-[#f15e1c] to-[#fab60a] text-white shadow-lg glow-orange" : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <span>Annual Billing</span>
+                  <span className="bg-white text-[#f15e1c] text-[10px] px-2 py-0.5 rounded-full font-extrabold">
+                    Save 20%
+                  </span>
+                </button>
+              </div>
+            </ScrollReveal>
           </div>
         </section>
 
         {/* PRICING CARDS */}
-        <section className="py-16 sm:py-24">
+        <section className="py-16 sm:py-24 border-t border-slate-800/80">
           <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-              {plans.map((p) => (
-                <div
-                  key={p.name}
-                  className={`p-6 sm:p-8 rounded-2xl bg-white border flex flex-col justify-between space-y-6 relative transition-all ${
-                    p.popular
-                      ? "border-[#2E936F] ring-2 ring-[#2E936F] shadow-lg"
-                      : "border-[#E2E8F0] shadow-xs hover:shadow-md"
-                  }`}
-                >
-                  {p.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#2E936F] text-white text-[10px] font-extrabold uppercase tracking-wider shadow-xs">
-                      {p.badge}
-                    </div>
-                  )}
-
-                  <div className="space-y-4">
-                    {!p.popular && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8]">
+              {plans.map((p, idx) => (
+                <ScrollReveal key={p.name} delay={idx * 0.1} direction="up">
+                  <TiltCard
+                    className={`p-8 rounded-3xl bg-slate-900/80 border flex flex-col justify-between space-y-6 relative transition-all backdrop-blur-xl shadow-2xl h-full ${
+                      p.popular
+                        ? "border-[#f15e1c] ring-1 ring-[#f15e1c]/50 glow-orange"
+                        : "border-slate-800 hover:border-slate-700"
+                    }`}
+                  >
+                    {p.popular && (
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#f15e1c] to-[#fab60a] text-white text-[10px] font-extrabold uppercase tracking-widest shadow-lg">
                         {p.badge}
-                      </span>
+                      </div>
                     )}
-                    <h3 className="text-xl font-bold text-[#0F172A]">{p.name}</h3>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-extrabold text-[#0F172A]">
-                        {isAnnual ? p.priceAnnual : p.priceMonthly}
-                      </span>
-                      <span className="text-xs text-[#475569]">/ month</span>
+
+                    <div className="space-y-4">
+                      {!p.popular && (
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                          {p.badge}
+                        </span>
+                      )}
+                      <h3 className="text-2xl font-bold text-white font-heading">{p.name}</h3>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-5xl font-extrabold text-white tracking-tight">
+                          {isAnnual ? p.priceAnnual : p.priceMonthly}
+                        </span>
+                        <span className="text-xs text-slate-400 font-medium">/ month</span>
+                      </div>
+                      <p className="text-xs text-slate-400 leading-relaxed">{p.desc}</p>
+
+                      <ul className="space-y-3 text-xs text-slate-300 pt-6 border-t border-slate-800">
+                        {p.features.map((f) => (
+                          <li key={f} className="flex items-start gap-2.5">
+                            <span className="w-4 h-4 rounded-full bg-[#2e936f]/20 text-[#2e936f] font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5 border border-[#2e936f]/40">✓</span>
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <p className="text-xs text-[#475569] leading-relaxed">{p.desc}</p>
 
-                    <ul className="space-y-2.5 text-xs text-[#0F172A] pt-4 border-t border-[#E2E8F0]">
-                      {p.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2">
-                          <span className="text-[#2E936F] font-bold">✓</span>
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="pt-4">
-                    <Link href="/onboarding" className="w-full">
-                      <Button
-                        variant={p.popular ? "primary" : "secondary"}
-                        className="w-full"
-                      >
-                        {p.cta}
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
+                    <div className="pt-4">
+                      <Link href="/onboarding" className="w-full">
+                        <MagneticButton className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all shadow-md ${
+                          p.popular
+                            ? "bg-gradient-to-r from-[#f15e1c] to-[#fab60a] text-white hover:shadow-[#f15e1c]/30"
+                            : "bg-slate-800 hover:bg-slate-700 text-white border border-slate-700"
+                        }`}>
+                          {p.cta}
+                        </MagneticButton>
+                      </Link>
+                    </div>
+                  </TiltCard>
+                </ScrollReveal>
               ))}
             </div>
           </div>
         </section>
 
         {/* FREQUENTLY ASKED QUESTIONS */}
-        <section className="py-16 sm:py-24 bg-white border-t border-[#E2E8F0]">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A]">
-                Frequently Asked Questions
-              </h2>
-            </div>
+        <section className="py-20 sm:py-28 border-t border-slate-800/80 relative">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+            <ScrollReveal direction="down">
+              <div className="text-center space-y-2">
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-heading tracking-tight">
+                  Frequently Asked Questions
+                </h2>
+                <p className="text-slate-400 text-sm">Clear answers regarding security, access scopes, and multi-mailbox setup.</p>
+              </div>
+            </ScrollReveal>
+
             <div className="space-y-4">
-              {faqs.map((faq) => (
-                <div
-                  key={faq.q}
-                  className="p-6 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-2"
-                >
-                  <h4 className="text-sm font-bold text-[#0F172A]">{faq.q}</h4>
-                  <p className="text-xs text-[#475569] leading-relaxed">{faq.a}</p>
-                </div>
+              {faqs.map((faq, idx) => (
+                <ScrollReveal key={faq.q} delay={idx * 0.08} direction="up">
+                  <TiltCard className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2 backdrop-blur-md">
+                    <h4 className="text-base font-bold text-white flex items-center gap-2 font-heading">
+                      <span className="text-[#f15e1c]">Q:</span> {faq.q}
+                    </h4>
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-6">{faq.a}</p>
+                  </TiltCard>
+                </ScrollReveal>
               ))}
             </div>
           </div>
@@ -208,3 +231,4 @@ export default function PricingPage() {
     </div>
   );
 }
+

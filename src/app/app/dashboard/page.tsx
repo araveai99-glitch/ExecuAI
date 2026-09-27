@@ -35,13 +35,13 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 font-sans">
       {/* Header Greeting & Core Question ("What needs my attention right now?") */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-[#FFF1F2] text-[#E11D48] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48] animate-pulse" />
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FFF2EC] text-[#F15E1C] border border-[#FDE8DF] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F15E1C] animate-pulse" />
               Executive Desk Telemetry
             </span>
             <span className="text-[#94A3B8]">•</span>
@@ -51,9 +51,9 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-heading font-extrabold text-[#0F172A] tracking-tight">
             Good morning, Alexander.{" "}
-            <span className="text-[#2E936F]">
+            <span className="text-[#F15E1C]">
               {decisions.length > 0 ? `${decisions.length} consequential items` : "Zero pending items"}
             </span>{" "}
             need your executive attention right now.
@@ -64,27 +64,27 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setLoading(!loading)}
-            className="text-[11px] font-semibold text-[#475569] hover:text-[#0F172A] px-2 py-1 rounded bg-[#F8FAFC] border border-[#E2E8F0]"
+            className="text-[11px] font-semibold text-[#475569] hover:text-[#0F172A] px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] cursor-pointer"
           >
             {loading ? "Stop Loading" : "Simulate Loading"}
           </button>
           <button
             onClick={() => setErrorState(!errorState)}
-            className="text-[11px] font-semibold text-[#E11D48] hover:bg-[#FFF1F2] px-2 py-1 rounded border border-[#FECDD3]"
+            className="text-[11px] font-semibold text-[#DC2626] hover:bg-[#FEF2F2] px-2.5 py-1 rounded-lg border border-[#FCA5A5] cursor-pointer"
           >
             {errorState ? "Clear Error" : "Simulate Error"}
           </button>
           {decisions.length > 0 ? (
             <button
               onClick={handleSimulateClear}
-              className="text-[11px] font-semibold text-[#2E936F] hover:bg-[#EFF4FF] px-2 py-1 rounded border border-[#79d9b0]/40"
+              className="text-[11px] font-semibold text-[#2E936F] hover:bg-[#E8F4F0] px-2.5 py-1 rounded-lg border border-[#2E936F]/30 cursor-pointer"
             >
               Simulate All Clear
             </button>
           ) : (
             <button
               onClick={handleResetData}
-              className="text-[11px] font-semibold text-[#0F172A] hover:bg-[#E5EEFF] px-2 py-1 rounded border border-[#CBD5E1]"
+              className="text-[11px] font-semibold text-[#0F172A] hover:bg-[#FDF7F0] px-2.5 py-1 rounded-lg border border-[#CBD5E1] cursor-pointer"
             >
               Reset Data
             </button>
@@ -119,13 +119,13 @@ export default function DashboardPage() {
             <Card accentRailColor="danger" hoverable>
               <div className="flex items-start justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#475569]">Critical</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#FFF1F2] text-[#E11D48] text-[10px] font-bold">Urgent</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#FEF2F2] text-[#DC2626] text-[10px] font-bold">Urgent</span>
               </div>
               <div className="mt-3 flex items-baseline gap-1.5">
                 <span className="text-3xl font-extrabold text-[#0F172A]">{telemetry.critical}</span>
                 <span className="text-xs text-[#475569]">emails</span>
               </div>
-              <div className="mt-2 text-xs font-semibold text-[#E11D48] flex items-center gap-1">
+              <div className="mt-2 text-xs font-semibold text-[#DC2626] flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">priority_high</span>
                 <span>Immediate legal action</span>
               </div>
@@ -135,7 +135,7 @@ export default function DashboardPage() {
             <Card accentRailColor="warning" hoverable>
               <div className="flex items-start justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#475569]">Urgent</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#FEF7E6] text-[#795600] text-[10px] font-bold">Priority</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#FFF2EC] text-[#F15E1C] text-[10px] font-bold">Priority</span>
               </div>
               <div className="mt-3 flex items-baseline gap-1.5">
                 <span className="text-3xl font-extrabold text-[#0F172A]">{telemetry.urgent}</span>
@@ -151,7 +151,7 @@ export default function DashboardPage() {
             <Card accentRailColor="warning" hoverable>
               <div className="flex items-start justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#475569]">Need Review</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#FEF7E6] text-[#795600] text-[10px] font-bold">Action Needed</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#FEF6E0] text-[#795600] text-[10px] font-bold">Action Needed</span>
               </div>
               <div className="mt-3 flex items-baseline gap-1.5">
                 <span className="text-3xl font-extrabold text-[#0F172A]">{telemetry.needReview}</span>
@@ -164,10 +164,10 @@ export default function DashboardPage() {
             </Card>
 
             {/* Safe to Draft */}
-            <Card accentRailColor="primary" hoverable>
+            <Card accentRailColor="green" hoverable>
               <div className="flex items-start justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#475569]">Safe to Draft</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#EFF4FF] text-[#2E936F] text-[10px] font-bold">Ready</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#E8F4F0] text-[#2E936F] text-[10px] font-bold">Ready</span>
               </div>
               <div className="mt-3 flex items-baseline gap-1.5">
                 <span className="text-3xl font-extrabold text-[#0F172A]">{telemetry.safeToDraft}</span>
@@ -183,7 +183,7 @@ export default function DashboardPage() {
             <Card accentRailColor="neutral" hoverable>
               <div className="flex items-start justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#475569]">Low Priority</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#E5EEFF] text-[#475569] text-[10px] font-bold">Silent</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#F1F5F9] text-[#475569] text-[10px] font-bold">Silent</span>
               </div>
               <div className="mt-3 flex items-baseline gap-1.5">
                 <span className="text-3xl font-extrabold text-[#475569]">{telemetry.lowPriority}</span>
@@ -197,7 +197,7 @@ export default function DashboardPage() {
           </div>
 
           {/* QUICK ACTIONS SECTION */}
-          <section className="p-4 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs space-y-3">
+          <section className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs space-y-3">
             <h2 className="text-xs font-bold uppercase tracking-wider text-[#94A3B8]">
               Executive Quick Actions
             </h2>
@@ -229,11 +229,11 @@ export default function DashboardPage() {
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#EFF4FF] text-[#2E936F] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[#FFF2EC] text-[#F15E1C] flex items-center justify-center border border-[#FDE8DF]">
                   <span className="material-symbols-outlined text-[20px]">gavel</span>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">Decisions Waiting</h2>
+                  <h2 className="text-xl font-heading font-extrabold text-[#0F172A] tracking-tight">Decisions Waiting</h2>
                   <p className="text-xs text-[#475569]">Focus on consequential actions, not raw email volume</p>
                 </div>
               </div>
@@ -261,13 +261,13 @@ export default function DashboardPage() {
                     key={item.id}
                     className="p-6 rounded-2xl bg-white border border-[#E2E8F0] shadow-sm relative overflow-hidden space-y-4 hover:shadow-md transition-all"
                   >
-                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#E11D48]" />
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#F15E1C]" />
 
                     <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                       <div className="space-y-3 flex-1 min-w-0">
                         {/* Required Attribute Line: Account, Intent, Risk, Priority, Timestamp */}
                         <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E5EEFF] text-[#0F172A] font-bold">
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#F1F5F9] text-[#0F172A] font-bold">
                             <span className="w-4 h-4 rounded bg-white text-[10px] flex items-center justify-center font-bold">
                               {item.provider === "GMAIL" ? "G" : "Z"}
                             </span>
@@ -297,7 +297,7 @@ export default function DashboardPage() {
                               <span>Executive AI Synthesis</span>
                             </div>
                             {item.exposure && (
-                              <span className="text-[10px] font-bold text-[#E11D48] bg-[#FFF1F2] px-2 py-0.5 rounded">
+                              <span className="text-[10px] font-bold text-[#F15E1C] bg-[#FFF2EC] px-2 py-0.5 rounded border border-[#FDE8DF]">
                                 Exposure: {item.exposure}
                               </span>
                             )}
@@ -335,3 +335,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

@@ -15,13 +15,13 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center p-8 sm:p-12 text-center space-y-3",
+        "flex flex-col items-center justify-center p-8 sm:p-12 text-center space-y-3 font-sans",
         className
       )}
     >
       <div className="relative flex items-center justify-center w-12 h-12">
-        <span className="w-12 h-12 rounded-full border-2 border-[#E5EEFF] border-t-[#2E936F] animate-spin" />
-        <span className="material-symbols-outlined absolute text-[#2E936F] text-[20px]">
+        <span className="w-12 h-12 rounded-full border-2 border-[#FFF2EC] border-t-[#F15E1C] animate-spin" />
+        <span className="material-symbols-outlined absolute text-[#F15E1C] text-[20px]">
           psychology
         </span>
       </div>
@@ -32,3 +32,4 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
     </div>
   );
 };
+

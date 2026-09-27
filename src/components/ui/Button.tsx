@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "danger" | "warning" | "ghost" | "link";
+  variant?: "primary" | "secondary" | "brand-green" | "danger" | "warning" | "peach" | "ghost" | "link";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
   fullWidth?: boolean;
@@ -29,24 +29,28 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E936F] focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.99] rounded-md min-h-[44px] sm:min-h-0 cursor-pointer";
+      "inline-flex items-center justify-center font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f15e1c] focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.99] rounded-xl cursor-pointer select-none";
 
     const variants = {
       primary:
-        "bg-[#2E936F] hover:bg-[#00694b] text-white shadow-sm font-semibold border border-transparent",
+        "bg-[#f15e1c] hover:bg-[#d84c0e] active:bg-[#b93f0b] text-white shadow-xs font-semibold border border-transparent",
       secondary:
-        "bg-white hover:bg-[#F8FAFC] text-[#0F172A] border border-[#CBD5E1] shadow-xs",
+        "bg-white hover:bg-[#fdf7f0] active:bg-[#f7d7b0]/30 text-[#0f172a] border border-[#cbd5e1] shadow-xs font-medium",
+      "brand-green":
+        "bg-[#2e936f] hover:bg-[#24785a] active:bg-[#1d6148] text-white shadow-xs font-semibold border border-transparent",
       danger:
-        "bg-[#FFF1F2] hover:bg-[#FFE4E6] text-[#E11D48] border border-[#FECDD3] font-semibold",
+        "bg-[#fef2f2] hover:bg-[#fee2e2] text-[#dc2626] border border-[#fca5a5] font-semibold",
       warning:
-        "bg-[#FEF7E6] hover:bg-[#FDF3D8] text-[#795600] border border-[#FDE68A] font-semibold",
+        "bg-[#fef6e0] hover:bg-[#ffec69]/40 text-[#795600] border border-[#fab60a] font-semibold",
+      peach:
+        "bg-[#fdf7f0] hover:bg-[#f7d7b0]/50 text-[#f15e1c] border border-[#f7d7b0] font-semibold",
       ghost:
-        "bg-transparent hover:bg-[#EFF4FF] text-[#475569] hover:text-[#0F172A]",
-      link: "bg-transparent underline-offset-4 hover:underline text-[#2E936F] p-0 h-auto min-h-0",
+        "bg-transparent hover:bg-[#fdf7f0] text-[#475569] hover:text-[#0f172a]",
+      link: "bg-transparent underline-offset-4 hover:underline text-[#f15e1c] p-0 h-auto min-h-0 font-semibold",
     };
 
     const sizes = {
-      sm: "h-8 px-3 text-xs gap-1.5",
+      sm: "h-9 px-3.5 text-xs gap-1.5",
       md: "h-10 px-4 text-sm gap-2",
       lg: "h-12 px-6 text-base gap-2.5",
     };
@@ -59,7 +63,6 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(baseStyles, variants[variant], sizes[size], fullWidth && "w-full", className)}
         {...props}
       >
-
         {isLoading ? (
           <span className="material-symbols-outlined animate-spin text-[18px]">
             progress_activity
@@ -75,3 +78,4 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = "Button";
+

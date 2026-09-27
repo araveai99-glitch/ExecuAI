@@ -37,7 +37,7 @@ export const Tabs: React.FC<TabsProps> = ({
               className={cn(
                 "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer min-h-[36px]",
                 isActive
-                  ? "bg-white text-[#0F172A] shadow-xs"
+                  ? "bg-[#F15E1C] text-white shadow-xs font-bold"
                   : "text-[#475569] hover:text-[#0F172A]",
                 tab.disabled && "opacity-50 pointer-events-none"
               )}
@@ -49,8 +49,8 @@ export const Tabs: React.FC<TabsProps> = ({
                   className={cn(
                     "px-1.5 py-0.2 rounded-full text-[10px] font-bold",
                     isActive
-                      ? "bg-[#DCE9FF] text-[#0F172A]"
-                      : "bg-[#E5EEFF] text-[#475569]"
+                      ? "bg-white/20 text-white"
+                      : "bg-[#F1F5F9] text-[#475569]"
                   )}
                 >
                   {tab.badge}
@@ -74,15 +74,15 @@ export const Tabs: React.FC<TabsProps> = ({
               disabled={tab.disabled}
               onClick={() => onChange(tab.id)}
               className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shrink-0 cursor-pointer",
+                "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer",
                 isActive
-                  ? "bg-[#2E936F] text-white shadow-xs"
-                  : "bg-[#F8FAFC] text-[#475569] hover:bg-[#E5EEFF] hover:text-[#0F172A]"
+                  ? "bg-[#F15E1C] text-white shadow-xs font-bold"
+                  : "bg-[#F8FAFC] text-[#475569] hover:bg-[#FDF7F0] hover:text-[#0F172A] border border-[#E2E8F0]"
               )}
             >
               {tab.label}
               {tab.badge !== undefined && (
-                <span className="ml-1.5 text-[10px] px-1 rounded-full bg-white/20">
+                <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-white/20">
                   {tab.badge}
                 </span>
               )}
@@ -103,9 +103,9 @@ export const Tabs: React.FC<TabsProps> = ({
             disabled={tab.disabled}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "pb-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px cursor-pointer",
+              "pb-2.5 text-sm font-semibold transition-all border-b-2 -mb-px cursor-pointer",
               isActive
-                ? "border-[#2E936F] text-[#2E936F]"
+                ? "border-[#F15E1C] text-[#F15E1C] font-bold"
                 : "border-transparent text-[#475569] hover:text-[#0F172A]"
             )}
           >
@@ -116,3 +116,4 @@ export const Tabs: React.FC<TabsProps> = ({
     </div>
   );
 };
+

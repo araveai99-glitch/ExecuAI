@@ -108,15 +108,15 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
   };
 
   return (
-    <div className="space-y-6 max-w-full overflow-x-hidden pb-12">
+    <div className="space-y-6 max-w-full overflow-x-hidden pb-12 font-sans">
       {/* Toast Notice */}
       {toastMessage && (
-        <div className="p-4 rounded-xl bg-[#2E936F] text-white text-xs font-bold shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="p-4 rounded-xl bg-[#F15E1C] text-white text-xs font-bold shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">check_circle</span>
             <span>{toastMessage}</span>
           </div>
-          <button onClick={() => setToastMessage(null)} className="text-white hover:opacity-80">
+          <button onClick={() => setToastMessage(null)} className="text-white hover:opacity-80 cursor-pointer">
             <span className="material-symbols-outlined text-[16px]">close</span>
           </button>
         </div>
@@ -129,7 +129,7 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
             {onBack ? (
               <button
                 onClick={onBack}
-                className="p-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] hover:bg-[#E2E8F0] font-bold text-xs flex items-center gap-1 transition-all"
+                className="p-2 px-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] hover:bg-[#FDF7F0] font-bold text-xs flex items-center gap-1 transition-all cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">arrow_back</span>
                 <span>Back</span>
@@ -137,14 +137,14 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
             ) : (
               <Link
                 href="/app/inbox"
-                className="p-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] hover:bg-[#E2E8F0] font-bold text-xs flex items-center gap-1 transition-all"
+                className="p-2 px-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] hover:bg-[#FDF7F0] font-bold text-xs flex items-center gap-1 transition-all cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">arrow_back</span>
                 <span>Inbox</span>
               </Link>
             )}
             <div>
-              <h1 className="text-xl font-bold text-[#0F172A] tracking-tight">AI Executive Response Studio</h1>
+              <h1 className="text-xl font-heading font-extrabold text-[#0F172A] tracking-tight">AI Executive Response Studio</h1>
               <p className="text-xs text-[#64748B]">
                 Synthesized draft review & controlled human approval workflow
               </p>
@@ -155,8 +155,8 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
             <span
               className={`text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5 ${
                 email.provider === "GMAIL"
-                  ? "bg-[#FFF1F2] text-[#E11D48] border border-[#FDA4AF]"
-                  : "bg-[#EFF6FF] text-[#2563EB] border border-[#93C5FD]"
+                  ? "bg-[#FFF2EC] text-[#EA4335] border border-[#FDE8DF]"
+                  : "bg-[#F1F5F9] text-[#226BBA] border border-[#E2E8F0]"
               }`}
             >
               Routed via {email.accountLabel} ({email.accountEmail})
@@ -186,10 +186,10 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold border ${
                 workflowStatus === "DISPATCHED"
                   ? "bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0]"
-                  : "bg-[#2E936F] text-white border-[#2E936F] shadow-xs"
+                  : "bg-[#F15E1C] text-white border-[#F15E1C] shadow-xs"
               }`}
             >
-              <span className="w-5 h-5 rounded-full bg-white text-[#2E936F] text-[10px] font-extrabold flex items-center justify-center">4</span>
+              <span className="w-5 h-5 rounded-full bg-white text-[#F15E1C] text-[10px] font-extrabold flex items-center justify-center">4</span>
               <span>Draft Review & Edit</span>
             </div>
             <span className="text-[#CBD5E1]">→</span>
@@ -207,7 +207,7 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
             <div
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold border ${
                 workflowStatus === "DISPATCHED"
-                  ? "bg-[#2563EB] text-white border-[#2563EB] shadow-xs"
+                  ? "bg-[#226BBA] text-white border-[#226BBA] shadow-xs"
                   : "bg-[#F8FAFC] text-[#94A3B8] border-[#E2E8F0]"
               }`}
             >
@@ -236,7 +236,7 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0F172A] leading-relaxed whitespace-pre-line">
+            <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0F172A] leading-relaxed whitespace-pre-line font-sans">
               {email.body}
             </div>
           </div>
@@ -248,8 +248,8 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
                 <span className="material-symbols-outlined text-[18px]">psychology</span>
                 <span>AI Classification & Explainability</span>
               </div>
-              <span className="bg-[#FEF7E6] text-[#795600] text-[10px] font-bold px-2 py-0.5 rounded border border-[#FDE68A]">
-                ISO 42001
+              <span className="bg-[#FEF6E0] text-[#795600] text-[10px] font-bold px-2 py-0.5 rounded border border-[#FAB60A]/40">
+                ExecuAI AI Engine
               </span>
             </div>
 
@@ -295,17 +295,17 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
         {/* RIGHT COLUMN: AI Draft Workbench & Controls (7 cols on xl) */}
         <div className="xl:col-span-7 space-y-6">
           {/* Zero-Trust Human Approval Security Guardrail Banner */}
-          <div className="p-4 rounded-2xl bg-[#FFF1F2] border border-[#FDA4AF] space-y-2 shadow-xs">
+          <div className="p-4 rounded-2xl bg-[#FFF2EC] border border-[#FDE8DF] space-y-2 shadow-xs">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[#E11D48] font-bold text-xs sm:text-sm">
+              <div className="flex items-center gap-2 text-[#F15E1C] font-bold text-xs sm:text-sm">
                 <span className="material-symbols-outlined text-[20px]">security</span>
                 <span>Human Approval Required — Zero-Trust Send Gate Active</span>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white text-[#E11D48] border border-[#FDA4AF]">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white text-[#F15E1C] border border-[#FDE8DF]">
                 Enforced
               </span>
             </div>
-            <p className="text-xs text-[#9F1239] leading-relaxed">
+            <p className="text-xs text-[#0F172A] leading-relaxed">
               The AI LLM model will <span className="font-extrabold underline">never directly call or trigger</span> a provider send API. Your explicit manual approval is mandatory before any communication is dispatched.
             </p>
           </div>
@@ -316,7 +316,7 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
               <div>
                 <h2 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
                   AI Draft Workspace & Response Controls
-                  <span className="material-symbols-outlined text-[#2E936F] text-[18px]">auto_awesome</span>
+                  <span className="material-symbols-outlined text-[#F15E1C] text-[18px]">auto_awesome</span>
                 </h2>
                 <p className="text-xs text-[#64748B]">Synthesizing executive voice profile for {email.senderName}</p>
               </div>
@@ -324,10 +324,10 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
               <span
                 className={`text-xs font-bold px-3 py-1 rounded-full text-center ${
                   workflowStatus === "DISPATCHED"
-                    ? "bg-[#EFF6FF] text-[#2563EB]"
+                    ? "bg-[#F1F5F9] text-[#226BBA]"
                     : workflowStatus === "APPROVED"
-                    ? "bg-[#EFF4FF] text-[#2E936F]"
-                    : "bg-[#FEF7E6] text-[#795600]"
+                    ? "bg-[#E8F4F0] text-[#2E936F]"
+                    : "bg-[#FEF6E0] text-[#795600]"
                 }`}
               >
                 {workflowStatus === "DISPATCHED"
@@ -351,9 +351,9 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
                       <button
                         key={t}
                         onClick={() => setTone(t)}
-                        className={`px-3 py-1 rounded-lg capitalize font-bold text-xs transition-all ${
+                        className={`px-3 py-1 rounded-lg capitalize font-bold text-xs transition-all cursor-pointer ${
                           tone === t
-                            ? "bg-[#2E936F] text-white shadow-xs"
+                            ? "bg-[#F15E1C] text-white shadow-xs"
                             : "bg-white text-[#475569] border border-[#E2E8F0] hover:text-[#0F172A]"
                         }`}
                       >
@@ -373,7 +373,7 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
                       <button
                         key={l}
                         onClick={() => setLength(l)}
-                        className={`px-3 py-1 rounded-lg capitalize font-bold text-xs transition-all ${
+                        className={`px-3 py-1 rounded-lg capitalize font-bold text-xs transition-all cursor-pointer ${
                           length === l
                             ? "bg-[#0F172A] text-white shadow-xs"
                             : "bg-white text-[#475569] border border-[#E2E8F0] hover:text-[#0F172A]"
@@ -396,7 +396,7 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
                     type="email"
                     value={draftRecipient}
                     onChange={(e) => setDraftRecipient(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-xs font-mono focus:ring-2 focus:ring-[#2E936F]"
+                    className="w-full p-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-xs font-mono focus:ring-2 focus:ring-[#F15E1C]/40 focus:border-[#F15E1C] focus:outline-none"
                   />
                 </div>
 
@@ -406,7 +406,7 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
                     type="text"
                     value={draftSubject}
                     onChange={(e) => setDraftSubject(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-xs font-semibold focus:ring-2 focus:ring-[#2E936F]"
+                    className="w-full p-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-xs font-semibold focus:ring-2 focus:ring-[#F15E1C]/40 focus:border-[#F15E1C] focus:outline-none"
                   />
                 </div>
               </div>
@@ -430,14 +430,14 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
                       setDraftBody(e.target.value);
                       if (workflowStatus === "REVIEW") setWorkflowStatus("EDITED");
                     }}
-                    className={`w-full p-4 rounded-xl border text-xs font-sans text-[#0F172A] leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#2E936F] focus:bg-white transition-all ${
+                    className={`w-full p-4 rounded-xl border text-xs sm:text-sm font-sans text-[#0F172A] leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#F15E1C]/40 focus:border-[#F15E1C] focus:bg-white transition-all ${
                       workflowStatus === "REGENERATING"
                         ? "bg-[#F8FAFC] opacity-50 animate-pulse border-[#CBD5E1]"
                         : "bg-[#F8FAFC] border-[#CBD5E1]"
                     }`}
                   />
                   {workflowStatus === "REGENERATING" && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-2xs rounded-xl font-bold text-xs text-[#2E936F]">
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-2xs rounded-xl font-bold text-xs text-[#F15E1C]">
                       <span className="material-symbols-outlined animate-spin text-[20px] mr-2">
                         progress_activity
                       </span>
@@ -451,7 +451,7 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
             {/* Action Bar (Edit, Regenerate, Copy, Save, Approve) */}
             <div className="pt-3 border-t border-[#E2E8F0] space-y-3">
               {workflowStatus === "DISPATCHED" ? (
-                <div className="p-4 rounded-xl bg-[#EFF4FF] border border-[#79d9b0] text-center space-y-2">
+                <div className="p-4 rounded-xl bg-[#E8F4F0] border border-[#2E936F]/40 text-center space-y-2">
                   <div className="text-xs font-bold text-[#2E936F] flex items-center justify-center gap-1.5">
                     <span className="material-symbols-outlined text-[20px]">verified</span>
                     <span>Approved & Dispatched via {email.accountLabel} Provider API</span>
@@ -517,12 +517,12 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
               <div className="flex items-center gap-2 text-[#0F172A] font-bold text-base">
-                <span className="material-symbols-outlined text-[#2563EB]">send</span>
+                <span className="material-symbols-outlined text-[#F15E1C]">send</span>
                 <span>Controlled Send Authorization Gateway</span>
               </div>
               <button
                 onClick={() => setShowControlledSendModal(false)}
-                className="text-[#94A3B8] hover:text-[#0F172A]"
+                className="text-[#94A3B8] hover:text-[#0F172A] cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
@@ -531,7 +531,7 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
             <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-[#94A3B8] font-bold uppercase text-[10px]">Target Account:</span>
-                <span className="font-bold text-[#2563EB]">{email.accountLabel} ({email.accountEmail})</span>
+                <span className="font-bold text-[#226BBA]">{email.accountLabel} ({email.accountEmail})</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[#94A3B8] font-bold uppercase text-[10px]">Recipient:</span>
@@ -543,7 +543,7 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-[#EFF4FF] border border-[#79d9b0]/40 text-xs text-[#0F172A] space-y-1">
+            <div className="p-3.5 rounded-xl bg-[#E8F4F0] border border-[#2E936F]/40 text-xs text-[#0F172A] space-y-1">
               <p className="font-bold text-[#2E936F]">Zero-Trust Security Verification Passed</p>
               <p className="text-[11px] text-[#64748B]">
                 Clicking "Confirm & Dispatch" executes the provider OAuth send endpoint on your behalf.
@@ -570,3 +570,4 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
     </div>
   );
 };
+

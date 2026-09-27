@@ -32,7 +32,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   return (
     <nav
       className={cn(
-        "fixed bottom-0 left-0 right-0 h-14 bg-white border-t border-[#E2E8F0] z-50 flex items-center justify-around px-2 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] lg:hidden",
+        "fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-[#E2E8F0] z-50 flex items-center justify-around px-2 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] lg:hidden font-sans",
         className
       )}
     >
@@ -44,8 +44,8 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
             href={item.href}
             onClick={() => onNavigate?.(item.id)}
             className={cn(
-              "flex flex-col items-center justify-center flex-1 py-1 text-[10px] font-semibold transition-colors relative min-h-[44px]",
-              isActive ? "text-[#2E936F]" : "text-[#475569] hover:text-[#0F172A]"
+              "flex flex-col items-center justify-center flex-1 py-1.5 text-[10px] font-semibold transition-all relative min-h-[48px] cursor-pointer",
+              isActive ? "text-[#F15E1C] font-bold" : "text-[#475569] hover:text-[#0F172A]"
             )}
           >
             <div className="relative">
@@ -53,7 +53,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 {item.icon}
               </span>
               {item.badge !== undefined && (
-                <span className="absolute -top-1 -right-2 px-1 py-0.2 rounded-full bg-[#E11D48] text-white text-[9px] font-bold min-w-[14px] text-center">
+                <span className="absolute -top-1 -right-2 px-1.5 py-0.2 rounded-full bg-[#F15E1C] text-white text-[9px] font-extrabold min-w-[15px] text-center border border-white">
                   {item.badge}
                 </span>
               )}
@@ -65,3 +65,4 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     </nav>
   );
 };
+

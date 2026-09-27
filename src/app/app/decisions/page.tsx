@@ -43,15 +43,15 @@ export default function DecisionCenterPage() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFF1F2] text-[#E11D48] text-[11px] font-bold tracking-wide">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48] animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#fff2ec] text-[#f15e1c] border border-[#f15e1c]/20 text-[11px] font-bold tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#f15e1c] animate-pulse" />
               SAFETY GATE SYSTEM ACTIVE
             </span>
             <span className="text-[11px] font-semibold text-[#94A3B8]">
               ISO/IEC 42001 GOVERNED PROTOCOL
             </span>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight font-heading">
             Decision Center <span className="text-[#94A3B8] font-normal text-lg sm:text-xl">— Consequential Actions Awaiting Executive Decision</span>
           </h1>
           <p className="text-xs sm:text-sm text-[#475569]">
@@ -69,21 +69,21 @@ export default function DecisionCenterPage() {
           </button>
           <button
             onClick={() => setErrorState(!errorState)}
-            className="text-[11px] font-semibold text-[#E11D48] hover:bg-[#FFF1F2] px-2 py-1 rounded border border-[#FECDD3]"
+            className="text-[11px] font-semibold text-[#f15e1c] hover:bg-[#fff2ec] px-2 py-1 rounded border border-[#f15e1c]/30"
           >
             {errorState ? "Clear Error" : "Simulate Error"}
           </button>
           {decisions.length > 0 ? (
             <button
               onClick={handleSimulateClear}
-              className="text-[11px] font-semibold text-[#2E936F] hover:bg-[#EFF4FF] px-2 py-1 rounded border border-[#79d9b0]/40"
+              className="text-[11px] font-semibold text-[#2e936f] hover:bg-[#2e936f]/10 px-2 py-1 rounded border border-[#2e936f]/30"
             >
               Simulate All Clear
             </button>
           ) : (
             <button
               onClick={handleResetData}
-              className="text-[11px] font-semibold text-[#0F172A] hover:bg-[#E5EEFF] px-2 py-1 rounded border border-[#CBD5E1]"
+              className="text-[11px] font-semibold text-[#0F172A] hover:bg-[#F8FAFC] px-2 py-1 rounded border border-[#CBD5E1]"
             >
               Reset Data
             </button>
@@ -117,7 +117,7 @@ export default function DecisionCenterPage() {
             <Card accentRailColor="danger">
               <span className="text-[10px] font-bold uppercase text-[#94A3B8]">Decisions Pending</span>
               <div className="text-3xl font-bold text-[#0F172A] mt-1">{decisions.length}</div>
-              <span className="text-xs text-[#E11D48] font-semibold block mt-1">Autonomous Sends Blocked</span>
+              <span className="text-xs text-[#f15e1c] font-semibold block mt-1">Autonomous Sends Blocked</span>
             </Card>
 
             <Card accentRailColor="primary">
@@ -129,13 +129,13 @@ export default function DecisionCenterPage() {
             <Card accentRailColor="warning">
               <span className="text-[10px] font-bold uppercase text-[#94A3B8]">Legal / Contractual Reviews</span>
               <div className="text-3xl font-bold text-[#0F172A] mt-1">2</div>
-              <span className="text-xs text-[#795600] font-semibold block mt-1">High Consequence Items</span>
+              <span className="text-xs text-[#855d00] font-semibold block mt-1">High Consequence Items</span>
             </Card>
 
             <Card accentRailColor="neutral">
               <span className="text-[10px] font-bold uppercase text-[#94A3B8]">Average Human Turnaround</span>
               <div className="text-3xl font-bold text-[#0F172A] mt-1">18m</div>
-              <span className="text-xs text-[#2E936F] font-semibold block mt-1">Target SLA &lt; 45 minutes</span>
+              <span className="text-xs text-[#2e936f] font-semibold block mt-1">Target SLA &lt; 45 minutes</span>
             </Card>
           </div>
 
@@ -183,7 +183,7 @@ export default function DecisionCenterPage() {
                 >
                   <div
                     className={`absolute left-0 top-0 bottom-0 w-1.5 ${
-                      item.risk === "HIGH_RISK" ? "bg-[#E11D48]" : (item.risk === "REVIEW_REQUIRED" || item.risk === "REVIEW") ? "bg-[#FAB60A]" : "bg-[#2E936F]"
+                      item.risk === "HIGH_RISK" ? "bg-[#f15e1c]" : (item.risk === "REVIEW_REQUIRED" || item.risk === "REVIEW") ? "bg-[#fab60a]" : "bg-[#2e936f]"
                     }`}
                   />
 
@@ -191,7 +191,7 @@ export default function DecisionCenterPage() {
                     <div className="space-y-3 flex-1 min-w-0">
                       {/* Meta Line: Required Attributes (Account, Intent, Priority, Risk, Timestamp) */}
                       <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E5EEFF] text-[#0F172A] font-bold">
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#f7d7b0]/40 text-[#0F172A] font-bold border border-[#f7d7b0]">
                           <span className="w-4 h-4 rounded bg-white text-[10px] flex items-center justify-center font-bold">
                             {item.provider === "GMAIL" ? "G" : "Z"}
                           </span>
@@ -207,7 +207,7 @@ export default function DecisionCenterPage() {
 
                       {/* Subject & Sender */}
                       <div>
-                        <h3 className="text-xl font-bold text-[#0F172A] tracking-tight">{item.subject}</h3>
+                        <h3 className="text-xl font-bold text-[#0F172A] tracking-tight font-heading">{item.subject}</h3>
                         <div className="text-xs font-semibold text-[#475569] mt-0.5">
                           {item.sender.name} <span className="text-[#94A3B8]">({item.sender.role} &lt;{item.sender.email}&gt;)</span>
                         </div>
@@ -215,13 +215,13 @@ export default function DecisionCenterPage() {
 
                       {/* AI Forensic Synthesis */}
                       <Card variant="ai" className="p-4 space-y-2">
-                        <div className="flex items-center justify-between pb-1 border-b border-[#FAB60A]/30">
-                          <div className="flex items-center gap-2 text-[#795600] font-bold text-xs">
+                        <div className="flex items-center justify-between pb-1 border-b border-[#fab60a]/30">
+                          <div className="flex items-center gap-2 text-[#855d00] font-bold text-xs">
                             <span className="material-symbols-outlined text-[18px]">psychology</span>
                             <span>ExecuAI Autonomous Forensic Analysis</span>
                           </div>
                           {item.exposure && (
-                            <span className="text-[10px] font-bold text-[#E11D48] bg-[#FFF1F2] px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold text-[#f15e1c] bg-[#fff2ec] px-2 py-0.5 rounded border border-[#f15e1c]/20">
                               Exposure: {item.exposure}
                             </span>
                           )}

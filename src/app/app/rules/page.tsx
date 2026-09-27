@@ -124,7 +124,7 @@ export default function RulesAndPreferencesPage() {
     <div className="space-y-6 max-w-full overflow-x-hidden pb-12">
       {/* Toast Notice */}
       {toastNotice && (
-        <div className="p-4 rounded-xl bg-[#2E936F] text-white text-xs font-bold shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="p-4 rounded-xl bg-[#2e936f] text-white text-xs font-bold shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">check_circle</span>
             <span>{toastNotice}</span>
@@ -140,8 +140,8 @@ export default function RulesAndPreferencesPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">Rules & Preferences Studio</h1>
-              <span className="bg-[#EFF4FF] text-[#2E936F] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#79d9b0]/30">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight font-heading">Rules & Preferences Studio</h1>
+              <span className="bg-[#2e936f]/10 text-[#2e936f] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#2e936f]/20">
                 Zero-Trust Boundaries Active
               </span>
             </div>
@@ -176,13 +176,13 @@ export default function RulesAndPreferencesPage() {
           <div className="p-6 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs space-y-6">
             <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
               <div>
-                <h2 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#E11D48]">security</span>
+                <h2 className="text-base font-bold text-[#0F172A] flex items-center gap-2 font-heading">
+                  <span className="material-symbols-outlined text-[#f15e1c]">security</span>
                   Communication Safety Boundaries
                 </h2>
                 <p className="text-xs text-[#64748B]">Strict hard-coded safety gates that cannot be bypassed by the AI engine.</p>
               </div>
-              <span className="text-xs font-bold text-[#E11D48] bg-[#FFF1F2] px-2.5 py-1 rounded-full border border-[#FDA4AF]">
+              <span className="text-xs font-bold text-[#f15e1c] bg-[#fff2ec] px-2.5 py-1 rounded-full border border-[#f15e1c]/20">
                 Zero-Trust Locked
               </span>
             </div>

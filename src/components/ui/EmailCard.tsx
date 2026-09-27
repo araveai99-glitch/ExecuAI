@@ -42,7 +42,7 @@ export const EmailCard: React.FC<EmailCardProps> = ({
       className={cn(
         "p-4 rounded-xl bg-white shadow-xs cursor-pointer transition-all duration-200 border relative hover:shadow-md",
         isSelected
-          ? "border-[#2E936F] bg-[#EFF4FF]/30 ring-1 ring-[#2E936F]"
+          ? "border-[#F15E1C] bg-[#FFF2EC]/40 ring-1 ring-[#F15E1C]"
           : "border-[#E2E8F0] hover:border-[#CBD5E1]",
         isUnread && "font-medium",
         className
@@ -51,14 +51,14 @@ export const EmailCard: React.FC<EmailCardProps> = ({
     >
       {/* Left indicator rail for High Risk / Critical */}
       {priority === "CRITICAL" || risk === "HIGH_RISK" ? (
-        <div className="w-1.5 absolute left-0 top-3 bottom-3 bg-[#E11D48] rounded-r" />
+        <div className="w-1.5 absolute left-0 top-3 bottom-3 bg-[#F15E1C] rounded-r" />
       ) : risk === "REVIEW_REQUIRED" ? (
         <div className="w-1.5 absolute left-0 top-3 bottom-3 bg-[#FAB60A] rounded-r" />
       ) : null}
 
       <div className="flex items-start justify-between gap-2 mb-1.5 pl-1">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="px-1.5 py-0.5 rounded bg-[#E5EEFF] text-[#0F172A] text-[10px] font-bold">
+          <span className="px-1.5 py-0.5 rounded bg-[#F1F5F9] text-[#0F172A] text-[10px] font-bold">
             {providerLabel}
           </span>
           <span className="text-xs text-[#475569] truncate max-w-[140px]">
@@ -91,3 +91,4 @@ export const EmailCard: React.FC<EmailCardProps> = ({
     </article>
   );
 };
+

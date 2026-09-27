@@ -51,9 +51,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => onAccountFilterChange?.("ALL")}
             className={cn(
-              "px-3 py-1 rounded-lg text-xs font-semibold transition-all",
+              "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
               activeAccountFilter === "ALL"
-                ? "bg-white text-[#0F172A] shadow-xs"
+                ? "bg-[#F15E1C] text-white shadow-xs"
                 : "text-[#475569] hover:text-[#0F172A]"
             )}
           >
@@ -62,9 +62,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => onAccountFilterChange?.("GMAIL")}
             className={cn(
-              "px-3 py-1 rounded-lg text-xs font-semibold transition-all",
+              "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
               activeAccountFilter === "GMAIL"
-                ? "bg-white text-[#0F172A] shadow-xs"
+                ? "bg-[#EA4335] text-white shadow-xs"
                 : "text-[#475569] hover:text-[#0F172A]"
             )}
           >
@@ -73,9 +73,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => onAccountFilterChange?.("ZOHO")}
             className={cn(
-              "px-3 py-1 rounded-lg text-xs font-semibold transition-all",
+              "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
               activeAccountFilter === "ZOHO"
-                ? "bg-white text-[#0F172A] shadow-xs"
+                ? "bg-[#226BBA] text-white shadow-xs"
                 : "text-[#475569] hover:text-[#0F172A]"
             )}
           >
@@ -84,8 +84,8 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Sync Status Badge */}
-        <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF4FF] border border-[#79d9b0]/30">
-          <span className="w-2 h-2 rounded-full bg-[#2E936F]" />
+        <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F4F0] border border-[#2E936F]/30">
+          <span className="w-2 h-2 rounded-full bg-[#2E936F] animate-pulse" />
           <span className="text-xs font-semibold text-[#2E936F]">
             {syncedCount} Mailboxes Synced
           </span>
@@ -115,3 +115,4 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+

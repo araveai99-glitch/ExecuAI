@@ -53,7 +53,7 @@ export default function SignUpPage() {
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-8">
         <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-2xl border border-[#E2E8F0] shadow-md space-y-6">
           <div className="space-y-1.5 text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
+            <h1 className="text-2xl font-heading font-extrabold tracking-tight text-[#0F172A]">
               Create Your ExecuAI SaaS Account
             </h1>
             <p className="text-xs text-[#475569]">
@@ -103,11 +103,11 @@ export default function SignUpPage() {
                 label={
                   <span className="text-xs text-[#475569]">
                     I agree to ExecuAI&apos;s{" "}
-                    <Link href="/security" className="text-[#2E936F] font-bold underline">
+                    <Link href="/security" className="text-[#F15E1C] font-bold underline">
                       Terms of Service
                     </Link>{" "}
                     and{" "}
-                    <Link href="/security" className="text-[#2E936F] font-bold underline">
+                    <Link href="/security" className="text-[#F15E1C] font-bold underline">
                       Privacy Policy
                     </Link>
                   </span>
@@ -116,7 +116,7 @@ export default function SignUpPage() {
                 onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
               />
               {errors.termsAccepted && (
-                <p className="text-xs text-[#E11D48] mt-1 font-medium">{errors.termsAccepted}</p>
+                <p className="text-xs text-[#DC2626] mt-1 font-medium">{errors.termsAccepted}</p>
               )}
             </div>
 
@@ -132,7 +132,7 @@ export default function SignUpPage() {
 
           <div className="text-center text-xs text-[#475569] pt-2 border-t border-[#E2E8F0]">
             Already have an ExecuAI account?{" "}
-            <Link href="/auth/login" className="text-[#2E936F] font-bold hover:underline">
+            <Link href="/auth/login" className="text-[#F15E1C] font-bold hover:underline">
               Sign In Here
             </Link>
           </div>
@@ -141,3 +141,4 @@ export default function SignUpPage() {
     </div>
   );
 }
+

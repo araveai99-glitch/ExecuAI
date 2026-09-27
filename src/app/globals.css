@@ -1,38 +1,63 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+
+  --color-primary-orange: #f15e1c;
+  --color-primary-orange-hover: #d84c0e;
+  --color-primary-orange-light: #fde8df;
+  --color-primary-orange-container: #fff2ec;
+
+  --color-brand-green: #2e936f;
+  --color-brand-green-hover: #24785a;
+  --color-brand-green-light: #e8f4f0;
+
+  --color-brand-white: #ffffff;
+
+  --color-light-yellow: #ffec69;
+  --color-light-yellow-surface: #fffde6;
+
+  --color-golden-yellow: #fab60a;
+  --color-golden-yellow-surface: #fef6e0;
+
+  --color-light-peach: #f7d7b0;
+  --color-light-peach-surface: #fdf7f0;
+}
+
 @layer base {
   :root {
-    --primary-green: #2E936F;
-    --primary-green-dark: #00694b;
-    --primary-green-container: #188461;
-    --primary-green-light: #79d9b0;
+    --primary-orange: #f15e1c;
+    --primary-orange-hover: #d84c0e;
+    --primary-orange-light: #fde8df;
     
-    --white: #FFFFFF;
+    --primary-green: #2e936f;
+    --primary-green-hover: #24785a;
+    --primary-green-light: #e8f4f0;
     
-    --yellow-highlight: #FFEC69;
-    --yellow-surface: #FFFDEB;
+    --white: #ffffff;
     
-    --orange-warning: #FAB60A;
-    --orange-warning-surface: #FEF7E6;
+    --light-yellow: #ffec69;
+    --light-yellow-surface: #fffde6;
     
-    --soft-beige: #F7D7B0;
-    --soft-beige-surface: #FDF8F3;
+    --golden-yellow: #fab60a;
+    --golden-yellow-surface: #fef6e0;
     
-    --danger: #E11D48;
-    --danger-surface: #FFF1F2;
+    --light-peach: #f7d7b0;
+    --light-peach-surface: #fdf7f0;
     
-    --surface-canvas: #F8FAFC;
-    --surface-card: #FFFFFF;
-    --surface-container-low: #EFF4FF;
-    --surface-container: #E5EEFF;
-    --surface-container-high: #DCE9FF;
+    --danger: #dc2626;
+    --danger-surface: #fef2f2;
     
-    --text-primary: #0F172A;
+    --surface-canvas: #f8fafc;
+    --surface-card: #ffffff;
+    
+    --text-primary: #0f172a;
     --text-secondary: #475569;
-    --text-tertiary: #94A3B8;
+    --text-tertiary: #94a3b8;
     
-    --border-subtle: #E2E8F0;
-    --border-strong: #CBD5E1;
+    --border-subtle: #e2e8f0;
+    --border-strong: #cbd5e1;
   }
 
   html, body {
@@ -40,9 +65,13 @@
     padding: 0;
     background-color: var(--surface-canvas);
     color: var(--text-primary);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, .font-heading {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
 
   /* Custom scrollbar matching prototype specification */
@@ -56,12 +85,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #CBD5E1;
+    background: #cbd5e1;
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #94A3B8;
+    background: #94a3b8;
   }
 }
 
@@ -81,3 +110,125 @@
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
 }
+
+/* Custom 3D & Glassmorphism Utilities strictly using brand palette */
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.perspective-2000 {
+  perspective: 2000px;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(241, 94, 28, 0.15);
+}
+
+.glass-card-dark {
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(241, 94, 28, 0.25);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(247, 215, 176, 0.6);
+}
+
+/* Glowing Aura Effects using Approved Brand Colors */
+.glow-orange {
+  box-shadow: 0 0 35px -5px rgba(241, 94, 28, 0.35);
+}
+
+.glow-orange-lg {
+  box-shadow: 0 0 60px 0px rgba(241, 94, 28, 0.3);
+}
+
+.glow-green {
+  box-shadow: 0 0 35px -5px rgba(46, 147, 111, 0.35);
+}
+
+.glow-yellow {
+  box-shadow: 0 0 35px -5px rgba(250, 182, 10, 0.35);
+}
+
+/* Subtle Grid Background Pattern */
+.bg-grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(241, 94, 28, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(241, 94, 28, 0.05) 1px, transparent 1px);
+}
+
+.bg-dot-pattern {
+  background-size: 24px 24px;
+  background-image: radial-gradient(rgba(241, 94, 28, 0.12) 1.5px, transparent 1.5px);
+}
+
+/* Keyframe Animations */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(1.5deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spinSlow 20s linear infinite;
+}
+
+.shimmer-border {
+  background: linear-gradient(90deg, transparent, rgba(241, 94, 28, 0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+

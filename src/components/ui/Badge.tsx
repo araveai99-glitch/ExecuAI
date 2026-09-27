@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "primary" | "secondary" | "danger" | "warning" | "beige" | "neutral" | "outline";
+  variant?: "primary" | "brand-green" | "secondary" | "danger" | "warning" | "yellow" | "peach" | "neutral" | "outline";
   size?: "sm" | "md";
   icon?: React.ReactNode;
 }
@@ -19,12 +19,14 @@ export const Badge: React.FC<BadgeProps> = ({
     "inline-flex items-center gap-1 font-semibold rounded-full uppercase tracking-wider transition-colors";
 
   const variants = {
-    primary: "bg-[#EFF4FF] text-[#2E936F]",
-    secondary: "bg-[#E5EEFF] text-[#0F172A]",
-    danger: "bg-[#FFF1F2] text-[#E11D48]",
-    warning: "bg-[#FEF7E6] text-[#795600]",
-    beige: "bg-[#FDF8F3] text-[#795600] border border-[#F7D7B0]",
-    neutral: "bg-[#E5EEFF] text-[#475569]",
+    primary: "bg-[#FFF2EC] text-[#F15E1C] border border-[#FDE8DF]",
+    "brand-green": "bg-[#E8F4F0] text-[#2E936F] border border-[#2E936F]/20",
+    secondary: "bg-[#F1F5F9] text-[#0F172A]",
+    danger: "bg-[#FEF2F2] text-[#DC2626] border border-[#FCA5A5]",
+    warning: "bg-[#FEF6E0] text-[#795600] border border-[#FAB60A]/40",
+    yellow: "bg-[#FFFDE6] text-[#795600] border border-[#FFEC69]",
+    peach: "bg-[#FDF7F0] text-[#795600] border border-[#F7D7B0]",
+    neutral: "bg-[#F1F5F9] text-[#475569]",
     outline: "bg-transparent text-[#475569] border border-[#CBD5E1]",
   };
 
@@ -43,3 +45,4 @@ export const Badge: React.FC<BadgeProps> = ({
     </span>
   );
 };
+

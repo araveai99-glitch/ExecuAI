@@ -59,15 +59,15 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-full overflow-x-hidden">
+    <div className="space-y-6 max-w-full overflow-x-hidden font-sans">
       {/* Toast Notification Bar */}
       {actionNotice && (
-        <div className="p-4 rounded-xl bg-[#2E936F] text-white text-xs font-bold shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="p-4 rounded-xl bg-[#F15E1C] text-white text-xs font-bold shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">check_circle</span>
             <span>{actionNotice}</span>
           </div>
-          <button onClick={() => setActionNotice(null)} className="text-white hover:opacity-80">
+          <button onClick={() => setActionNotice(null)} className="text-white hover:opacity-80 cursor-pointer">
             <span className="material-symbols-outlined text-[16px]">close</span>
           </button>
         </div>
@@ -79,7 +79,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
           {onBack ? (
             <button
               onClick={onBack}
-              className="p-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] hover:bg-[#E2E8F0] font-bold text-xs flex items-center gap-1 transition-all"
+              className="p-2 px-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] hover:bg-[#FDF7F0] font-bold text-xs flex items-center gap-1 transition-all cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px]">arrow_back</span>
               <span>Back</span>
@@ -87,7 +87,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
           ) : (
             <Link
               href="/app/inbox"
-              className="p-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] hover:bg-[#E2E8F0] font-bold text-xs flex items-center gap-1 transition-all"
+              className="p-2 px-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] hover:bg-[#FDF7F0] font-bold text-xs flex items-center gap-1 transition-all cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px]">arrow_back</span>
               <span>Inbox</span>
@@ -96,10 +96,10 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
 
           <div className="flex items-center gap-2">
             <span
-              className={`text-xs font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${
+              className={`text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5 ${
                 email.provider === "GMAIL"
-                  ? "bg-[#FFF1F2] text-[#E11D48] border border-[#FDA4AF]"
-                  : "bg-[#EFF6FF] text-[#2563EB] border border-[#93C5FD]"
+                  ? "bg-[#FFF2EC] text-[#EA4335] border border-[#FDE8DF]"
+                  : "bg-[#F1F5F9] text-[#226BBA] border border-[#E2E8F0]"
               }`}
             >
               <span className="material-symbols-outlined text-[14px]">
@@ -114,7 +114,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
           <span className="text-[#64748B] font-medium">{email.timestamp}</span>
           <button
             onClick={() => handleAction("Thread starred for executive tracking.")}
-            className="p-2 rounded-lg border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#FAB60A]"
+            className="p-2 rounded-lg border border-[#E2E8F0] hover:bg-[#FEF6E0] text-[#FAB60A] cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">star</span>
           </button>
@@ -134,7 +134,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
                 <IntentBadge intent={email.intent} />
                 <RiskBadge risk={email.risk} />
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight leading-tight">
+              <h1 className="text-xl sm:text-2xl font-heading font-extrabold text-[#0F172A] tracking-tight leading-tight">
                 {email.subject}
               </h1>
             </div>
@@ -146,7 +146,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-sm text-white ${
-                      email.provider === "GMAIL" ? "bg-[#EA4335]" : "bg-[#2264E5]"
+                      email.provider === "GMAIL" ? "bg-[#EA4335]" : "bg-[#226BBA]"
                     }`}
                   >
                     {email.avatarInitials || email.senderName.substring(0, 2)}
@@ -154,12 +154,12 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
                   <div>
                     <h4 className="font-bold text-[#0F172A] text-sm">{email.senderName}</h4>
                     <p className="text-[#64748B] font-medium">{email.senderRole || "External Correspondent"}</p>
-                    <p className="text-[#2563EB] font-mono text-[11px]">&lt;{email.senderEmail}&gt;</p>
+                    <p className="text-[#F15E1C] font-mono text-[11px]">&lt;{email.senderEmail}&gt;</p>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <span className="px-2 py-0.5 rounded bg-[#EFF4FF] text-[#2E936F] font-bold text-[10px] uppercase border border-[#79d9b0]/30 inline-flex items-center gap-1">
+                  <span className="px-2.5 py-1 rounded-full bg-[#E8F4F0] text-[#2E936F] font-bold text-[10px] uppercase border border-[#2E936F]/30 inline-flex items-center gap-1">
                     <span className="material-symbols-outlined text-[12px]">verified</span>
                     DKIM & DMARC Verified
                   </span>
@@ -195,7 +195,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
             </div>
 
             {/* Email Message Body */}
-            <div className="p-5 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#0F172A] leading-relaxed whitespace-pre-line font-normal space-y-4">
+            <div className="p-5 rounded-xl bg-white border border-[#E2E8F0] text-xs sm:text-sm text-[#0F172A] leading-relaxed whitespace-pre-line font-normal space-y-4">
               {email.body}
             </div>
 
@@ -209,7 +209,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="p-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="material-symbols-outlined text-[#E11D48] text-[20px]">picture_as_pdf</span>
+                      <span className="material-symbols-outlined text-[#DC2626] text-[20px]">picture_as_pdf</span>
                       <div className="min-w-0">
                         <p className="font-bold text-[#0F172A] truncate">Series_B_Definitive_Draft_v4.pdf</p>
                         <span className="text-[10px] text-[#94A3B8]">2.4 MB • Signed PDF</span>
@@ -222,7 +222,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
 
                   <div className="p-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="material-symbols-outlined text-[#2563EB] text-[20px]">description</span>
+                      <span className="material-symbols-outlined text-[#226BBA] text-[20px]">description</span>
                       <div className="min-w-0">
                         <p className="font-bold text-[#0F172A] truncate">Indemnity_Risk_Summary_Note.docx</p>
                         <span className="text-[10px] text-[#94A3B8]">480 KB • Word Document</span>
@@ -246,12 +246,12 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
               </h3>
 
               <div className="space-y-3 relative before:absolute before:left-5 before:top-4 before:bottom-4 before:w-0.5 before:bg-[#E2E8F0]">
-                {email.threadHistory.map((msg, idx) => (
+                {email.threadHistory.map((msg) => (
                   <div
                     key={msg.id}
                     className={`p-4 sm:p-5 rounded-2xl border transition-all relative ml-8 ${
                       msg.isFromUser
-                        ? "bg-[#F8FAFC] border-[#CBD5E1]"
+                        ? "bg-[#FDF7F0] border-[#F7D7B0]"
                         : "bg-white border-[#E2E8F0] shadow-xs"
                     }`}
                   >
@@ -280,16 +280,16 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
         <div className="lg:col-span-5 space-y-6 sticky top-6">
           {/* High-Risk Human Approval Guardrail Banner */}
           {rationale.requiresHumanApproval && (
-            <div className="p-4 rounded-2xl bg-[#FFF1F2] border border-[#FDA4AF] space-y-3 shadow-xs">
-              <div className="flex items-center gap-2 text-[#E11D48] font-bold text-sm">
+            <div className="p-4 rounded-2xl bg-[#FFF2EC] border border-[#FDE8DF] space-y-3 shadow-xs">
+              <div className="flex items-center gap-2 text-[#F15E1C] font-bold text-sm">
                 <span className="material-symbols-outlined text-[20px]">security</span>
                 <span>Human approval required.</span>
               </div>
-              <p className="text-xs text-[#9F1239] leading-relaxed">
+              <p className="text-xs text-[#0F172A] leading-relaxed">
                 {rationale.humanApprovalReason ||
                   "Human approval required. High-risk communication contains binding legal/financial commitment. Automated draft dispatch has been programmatically blocked."}
               </p>
-              <div className="pt-1 flex items-center gap-2 text-[11px] text-[#E11D48] font-semibold">
+              <div className="pt-1 flex items-center gap-2 text-[11px] text-[#F15E1C] font-semibold">
                 <span className="material-symbols-outlined text-[14px]">lock</span>
                 <span>Zero-Trust Auto-Reply Barrier Active</span>
               </div>
@@ -303,14 +303,14 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
                 <span className="material-symbols-outlined text-[20px]">psychology</span>
                 <span>AI Forensic Analysis</span>
               </div>
-              <span className="bg-[#FEF7E6] text-[#795600] text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-[#FDE68A]">
-                ISO 42001 Audited
+              <span className="bg-[#FEF6E0] text-[#795600] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-[#FAB60A]/40">
+                ExecuAI Certified
               </span>
             </div>
 
             {/* Plain Language Rationale Explanation */}
             <div className="p-4 rounded-xl bg-white border border-[#E2E8F0] space-y-2">
-              <h4 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider text-[10px] text-[#94A3B8]">
+              <h4 className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">
                 Executive Classification Rationale
               </h4>
               <p className="text-xs font-semibold text-[#0F172A] leading-relaxed">
@@ -331,7 +331,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
                     key={idx}
                     className="p-3 rounded-xl bg-white border border-[#E2E8F0] flex items-start gap-3 shadow-2xs"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-[#FEF7E6] text-[#FAB60A] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-7 h-7 rounded-lg bg-[#FEF6E0] text-[#FAB60A] flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="material-symbols-outlined text-[16px]">{factor.icon}</span>
                     </div>
                     <div className="space-y-0.5 min-w-0">
@@ -401,12 +401,12 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#2E936F]">auto_fix_high</span>
+                <span className="material-symbols-outlined text-[#F15E1C]">auto_fix_high</span>
                 <h3 className="text-base font-bold text-[#0F172A]">AI Executive Draft Assistant</h3>
               </div>
               <button
                 onClick={() => setShowDraftModal(false)}
-                className="text-[#94A3B8] hover:text-[#0F172A]"
+                className="text-[#94A3B8] hover:text-[#0F172A] cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
@@ -426,7 +426,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
                     setShowDraftModal(false);
                     handleAction("Generated AI Draft proposing 2x liability cap under Section 14.2.");
                   }}
-                  className="p-3 rounded-xl border border-[#E2E8F0] bg-white hover:border-[#2E936F] hover:bg-[#EFF4FF] text-left transition-all"
+                  className="p-3 rounded-xl border border-[#E2E8F0] bg-white hover:border-[#F15E1C] hover:bg-[#FFF2EC]/40 text-left transition-all cursor-pointer"
                 >
                   <p className="font-bold text-[#0F172A]">Redline Indemnity Cap (Recommended)</p>
                   <p className="text-[11px] text-[#64748B]">Propose a $10M liability cap and exclude secondary software derivative claims.</p>
@@ -437,7 +437,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
                     setShowDraftModal(false);
                     handleAction("Generated AI Draft requesting legal team review.");
                   }}
-                  className="p-3 rounded-xl border border-[#E2E8F0] bg-white hover:border-[#2E936F] hover:bg-[#EFF4FF] text-left transition-all"
+                  className="p-3 rounded-xl border border-[#E2E8F0] bg-white hover:border-[#F15E1C] hover:bg-[#FFF2EC]/40 text-left transition-all cursor-pointer"
                 >
                   <p className="font-bold text-[#0F172A]">Defer to External Counsel</p>
                   <p className="text-[11px] text-[#64748B]">Request Apex Law to coordinate directly with target lead counsel.</p>
@@ -460,12 +460,12 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
               <h3 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#2563EB]">forward</span>
+                <span className="material-symbols-outlined text-[#226BBA]">forward</span>
                 Forward Email Thread
               </h3>
               <button
                 onClick={() => setShowForwardModal(false)}
-                className="text-[#94A3B8] hover:text-[#0F172A]"
+                className="text-[#94A3B8] hover:text-[#0F172A] cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
@@ -477,7 +477,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
                 <input
                   type="email"
                   defaultValue="legal-team@company.com"
-                  className="w-full p-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-xs focus:ring-2 focus:ring-[#2E936F]"
+                  className="w-full p-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-xs focus:ring-2 focus:ring-[#F15E1C]/40 focus:border-[#F15E1C] focus:outline-none"
                 />
               </div>
 
@@ -486,7 +486,7 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
                 <textarea
                   rows={3}
                   defaultValue="Please review the attached Section 14.2 indemnity clause and coordinate redline adjustments."
-                  className="w-full p-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-xs focus:ring-2 focus:ring-[#2E936F]"
+                  className="w-full p-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-xs focus:ring-2 focus:ring-[#F15E1C]/40 focus:border-[#F15E1C] focus:outline-none"
                 />
               </div>
             </div>
@@ -512,3 +512,4 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
     </div>
   );
 };
+

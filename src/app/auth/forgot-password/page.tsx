@@ -28,7 +28,7 @@ export default function ForgotPasswordPage() {
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-8">
         <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-2xl border border-[#E2E8F0] shadow-md space-y-6">
           <div className="space-y-1.5 text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
+            <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] font-heading">
               Reset Your ExecuAI Password
             </h1>
             <p className="text-xs text-[#475569]">
@@ -37,11 +37,11 @@ export default function ForgotPasswordPage() {
           </div>
 
           {submitted ? (
-            <div className="p-6 rounded-xl bg-[#EFF4FF] border border-[#79d9b0]/40 text-center space-y-3">
-              <div className="w-10 h-10 rounded-full bg-[#2E936F] text-white font-bold flex items-center justify-center mx-auto">
+            <div className="p-6 rounded-xl bg-[#2e936f]/10 border border-[#2e936f]/20 text-center space-y-3">
+              <div className="w-10 h-10 rounded-full bg-[#2e936f] text-white font-bold flex items-center justify-center mx-auto">
                 ✓
               </div>
-              <h3 className="text-base font-bold text-[#0F172A]">Reset Link Sent</h3>
+              <h3 className="text-base font-bold text-[#0F172A] font-heading">Reset Link Sent</h3>
               <p className="text-xs text-[#475569]">
                 We sent a password reset link to <strong className="text-[#0F172A]">{email}</strong>. Please check your inbox.
               </p>
@@ -72,7 +72,7 @@ export default function ForgotPasswordPage() {
 
           <div className="text-center text-xs text-[#475569] pt-2 border-t border-[#E2E8F0]">
             Remembered your password?{" "}
-            <Link href="/auth/login" className="text-[#2E936F] font-bold hover:underline">
+            <Link href="/auth/login" className="text-[#f15e1c] font-bold hover:underline">
               Back to Login
             </Link>
           </div>

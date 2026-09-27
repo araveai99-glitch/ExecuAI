@@ -121,8 +121,8 @@ export default function UnifiedInboxPage() {
       {/* Dynamic State Switcher (Simulator Controls) */}
       <div className="bg-[#0F172A] text-white p-3 rounded-2xl shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#2E936F] animate-ping" />
-          <span className="font-bold text-[#FFEC69] uppercase tracking-wide text-[11px]">Inbox Simulation Mode:</span>
+          <span className="w-2 h-2 rounded-full bg-[#f15e1c] animate-ping" />
+          <span className="font-bold text-[#ffec69] uppercase tracking-wide text-[11px]">Inbox Simulation Mode:</span>
           <span className="text-[#94A3B8]">Toggle UI states to inspect empty, loading, or error behaviors</span>
         </div>
 
@@ -130,7 +130,7 @@ export default function UnifiedInboxPage() {
           <button
             onClick={() => setViewState("NORMAL")}
             className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
-              viewState === "NORMAL" ? "bg-[#2E936F] text-white" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
+              viewState === "NORMAL" ? "bg-[#f15e1c] text-white" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
             }`}
           >
             Live Stream
@@ -138,7 +138,7 @@ export default function UnifiedInboxPage() {
           <button
             onClick={() => setViewState("LOADING")}
             className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
-              viewState === "LOADING" ? "bg-[#FAB60A] text-[#0F172A]" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
+              viewState === "LOADING" ? "bg-[#fab60a] text-[#0F172A]" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
             }`}
           >
             Skeleton Loading
@@ -154,7 +154,7 @@ export default function UnifiedInboxPage() {
           <button
             onClick={() => setViewState("ERROR")}
             className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
-              viewState === "ERROR" ? "bg-[#E11D48] text-white" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
+              viewState === "ERROR" ? "bg-[#f15e1c] text-white" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
             }`}
           >
             Error State
@@ -167,12 +167,12 @@ export default function UnifiedInboxPage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">Unified Executive Inbox</h1>
-              <span className="bg-[#E5EEFF] text-[#0F172A] text-xs px-2.5 py-0.5 rounded-full font-bold">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight font-heading">Unified Executive Inbox</h1>
+              <span className="bg-[#f7d7b0]/50 text-[#0F172A] text-xs px-2.5 py-0.5 rounded-full font-bold">
                 {unreadCount} Unread Emails
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFF1F2] text-[#E11D48] text-xs font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48] animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#fff2ec] text-[#f15e1c] text-xs font-bold border border-[#f15e1c]/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#f15e1c] animate-pulse" />
                 {criticalCount} Critical Priority
               </span>
             </div>
@@ -202,7 +202,7 @@ export default function UnifiedInboxPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search emails, people, or topics across all connected accounts..."
-            className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2E936F] focus:bg-white transition-all"
+            className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#f15e1c] focus:bg-white transition-all"
           />
           {searchQuery && (
             <button
@@ -281,11 +281,11 @@ export default function UnifiedInboxPage() {
               onClick={() => setUnreadOnly(!unreadOnly)}
               className={`px-3 py-1.5 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
                 unreadOnly
-                  ? "bg-[#E5EEFF] border-[#2563EB] text-[#2563EB]"
+                  ? "bg-[#fff2ec] border-[#f15e1c] text-[#f15e1c]"
                   : "bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A]"
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
+              <span className="w-2 h-2 rounded-full bg-[#f15e1c]" />
               Unread Only
             </button>
 
@@ -293,11 +293,11 @@ export default function UnifiedInboxPage() {
               onClick={() => setFlaggedOnly(!flaggedOnly)}
               className={`px-3 py-1.5 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
                 flaggedOnly
-                  ? "bg-[#FEF7E6] border-[#FAB60A] text-[#795600]"
+                  ? "bg-[#ffec69]/30 border-[#fab60a] text-[#855d00]"
                   : "bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A]"
               }`}
             >
-              <span className="material-symbols-outlined text-[16px] text-[#FAB60A]">star</span>
+              <span className="material-symbols-outlined text-[16px] text-[#fab60a]">star</span>
               Flagged Only
             </button>
           </div>
@@ -320,7 +320,7 @@ export default function UnifiedInboxPage() {
                 setFlaggedOnly(false);
                 setSearchQuery("");
               }}
-              className="text-[#E11D48] hover:underline font-bold text-xs flex items-center gap-1"
+              className="text-[#f15e1c] hover:underline font-bold text-xs flex items-center gap-1"
             >
               <span className="material-symbols-outlined text-[14px]">refresh</span>
               Clear Filters
@@ -357,13 +357,13 @@ export default function UnifiedInboxPage() {
       )}
 
       {viewState === "ERROR" && (
-        <div className="p-8 rounded-2xl bg-[#FFF1F2] border border-[#FDA4AF] text-center space-y-4 max-w-2xl mx-auto my-8 shadow-xs">
-          <div className="w-12 h-12 rounded-full bg-[#FFE4E6] text-[#E11D48] flex items-center justify-center mx-auto">
+        <div className="p-8 rounded-2xl bg-[#fff2ec] border border-[#f15e1c]/30 text-center space-y-4 max-w-2xl mx-auto my-8 shadow-xs">
+          <div className="w-12 h-12 rounded-full bg-[#f15e1c]/10 text-[#f15e1c] flex items-center justify-center mx-auto">
             <span className="material-symbols-outlined text-2xl">sync_problem</span>
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-bold text-[#9F1239]">Unified Mailbox Sync Interrupted</h3>
-            <p className="text-xs text-[#BE123C] leading-relaxed max-w-md mx-auto">
+            <h3 className="text-lg font-bold text-[#f15e1c] font-heading">Unified Mailbox Sync Interrupted</h3>
+            <p className="text-xs text-[#475569] leading-relaxed max-w-md mx-auto">
               Unable to reach OAuth provider endpoints for <span className="font-bold">director@company.com (Zoho #1)</span>. The connection timed out during TLS handshake verification.
             </p>
           </div>
@@ -388,12 +388,12 @@ export default function UnifiedInboxPage() {
       )}
 
       {(viewState === "EMPTY" || (viewState === "NORMAL" && filteredEmails.length === 0)) && (
-        <div className="p-12 rounded-2xl bg-[#FDF8F3] border border-[#F7D7B0] text-center space-y-4 max-w-xl mx-auto my-8 shadow-xs">
-          <div className="w-16 h-16 rounded-full bg-[#FEF7E6] text-[#FAB60A] flex items-center justify-center mx-auto border border-[#F7D7B0]">
+        <div className="p-12 rounded-2xl bg-[#f7d7b0]/20 border border-[#f7d7b0] text-center space-y-4 max-w-xl mx-auto my-8 shadow-xs">
+          <div className="w-16 h-16 rounded-full bg-[#ffec69]/40 text-[#fab60a] flex items-center justify-center mx-auto border border-[#f7d7b0]">
             <span className="material-symbols-outlined text-3xl">verified</span>
           </div>
           <div className="space-y-1">
-            <h3 className="text-xl font-bold text-[#0F172A]">You're all caught up.</h3>
+            <h3 className="text-xl font-bold text-[#0F172A] font-heading">You're all caught up.</h3>
             <p className="text-xs text-[#64748B]">
               No emails matching your active filter criteria require attention across connected accounts.
             </p>
@@ -440,7 +440,7 @@ export default function UnifiedInboxPage() {
                   }}
                   className={`p-4 rounded-xl border transition-all cursor-pointer space-y-3 relative ${
                     isSelected
-                      ? "bg-white border-[#2E936F] shadow-sm ring-1 ring-[#2E936F]"
+                      ? "bg-white border-[#f15e1c] shadow-sm ring-1 ring-[#f15e1c]"
                       : email.unread
                       ? "bg-white border-[#CBD5E1] shadow-2xs hover:border-[#94A3B8]"
                       : "bg-[#F8FAFC]/90 border-[#E2E8F0] hover:bg-white"

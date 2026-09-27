@@ -66,7 +66,7 @@ export default function SecurityDashboardPage() {
     <div className="space-y-6 max-w-full overflow-x-hidden pb-12">
       {/* Toast Notice */}
       {toastMessage && (
-        <div className="p-4 rounded-xl bg-[#2E936F] text-white text-xs font-bold shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="p-4 rounded-xl bg-[#2e936f] text-white text-xs font-bold shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">check_circle</span>
             <span>{toastMessage}</span>
@@ -82,11 +82,11 @@ export default function SecurityDashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">Security & Governance Studio</h1>
-              <span className="bg-[#EFF4FF] text-[#2E936F] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#79d9b0]/30">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight font-heading">Security & Governance Studio</h1>
+              <span className="bg-[#2e936f]/10 text-[#2e936f] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#2e936f]/20">
                 AES-256 Tokens Encrypted
               </span>
-              <span className="bg-[#FEF7E6] text-[#795600] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#FDE68A]">
+              <span className="bg-[#ffec69]/40 text-[#855d00] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#fab60a]/30">
                 Zero-Trust Active
               </span>
             </div>

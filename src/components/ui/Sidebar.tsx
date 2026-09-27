@@ -54,22 +54,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex flex-col flex-1 overflow-y-auto">
         {/* Brand Header */}
         <div className="h-16 px-4 flex items-center justify-between border-b border-[#F8FAFC]">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#2E936F] text-white font-bold flex items-center justify-center text-sm shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#F15E1C] text-white font-extrabold flex items-center justify-center text-sm shadow-xs">
               E
             </div>
-            <span className="text-xl font-bold tracking-tight text-[#0F172A]">
+            <span className="text-xl font-heading font-extrabold tracking-tight text-[#0F172A]">
               ExecuAI
             </span>
           </div>
-          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-lg bg-[#E5EEFF] text-[#0F172A]">
+          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-[#FFF2EC] text-[#F15E1C] border border-[#FDE8DF]">
             v2.4
           </span>
         </div>
 
         {/* Connected Mailboxes Box */}
         <div className="px-4 py-3">
-          <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col gap-1.5">
+          <div className="p-3 rounded-xl bg-[#FDF7F0] border border-[#F7D7B0] flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#475569]">
                 Connected Mailboxes
@@ -114,10 +114,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   href={item.href}
                   onClick={() => onNavigate?.(item.id)}
                   className={cn(
-                    "flex items-center justify-between px-3 py-2.5 rounded-xl transition-colors text-xs font-semibold",
+                    "flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-xs font-semibold",
                     isActive
-                      ? "bg-[#188461] text-white shadow-xs"
-                      : "text-[#475569] hover:bg-[#E5EEFF] hover:text-[#0F172A]"
+                      ? "bg-[#F15E1C] text-white shadow-xs font-bold"
+                      : "text-[#475569] hover:bg-[#FDF7F0] hover:text-[#0F172A]"
                   )}
                 >
                   <div className="flex items-center gap-2.5">
@@ -131,10 +131,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       className={cn(
                         "px-2 py-0.5 rounded-full text-[10px] font-bold",
                         item.badgeVariant === "danger"
-                          ? "bg-[#FFF1F2] text-[#E11D48]"
+                          ? "bg-[#FFF2EC] text-[#F15E1C] border border-[#FDE8DF]"
                           : isActive
                           ? "bg-white/20 text-white"
-                          : "bg-[#E5EEFF] text-[#0F172A]"
+                          : "bg-[#F1F5F9] text-[#0F172A]"
                       )}
                     >
                       {item.badge}
@@ -150,7 +150,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* User Profile Footer */}
       <div className="p-3 bg-[#F8FAFC] border-t border-[#E2E8F0]">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#2E936F] text-white font-bold flex items-center justify-center shrink-0 text-xs">
+          <div className="w-8 h-8 rounded-full bg-[#2E936F] text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">
             AV
           </div>
           <div className="flex flex-col min-w-0 flex-1">
@@ -169,3 +169,4 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </aside>
   );
 };
+

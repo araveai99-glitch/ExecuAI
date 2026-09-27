@@ -9,10 +9,10 @@ export const PublicFooter: React.FC = () => {
           {/* Brand Info */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-[#2E936F] text-white font-bold flex items-center justify-center text-sm shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-[#F15E1C] text-white font-extrabold flex items-center justify-center text-sm shadow-xs">
                 E
               </div>
-              <span className="text-xl font-bold tracking-tight text-white">
+              <span className="text-xl font-heading font-extrabold tracking-tight text-white">
                 ExecuAI
               </span>
             </div>
@@ -20,8 +20,8 @@ export const PublicFooter: React.FC = () => {
               A secure AI Executive Email Assistant bringing multiple Gmail and Zoho mailboxes into one unified workspace with Safety Gate human-in-the-loop protection.
             </p>
             <div className="flex items-center gap-2 pt-2">
-              <span className="px-2.5 py-1 rounded-full bg-[#188461]/30 text-[#79d9b0] text-[10px] font-bold border border-[#2E936F]/40 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#79d9b0]" />
+              <span className="px-3 py-1 rounded-full bg-[#E8F4F0] text-[#2E936F] text-[10px] font-bold border border-[#2E936F]/40 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#2E936F]" />
                 Gmail + Zoho Unified Architecture
               </span>
             </div>
@@ -34,22 +34,22 @@ export const PublicFooter: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs text-[#CBD5E1]">
               <li>
-                <Link href="/features" className="hover:text-[#79d9b0] transition-colors">
+                <Link href="/features" className="hover:text-[#F15E1C] transition-colors">
                   Features & Matrix
                 </Link>
               </li>
               <li>
-                <Link href="/how-it-works" className="hover:text-[#79d9b0] transition-colors">
+                <Link href="/how-it-works" className="hover:text-[#F15E1C] transition-colors">
                   How It Works
                 </Link>
               </li>
               <li>
-                <Link href="/use-cases" className="hover:text-[#79d9b0] transition-colors">
+                <Link href="/use-cases" className="hover:text-[#F15E1C] transition-colors">
                   Executive Use Cases
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="hover:text-[#79d9b0] transition-colors">
+                <Link href="/pricing" className="hover:text-[#F15E1C] transition-colors">
                   Pricing Plans
                 </Link>
               </li>
@@ -63,22 +63,22 @@ export const PublicFooter: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs text-[#CBD5E1]">
               <li>
-                <Link href="/security" className="hover:text-[#79d9b0] transition-colors">
+                <Link href="/security" className="hover:text-[#2E936F] transition-colors">
                   Safety Gate Protocol
                 </Link>
               </li>
               <li>
-                <Link href="/security" className="hover:text-[#79d9b0] transition-colors">
+                <Link href="/security" className="hover:text-[#2E936F] transition-colors">
                   OAuth 2.0 Security
                 </Link>
               </li>
               <li>
-                <Link href="/security" className="hover:text-[#79d9b0] transition-colors">
+                <Link href="/security" className="hover:text-[#2E936F] transition-colors">
                   Multi-Tenant Isolation
                 </Link>
               </li>
               <li>
-                <Link href="/security" className="hover:text-[#79d9b0] transition-colors">
+                <Link href="/security" className="hover:text-[#2E936F] transition-colors">
                   Audit Logging
                 </Link>
               </li>
@@ -92,17 +92,17 @@ export const PublicFooter: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs text-[#CBD5E1]">
               <li>
-                <Link href="/contact" className="hover:text-[#79d9b0] transition-colors">
+                <Link href="/contact" className="hover:text-[#F15E1C] transition-colors">
                   Request Executive Demo
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-[#79d9b0] transition-colors">
+                <Link href="/contact" className="hover:text-[#F15E1C] transition-colors">
                   Contact Team
                 </Link>
               </li>
               <li>
-                <Link href="/auth/login" className="hover:text-[#79d9b0] transition-colors">
+                <Link href="/auth/login" className="hover:text-[#F15E1C] transition-colors">
                   Executive Login
                 </Link>
               </li>
@@ -126,3 +126,4 @@ export const PublicFooter: React.FC = () => {
     </footer>
   );
 };
+

@@ -20,27 +20,26 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({
   className,
   size = "md",
 }) => {
-
   const configs: Record<
     PriorityLevel,
     { label: string; styles: string; icon?: string }
   > = {
     CRITICAL: {
       label: "Critical",
-      styles: "bg-[#FFF1F2] text-[#E11D48] font-bold",
+      styles: "bg-[#FEF2F2] text-[#DC2626] border border-[#FCA5A5] font-bold",
       icon: "priority_high",
     },
     URGENT: {
       label: "Urgent",
-      styles: "bg-[#FFF1F2] text-[#E11D48] font-semibold",
+      styles: "bg-[#FFF2EC] text-[#F15E1C] border border-[#FDE8DF] font-semibold",
     },
     IMPORTANT: {
       label: "Important",
-      styles: "bg-[#FEF7E6] text-[#795600] font-semibold",
+      styles: "bg-[#FEF6E0] text-[#795600] border border-[#FAB60A]/40 font-semibold",
     },
     NORMAL: {
       label: "Normal",
-      styles: "bg-[#E5EEFF] text-[#475569] font-medium",
+      styles: "bg-[#F1F5F9] text-[#475569] font-medium border border-[#E2E8F0]",
     },
     LOW: {
       label: "Low Priority",
@@ -71,3 +70,4 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({
     </span>
   );
 };
+
