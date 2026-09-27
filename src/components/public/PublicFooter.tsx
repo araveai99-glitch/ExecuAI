@@ -56,7 +56,7 @@ export const PublicFooter: React.FC = () => {
             </ul>
           </div>
 
-          {/* Security & Protocol */}
+          {/* Governance & Security */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#94A3B8]">
               Governance & Security
@@ -68,37 +68,42 @@ export const PublicFooter: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/security" className="hover:text-[#2E936F] transition-colors">
-                  OAuth 2.0 Security
+                <Link href="/privacy" className="hover:text-[#2E936F] transition-colors">
+                  Zero AI Model Training
                 </Link>
               </li>
               <li>
-                <Link href="/security" className="hover:text-[#2E936F] transition-colors">
-                  Multi-Tenant Isolation
+                <Link href="/cookies" className="hover:text-[#2E936F] transition-colors">
+                  Cookie Controls
                 </Link>
               </li>
               <li>
-                <Link href="/security" className="hover:text-[#2E936F] transition-colors">
-                  Audit Logging
+                <Link href="/terms" className="hover:text-[#2E936F] transition-colors">
+                  Acceptable Use Policy
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Contact & Support */}
+          {/* Company & Support */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#94A3B8]">
               Company
             </h4>
             <ul className="space-y-2 text-xs text-[#CBD5E1]">
               <li>
+                <Link href="/about" className="hover:text-[#F15E1C] transition-colors">
+                  About ExecuAI
+                </Link>
+              </li>
+              <li>
                 <Link href="/contact" className="hover:text-[#F15E1C] transition-colors">
                   Request Executive Demo
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-[#F15E1C] transition-colors">
-                  Contact Team
+                <Link href="/refund" className="hover:text-[#F15E1C] transition-colors">
+                  Refund & Billing Policy
                 </Link>
               </li>
               <li>
@@ -112,13 +117,19 @@ export const PublicFooter: React.FC = () => {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-[#1E293B] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#64748B]">
-          <p>© {new Date().getFullYear()} ExecuAI SaaS. All rights reserved. AI prepares drafts; human remains in control.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/security" className="hover:text-[#CBD5E1] transition-colors">
+          <p>© {new Date().getFullYear()} ExecuAI SaaS Inc. All rights reserved. AI prepares drafts; human remains in control.</p>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link href="/privacy" className="hover:text-[#CBD5E1] transition-colors">
               Privacy Policy
             </Link>
-            <Link href="/security" className="hover:text-[#CBD5E1] transition-colors">
+            <Link href="/terms" className="hover:text-[#CBD5E1] transition-colors">
               Terms of Service
+            </Link>
+            <Link href="/cookies" className="hover:text-[#CBD5E1] transition-colors">
+              Cookie Policy
+            </Link>
+            <Link href="/refund" className="hover:text-[#CBD5E1] transition-colors">
+              Refund Policy
             </Link>
           </div>
         </div>
@@ -126,4 +137,3 @@ export const PublicFooter: React.FC = () => {
     </footer>
   );
 };
-

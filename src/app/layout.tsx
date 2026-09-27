@@ -1,10 +1,45 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SkipToContent } from "@/components/ui/SkipToContent";
+import { CookieConsent } from "@/components/ui/CookieConsent";
+import { BackToTop } from "@/components/ui/BackToTop";
+import { FloatingContact } from "@/components/ui/FloatingContact";
 
 export const metadata: Metadata = {
-  title: "ExecuAI — AI Executive Email Assistant",
+  title: {
+    default: "ExecuAI — Human-in-the-Loop AI Executive Assistant",
+    template: "%s | ExecuAI Executive Platform",
+  },
   description:
-    "A secure AI Executive Assistant bringing multiple Gmail & Zoho email accounts into one unified dashboard with Safety Gate human-in-the-loop protection.",
+    "A secure AI Executive Email Assistant unifying Gmail & Zoho mailboxes into one 3D triage matrix with financial Safety Gate protection and zero model training guarantees.",
+  keywords: [
+    "Executive Email AI",
+    "Gmail AI Assistant",
+    "Zoho Mail AI Integration",
+    "Human in the loop AI",
+    "Safety Gate Protocol",
+    "Zero Model Training Email AI",
+  ],
+  authors: [{ name: "ExecuAI Security & Product Team" }],
+  metadataBase: new URL("https://execuai.com"),
+  openGraph: {
+    title: "ExecuAI — Human-in-the-Loop AI Executive Email Assistant",
+    description:
+      "Unify Gmail & Zoho mailboxes into one decision dashboard with financial Safety Gate protection.",
+    url: "https://execuai.com",
+    siteName: "ExecuAI",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ExecuAI — AI Executive Assistant",
+    description: "Human-in-the-loop email governance for Gmail and Zoho Mail.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -26,10 +61,13 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-[#F8FAFC] text-[#0F172A] font-sans antialiased">
+      <body className="bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-[#FFF2EC] selection:text-[#F15E1C]">
+        <SkipToContent />
         {children}
+        <CookieConsent />
+        <BackToTop />
+        <FloatingContact />
       </body>
     </html>
   );
 }
-
