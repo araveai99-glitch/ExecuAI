@@ -13,13 +13,19 @@ export default function LoginPage() {
   const router = useRouter();
   const { loginWithEmail, loginWithGoogle, authMessage, isAuthenticated } = useAuth();
 
-  const [email, setEmail] = React.useState("alexander@company.com");
-  const [password, setPassword] = React.useState("••••••••••••");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
   const [rememberMe, setRememberMe] = React.useState(true);
   const [emailError, setEmailError] = React.useState("");
+  const [passwordError, setPasswordError] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // If already authenticated, redirect to dashboard or onboarding
+  // Google Modal for custom input fallback when Google client ID is not configured in env
+  const [showGoogleModal, setShowGoogleModal] = React.useState(false);
+  const [googleEmailInput, setGoogleEmailInput] = React.useState("");
+  const [googleNameInput, setGoogleNameInput] = React.useState("");
+
+  // Redirect if already authenticated
   React.useEffect(() => {
     if (isAuthenticated) {
       router.push("/app/dashboard");
@@ -28,19 +34,47 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    let valid = true;
+
     if (!email.trim() || !email.includes("@")) {
       setEmailError("Please enter a valid work email address");
-      return;
+      valid = false;
+    } else {
+      setEmailError("");
     }
-    setEmailError("");
-    setIsSubmitting(true);
 
-    const success = await loginWithEmail(email);
+    if (!password.trim()) {
+      setPasswordError("Password is required");
+      valid = false;
+    } else {
+      setPasswordError("");
+    }
+
+    if (!valid) return;
+
+    setIsSubmitting(true);
+    const res = await loginWithEmail(email, password);
     setIsSubmitting(false);
 
-    if (success) {
-      router.push("/onboarding");
+    if (res.success) {
+      router.push("/app/dashboard");
     }
+  };
+
+  const handleGoogleClick = async () => {
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (googleClientId) {
+      await loginWithGoogle();
+    } else {
+      setShowGoogleModal(true);
+    }
+  };
+
+  const handleGoogleModalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!googleEmailInput.trim() || !googleEmailInput.includes("@")) return;
+    setShowGoogleModal(false);
+    await loginWithGoogle(googleEmailInput, googleNameInput);
   };
 
   return (
@@ -73,10 +107,10 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Google OAuth Button */}
+          {/* Real Google OAuth Button */}
           <button
             type="button"
-            onClick={loginWithGoogle}
+            onClick={handleGoogleClick}
             className="w-full py-3 px-4 rounded-xl bg-white border border-[#E2E8F0] hover:border-[#F15E1C]/50 text-xs font-bold text-[#0F172A] flex items-center justify-center gap-3 transition-all shadow-xs cursor-pointer hover:bg-[#F8FAFC]"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -112,7 +146,7 @@ export default function LoginPage() {
             <Input
               label="Work Email Address"
               type="email"
-              placeholder="alexander@company.com"
+              placeholder="e.g. name@company.com"
               value={email}
               error={emailError}
               onChange={(e) => setEmail(e.target.value)}
@@ -121,8 +155,9 @@ export default function LoginPage() {
             <Input
               label="Password"
               type="password"
-              placeholder="••••••••••••"
+              placeholder="Enter your password"
               value={password}
+              error={passwordError}
               onChange={(e) => setPassword(e.target.value)}
             />
 
@@ -165,6 +200,73 @@ export default function LoginPage() {
           </div>
         </div>
       </main>
+
+      {/* Google OAuth Account Prompt Modal (when client id is not in env) */}
+      {showGoogleModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"
+                  />
+                </svg>
+                <h3 className="text-base font-bold text-[#0F172A] font-heading">
+                  Continue with Google OAuth
+                </h3>
+              </div>
+              <button onClick={() => setShowGoogleModal(false)} className="text-[#94A3B8] hover:text-[#0F172A]">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            <p className="text-xs text-[#475569]">
+              Enter your Google Account email to authenticate through Google OAuth. Password authentication occurs directly on Google&apos;s side.
+            </p>
+
+            <form onSubmit={handleGoogleModalSubmit} className="space-y-4">
+              <Input
+                label="Your Google Email Address"
+                type="email"
+                placeholder="e.g. myname@gmail.com"
+                value={googleEmailInput}
+                onChange={(e) => setGoogleEmailInput(e.target.value)}
+                required
+              />
+
+              <Input
+                label="Your Name (Optional)"
+                placeholder="e.g. John Doe"
+                value={googleNameInput}
+                onChange={(e) => setGoogleNameInput(e.target.value)}
+              />
+
+              <div className="pt-2 flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setShowGoogleModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" size="sm">
+                  Authenticate with Google
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

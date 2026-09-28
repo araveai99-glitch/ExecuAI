@@ -13,11 +13,29 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { initialDecisionItems } from "@/lib/data/mockExecuData";
 import { DecisionItem } from "@/lib/types/execuai";
 
+import { useAuth } from "@/lib/auth-context";
+
 export default function DecisionCenterPage() {
+  const { user } = useAuth();
   const [loading, setLoading] = React.useState(false);
   const [errorState, setErrorState] = React.useState(false);
   const [filterRisk, setFilterRisk] = React.useState<string>("ALL");
-  const [decisions, setDecisions] = React.useState<DecisionItem[]>(initialDecisionItems);
+
+  const userPrimaryEmail = user?.email || "user@example.com";
+  const userConnectedEmails = user?.connectedAccounts?.map((a) => a.email) || [userPrimaryEmail];
+
+  const dynamicDecisions = React.useMemo(() => {
+    return initialDecisionItems.map((item, idx) => ({
+      ...item,
+      account: userConnectedEmails[idx % userConnectedEmails.length] || userPrimaryEmail,
+    }));
+  }, [userPrimaryEmail, userConnectedEmails]);
+
+  const [decisions, setDecisions] = React.useState<DecisionItem[]>(dynamicDecisions);
+
+  React.useEffect(() => {
+    setDecisions(dynamicDecisions);
+  }, [dynamicDecisions]);
 
   const filteredDecisions = decisions.filter((d) => {
     if (filterRisk === "ALL") return true;

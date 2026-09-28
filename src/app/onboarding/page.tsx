@@ -5,21 +5,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useAuth } from "@/lib/auth-context";
 
 export default function SimpleOnboardingPage() {
   const router = useRouter();
+  const { user, connectAccount, updateProfile } = useAuth();
   const [step, setStep] = React.useState<1 | 2>(1);
 
-  // Form State
-  const [name, setName] = React.useState("Alexander Vance");
-  const [email, setEmail] = React.useState("alexander@company.com");
+  // Form State initialized dynamically from authenticated user session
+  const [name, setName] = React.useState(user?.name || "");
+  const [email, setEmail] = React.useState(user?.email || "");
   const [nameError, setNameError] = React.useState("");
   const [emailError, setEmailError] = React.useState("");
 
-  // Connected accounts state
-  const [connectedEmails, setConnectedEmails] = React.useState<
-    Array<{ provider: string; email: string }>
-  >([]);
+  React.useEffect(() => {
+    if (user) {
+      if (!name) setName(user.name);
+      if (!email) setEmail(user.email);
+    }
+  }, [user, name, email]);
 
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +42,7 @@ export default function SimpleOnboardingPage() {
     }
 
     if (valid) {
+      updateProfile({ name, email });
       setStep(2);
     }
   };
@@ -50,10 +55,10 @@ export default function SimpleOnboardingPage() {
         ? `${name.toLowerCase().replace(/\s+/g, ".")}@zoho.com`
         : `${name.toLowerCase().replace(/\s+/g, ".")}@${provider.toLowerCase()}.com`;
 
-    if (!connectedEmails.some((acc) => acc.email === defaultAccount)) {
-      setConnectedEmails([...connectedEmails, { provider, email: defaultAccount }]);
-    }
+    connectAccount(provider, defaultAccount);
   };
+
+  const activeConnectedAccounts = user?.connectedAccounts || [];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 sm:p-6 font-sans text-[#0F172A]">
@@ -74,9 +79,9 @@ export default function SimpleOnboardingPage() {
           <div className="space-y-6">
             <div className="space-y-1.5 text-center">
               <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#0F172A] tracking-tight">
-                Welcome
+                Welcome, {user?.name ? user.name.split(" ")[0] : ""}!
               </h1>
-              <p className="text-sm text-[#475569]">Let&apos;s get you started.</p>
+              <p className="text-sm text-[#475569]">Confirm your executive profile details.</p>
             </div>
 
             <form onSubmit={handleStep1Submit} className="space-y-4">
@@ -114,19 +119,19 @@ export default function SimpleOnboardingPage() {
               </p>
             </div>
 
-            {/* List of Connected Accounts if any */}
-            {connectedEmails.length > 0 && (
+            {/* List of Connected Accounts */}
+            {activeConnectedAccounts.length > 0 && (
               <div className="space-y-2">
                 <div className="text-xs font-bold text-[#2E936F] flex items-center gap-1.5 uppercase tracking-wider">
                   <span className="material-symbols-outlined text-[16px]">check_circle</span>
                   <span>Email connected ✓</span>
                 </div>
-                {connectedEmails.map((acc) => (
+                {activeConnectedAccounts.map((acc) => (
                   <div
                     key={acc.email}
                     className="p-3 rounded-xl bg-[#E8F4F0] border border-[#2E936F]/30 flex items-center justify-between text-xs"
                   >
-                    <div className="font-bold text-[#0F172A]">{acc.email}</div>
+                    <div className="font-bold text-[#0F172A] font-mono">{acc.email}</div>
                     <span className="px-2 py-0.5 rounded bg-[#2E936F] text-white font-bold text-[10px]">
                       {acc.provider}
                     </span>
@@ -146,7 +151,7 @@ export default function SimpleOnboardingPage() {
               </div>
               <div>
                 <div className="text-sm font-bold text-[#0F172A]">
-                  {connectedEmails.length > 0 ? "+ Add another email" : "+ Add Email"}
+                  {activeConnectedAccounts.length > 0 ? "+ Add another email" : "+ Add Email"}
                 </div>
                 <div className="text-xs text-[#64748B]">Connect an email account</div>
               </div>
@@ -155,7 +160,7 @@ export default function SimpleOnboardingPage() {
             {/* Other Providers Section */}
             <div className="space-y-3 pt-2">
               <div className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider text-center">
-                Other providers
+                Supported Providers
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold">
                 {["Zoho", "Outlook", "Gmail", "Other"].map((prov) => (

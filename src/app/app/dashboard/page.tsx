@@ -13,11 +13,37 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { initialDecisionItems, initialTelemetryCounts } from "@/lib/data/mockExecuData";
 import { DecisionItem } from "@/lib/types/execuai";
 
+import { useAuth } from "@/lib/auth-context";
+
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [loading, setLoading] = React.useState(false);
   const [errorState, setErrorState] = React.useState(false);
-  const [decisions, setDecisions] = React.useState<DecisionItem[]>(initialDecisionItems);
-  const [telemetry, setTelemetry] = React.useState(initialTelemetryCounts);
+
+  // Dynamically map decision items to use current user's email
+  const userPrimaryEmail = user?.email || "user@example.com";
+  const userConnectedEmails = user?.connectedAccounts?.map((a) => a.email) || [userPrimaryEmail];
+
+  const dynamicDecisions = React.useMemo(() => {
+    return initialDecisionItems.map((item, idx) => ({
+      ...item,
+      account: userConnectedEmails[idx % userConnectedEmails.length] || userPrimaryEmail,
+    }));
+  }, [userPrimaryEmail, userConnectedEmails]);
+
+  const [decisions, setDecisions] = React.useState<DecisionItem[]>(dynamicDecisions);
+  const [telemetry, setTelemetry] = React.useState({
+    ...initialTelemetryCounts,
+    totalSyncedAccounts: userConnectedEmails.length || 1,
+  });
+
+  React.useEffect(() => {
+    setDecisions(dynamicDecisions);
+    setTelemetry((prev) => ({
+      ...prev,
+      totalSyncedAccounts: userConnectedEmails.length || 1,
+    }));
+  }, [dynamicDecisions, userConnectedEmails.length]);
 
   const handleSimulateClear = () => {
     setDecisions([]);
@@ -28,15 +54,17 @@ export default function DashboardPage() {
     setErrorState(false);
     setLoading(true);
     setTimeout(() => {
-      setDecisions(initialDecisionItems);
-      setTelemetry(initialTelemetryCounts);
+      setDecisions(dynamicDecisions);
+      setTelemetry({ ...initialTelemetryCounts, totalSyncedAccounts: userConnectedEmails.length || 1 });
       setLoading(false);
     }, 500);
   };
 
+  const firstName = user?.name ? user.name.split(" ")[0] : "Executive";
+
   return (
-    <div className="space-y-8 font-sans">
-      {/* Header Greeting & Core Question ("What needs my attention right now?") */}
+    <div className="space-y-8 font-sans text-[#0F172A]">
+      {/* Header Greeting & Core Question */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -52,7 +80,7 @@ export default function DashboardPage() {
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-heading font-extrabold text-[#0F172A] tracking-tight">
-            Good morning, Alexander.{" "}
+            Good morning, {firstName}.{" "}
             <span className="text-[#F15E1C]">
               {decisions.length > 0 ? `${decisions.length} consequential items` : "Zero pending items"}
             </span>{" "}

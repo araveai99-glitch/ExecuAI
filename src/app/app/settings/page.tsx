@@ -6,7 +6,10 @@ import { Input } from "@/components/ui/Input";
 import { Toggle } from "@/components/ui/Toggle";
 import { Tabs } from "@/components/ui/Tabs";
 
+import { useAuth } from "@/lib/auth-context";
+
 export default function SettingsPage() {
+  const { user, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = React.useState<string>("general");
   const [toastNotice, setToastNotice] = React.useState<string | null>(null);
 
@@ -16,11 +19,18 @@ export default function SettingsPage() {
   };
 
   // 1. GENERAL SETTINGS STATE
-  const [fullName, setFullName] = React.useState("Alexander Vance");
-  const [execRole, setExecRole] = React.useState("Chief Executive Officer");
-  const [primaryEmail] = React.useState("alexander@execuai.com");
+  const [fullName, setFullName] = React.useState(user?.name || "Executive User");
+  const [execRole, setExecRole] = React.useState(user?.role || "Chief Executive Officer");
+  const primaryEmail = user?.email || "user@example.com";
   const [workspaceName, setWorkspaceName] = React.useState("ExecuAI Executive Suite");
   const [timezone, setTimezone] = React.useState("EST (UTC-05:00)");
+
+  React.useEffect(() => {
+    if (user) {
+      setFullName(user.name);
+      setExecRole(user.role || "Chief Executive Officer");
+    }
+  }, [user]);
 
   // 2. NOTIFICATIONS STATE
   const [emailAlerts, setEmailAlerts] = React.useState(true);
@@ -36,6 +46,7 @@ export default function SettingsPage() {
   const [themeMode, setThemeMode] = React.useState<"light" | "system">("light");
 
   const handleSave = () => {
+    updateProfile({ name: fullName, role: execRole });
     showToast("Settings and executive preferences saved successfully.");
   };
 

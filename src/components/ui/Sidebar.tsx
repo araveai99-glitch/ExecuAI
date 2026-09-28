@@ -52,6 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: "rules-and-policies", label: "Rules & Policies", href: "/app/rules", icon: "policy", section: "Governance" },
     { id: "security-and-audit-log", label: "Security & Audit", href: "/app/security", icon: "verified_user", section: "Governance" },
     { id: "settings", label: "Settings", href: "/app/settings", icon: "settings", section: "Governance" },
+    { id: "admin", label: "Admin Console", href: "/admin", icon: "admin_panel_settings", section: "Governance" },
   ];
 
   return (

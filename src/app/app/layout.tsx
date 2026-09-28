@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/ui/Sidebar";
 import { Header } from "@/components/ui/Header";
 import { MobileNavigation } from "@/components/ui/MobileNavigation";
+import { useAuth } from "@/lib/auth-context";
 
 export default function AppShellLayout({
   children,
@@ -13,13 +14,32 @@ export default function AppShellLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  // Route Guard Effect
+  React.useEffect(() => {
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        router.push("/auth/login");
+        return;
+      }
+
+      // Check subscription / portal access
+      const isSubscriptionExpiredPage = pathname === "/app/subscription-expired";
+      const isAccessRestricted =
+        user?.subscription?.portalAccess === false || user?.subscription?.status === "expired";
+
+      if (isAccessRestricted && !isSubscriptionExpiredPage) {
+        router.push("/app/subscription-expired");
+      }
+    }
+  }, [isAuthenticated, isLoading, pathname, router, user]);
 
   // Extract current page path id (e.g. /app/dashboard -> dashboard)
   const segments = pathname.split("/").filter(Boolean);
   const currentPathId = segments[segments.length - 1] || "dashboard";
 
   const handleNavigate = (id: string) => {
-    // Map id to route path
     const routeMap: Record<string, string> = {
       dashboard: "/app/dashboard",
       "unified-inbox": "/app/inbox",
@@ -41,24 +61,39 @@ export default function AppShellLayout({
     router.push(targetRoute);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-center font-sans">
+        <div className="w-12 h-12 rounded-2xl bg-[#F15E1C] text-white font-extrabold flex items-center justify-center text-xl shadow-lg animate-pulse mb-3">
+          E
+        </div>
+        <p className="text-xs font-bold text-[#475569]">Loading ExecuAI Session...</p>
+      </div>
+    );
+  }
+
+  const activeUserName = user?.name || "Authenticated Executive";
+  const activeUserRole = user?.role || "Executive Leader";
+  const connectedMailboxes = user?.connectedAccounts?.map((a) => ({
+    provider: a.provider.toUpperCase(),
+    email: a.email,
+  })) || [];
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased">
       {/* Persistent Desktop Sidebar */}
       <Sidebar
         currentPath={currentPathId}
         onNavigate={handleNavigate}
-        connectedMailboxes={[
-          { provider: "GMAIL", email: "ceo@company.com" },
-          { provider: "ZOHO", email: "board@vance.io" },
-        ]}
-        userName="Alexander Vance"
-        userRole="Chief Executive Officer"
+        connectedMailboxes={connectedMailboxes}
+        userName={activeUserName}
+        userRole={activeUserRole}
       />
 
       {/* Persistent Top Header */}
       <Header
-        userName="Alexander Vance"
-        syncedCount={3}
+        userName={activeUserName}
+        syncedCount={connectedMailboxes.length || 1}
         onSearch={(q) => console.log("Global search:", q)}
       />
 
@@ -77,3 +112,4 @@ export default function AppShellLayout({
     </div>
   );
 }
+

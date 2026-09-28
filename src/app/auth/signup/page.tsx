@@ -7,9 +7,12 @@ import { AuthHeader } from "@/components/auth/AuthHeader";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { useAuth } from "@/lib/auth-context";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const { registerUser, authMessage } = useAuth();
+
   const [formData, setFormData] = React.useState({
     name: "",
     email: "",
@@ -35,15 +38,17 @@ export default function SignUpPage() {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    const res = await registerUser(formData.name, formData.email, formData.password);
+    setIsLoading(false);
+
+    if (res.success) {
       router.push("/auth/email-verification");
-    }, 800);
+    }
   };
 
   return (
@@ -51,20 +56,35 @@ export default function SignUpPage() {
       <AuthHeader />
 
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-8">
-        <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-2xl border border-[#E2E8F0] shadow-md space-y-6">
+        <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl border border-[#E2E8F0] shadow-xl space-y-6">
           <div className="space-y-1.5 text-center">
-            <h1 className="text-2xl font-heading font-extrabold tracking-tight text-[#0F172A]">
-              Create Your ExecuAI SaaS Account
+            <h1 className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight text-[#0F172A]">
+              Create Account
             </h1>
             <p className="text-xs text-[#475569]">
-              One workspace to connect, triage, and draft across multiple Gmail & Zoho accounts.
+              Start your 14-day free trial. Connect, triage, and draft across multiple Gmail & Zoho accounts.
             </p>
           </div>
 
+          {/* Feedback Message */}
+          {authMessage && (
+            <div
+              className={`p-3 rounded-xl border text-xs font-semibold ${
+                authMessage.type === "success"
+                  ? "bg-[#E8F4F0] border-[#2E936F]/30 text-[#2E936F]"
+                  : authMessage.type === "error"
+                  ? "bg-[#FEF2F2] border-[#DC2626]/30 text-[#DC2626]"
+                  : "bg-[#FFF2EC] border-[#F15E1C]/30 text-[#F15E1C]"
+              }`}
+            >
+              {authMessage.text}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label="Executive Full Name"
-              placeholder="Alexander Vance"
+              label="Full Name"
+              placeholder="Enter your name"
               value={formData.name}
               error={errors.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -73,7 +93,7 @@ export default function SignUpPage() {
             <Input
               label="Work Email Address"
               type="email"
-              placeholder="alexander@company.com"
+              placeholder="e.g. name@company.com"
               value={formData.email}
               error={errors.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -82,7 +102,7 @@ export default function SignUpPage() {
             <Input
               label="Password"
               type="password"
-              placeholder="••••••••••••"
+              placeholder="Minimum 8 characters"
               value={formData.password}
               error={errors.password}
               hint="Minimum 8 characters with letters & numbers"
@@ -92,7 +112,7 @@ export default function SignUpPage() {
             <Input
               label="Confirm Password"
               type="password"
-              placeholder="••••••••••••"
+              placeholder="Re-enter your password"
               value={formData.confirmPassword}
               error={errors.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
@@ -123,10 +143,10 @@ export default function SignUpPage() {
             <Button
               type="submit"
               variant="primary"
-              className="w-full mt-2"
+              className="w-full mt-2 py-3 text-xs font-bold"
               isLoading={isLoading}
             >
-              Create Executive Account
+              Create Account →
             </Button>
           </form>
 
@@ -141,4 +161,3 @@ export default function SignUpPage() {
     </div>
   );
 }
-

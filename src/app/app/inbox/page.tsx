@@ -6,18 +6,20 @@ import { Tabs } from "@/components/ui/Tabs";
 import { PriorityBadge } from "@/components/ui/PriorityBadge";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { IntentBadge } from "@/components/ui/IntentBadge";
-import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmailDetailView } from "@/components/execuai/EmailDetailView";
 import { initialUnifiedEmails } from "@/lib/data/mockExecuData";
-import {
-  UnifiedEmailItem,
-  PriorityLevel,
-  IntentCategory,
-  RiskLevel,
-} from "@/lib/types/execuai";
+import { UnifiedEmailItem } from "@/lib/types/execuai";
+import { useAuth } from "@/lib/auth-context";
 
 export default function UnifiedInboxPage() {
+  const { user } = useAuth();
+  
+  // Dynamic user accounts
+  const userPrimaryEmail = user?.email || "user@example.com";
+  const connectedList = user?.connectedAccounts || [{ provider: "Gmail", email: userPrimaryEmail, connectedAt: new Date().toISOString() }];
+  const userAccountEmails = connectedList.map((a) => a.email);
+
   // Simulator State Toggles
   const [viewState, setViewState] = React.useState<"NORMAL" | "LOADING" | "ERROR" | "EMPTY">("NORMAL");
 
@@ -34,8 +36,24 @@ export default function UnifiedInboxPage() {
   // Mobile Detail Modal State
   const [isMobileDetailOpen, setIsMobileDetailOpen] = React.useState<boolean>(false);
 
-  // Master Email List State (with local unread/flag toggling)
-  const [emails, setEmails] = React.useState<UnifiedEmailItem[]>(initialUnifiedEmails);
+  // Dynamic Emails based on user's accounts
+  const dynamicEmails = React.useMemo(() => {
+    return initialUnifiedEmails.map((e, idx) => {
+      const assignedAccount = userAccountEmails[idx % userAccountEmails.length] || userPrimaryEmail;
+      return {
+        ...e,
+        accountEmail: assignedAccount,
+        accountLabel: assignedAccount.includes("gmail") ? "Gmail Account" : "Zoho Account",
+      };
+    });
+  }, [userAccountEmails, userPrimaryEmail]);
+
+  // Master Email List State
+  const [emails, setEmails] = React.useState<UnifiedEmailItem[]>(dynamicEmails);
+
+  React.useEffect(() => {
+    setEmails(dynamicEmails);
+  }, [dynamicEmails]);
 
   // Toggle Starred / Flagged
   const toggleFlag = (e: React.MouseEvent, id: string) => {
@@ -58,31 +76,24 @@ export default function UnifiedInboxPage() {
     if (viewState === "EMPTY") return [];
 
     return emails.filter((item) => {
-      // Account filter
-      if (accountFilter !== "ALL" && item.accountEmail !== accountFilter) {
+      if (accountFilter !== "ALL" && item.accountEmail.toLowerCase() !== accountFilter.toLowerCase()) {
         return false;
       }
-      // Priority filter
       if (priorityFilter !== "ALL" && item.priority !== priorityFilter) {
         return false;
       }
-      // Intent filter
       if (intentFilter !== "ALL" && item.intent !== intentFilter) {
         return false;
       }
-      // Risk filter
       if (riskFilter !== "ALL" && item.risk !== riskFilter) {
         return false;
       }
-      // Unread filter
       if (unreadOnly && !item.unread) {
         return false;
       }
-      // Flagged filter
       if (flaggedOnly && !item.flagged) {
         return false;
       }
-      // Search query filter
       if (searchQuery.trim() !== "") {
         const query = searchQuery.toLowerCase();
         const matchSender = item.senderName.toLowerCase().includes(query) || item.senderEmail.toLowerCase().includes(query);
@@ -109,20 +120,26 @@ export default function UnifiedInboxPage() {
   const criticalCount = React.useMemo(() => emails.filter((e) => e.priority === "CRITICAL").length, [emails]);
 
   // Account Tabs Config
-  const accountTabs = [
-    { id: "ALL", label: "All Connected Accounts", badge: `${emails.length}` },
-    { id: "ceo@company.com", label: "Gmail #1 (CEO)", badge: `${emails.filter((e) => e.accountEmail === "ceo@company.com").length}` },
-    { id: "alexander.founder@gmail.com", label: "Gmail #2 (Personal)", badge: `${emails.filter((e) => e.accountEmail === "alexander.founder@gmail.com").length}` },
-    { id: "director@company.com", label: "Zoho #1 (Director)", badge: `${emails.filter((e) => e.accountEmail === "director@company.com").length}` },
-  ];
+  const accountTabs = React.useMemo(() => {
+    const tabs = [{ id: "ALL", label: "All Connected Accounts", badge: `${emails.length}` }];
+    connectedList.forEach((acc) => {
+      const count = emails.filter((e) => e.accountEmail.toLowerCase() === acc.email.toLowerCase()).length;
+      tabs.push({
+        id: acc.email,
+        label: `${acc.provider} (${acc.email})`,
+        badge: `${count}`,
+      });
+    });
+    return tabs;
+  }, [connectedList, emails]);
 
   return (
-    <div className="space-y-6 max-w-full overflow-x-hidden pb-12">
+    <div className="space-y-6 max-w-full overflow-x-hidden pb-12 font-sans text-[#0F172A]">
       {/* Dynamic State Switcher (Simulator Controls) */}
       <div className="bg-[#0F172A] text-white p-3 rounded-2xl shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#f15e1c] animate-ping" />
-          <span className="font-bold text-[#ffec69] uppercase tracking-wide text-[11px]">Inbox Simulation Mode:</span>
+          <span className="w-2 h-2 rounded-full bg-[#F15E1C] animate-ping" />
+          <span className="font-bold text-[#FFEC69] uppercase tracking-wide text-[11px]">Inbox Simulation Mode:</span>
           <span className="text-[#94A3B8]">Toggle UI states to inspect empty, loading, or error behaviors</span>
         </div>
 
@@ -130,7 +147,7 @@ export default function UnifiedInboxPage() {
           <button
             onClick={() => setViewState("NORMAL")}
             className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
-              viewState === "NORMAL" ? "bg-[#f15e1c] text-white" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
+              viewState === "NORMAL" ? "bg-[#F15E1C] text-white" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
             }`}
           >
             Live Stream
@@ -138,7 +155,7 @@ export default function UnifiedInboxPage() {
           <button
             onClick={() => setViewState("LOADING")}
             className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
-              viewState === "LOADING" ? "bg-[#fab60a] text-[#0F172A]" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
+              viewState === "LOADING" ? "bg-[#FAB60A] text-[#0F172A]" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
             }`}
           >
             Skeleton Loading
@@ -154,7 +171,7 @@ export default function UnifiedInboxPage() {
           <button
             onClick={() => setViewState("ERROR")}
             className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
-              viewState === "ERROR" ? "bg-[#f15e1c] text-white" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
+              viewState === "ERROR" ? "bg-[#F15E1C] text-white" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
             }`}
           >
             Error State
@@ -168,16 +185,16 @@ export default function UnifiedInboxPage() {
           <div className="space-y-1">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight font-heading">Unified Executive Inbox</h1>
-              <span className="bg-[#f7d7b0]/50 text-[#0F172A] text-xs px-2.5 py-0.5 rounded-full font-bold">
+              <span className="bg-[#F7D7B0]/50 text-[#0F172A] text-xs px-2.5 py-0.5 rounded-full font-bold">
                 {unreadCount} Unread Emails
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#fff2ec] text-[#f15e1c] text-xs font-bold border border-[#f15e1c]/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#f15e1c] animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFF2EC] text-[#F15E1C] text-xs font-bold border border-[#F15E1C]/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#F15E1C] animate-pulse" />
                 {criticalCount} Critical Priority
               </span>
             </div>
             <p className="text-xs text-[#64748B]">
-              Real-time multi-mailbox aggregation across Gmail #1, Gmail #2, and Zoho #1.
+              Real-time multi-mailbox aggregation across your connected accounts.
             </p>
           </div>
 
@@ -202,7 +219,7 @@ export default function UnifiedInboxPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search emails, people, or topics across all connected accounts..."
-            className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#f15e1c] focus:bg-white transition-all"
+            className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#F15E1C] focus:bg-white transition-all"
           />
           {searchQuery && (
             <button
@@ -281,11 +298,11 @@ export default function UnifiedInboxPage() {
               onClick={() => setUnreadOnly(!unreadOnly)}
               className={`px-3 py-1.5 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
                 unreadOnly
-                  ? "bg-[#fff2ec] border-[#f15e1c] text-[#f15e1c]"
+                  ? "bg-[#FFF2EC] border-[#F15E1C] text-[#F15E1C]"
                   : "bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A]"
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-[#f15e1c]" />
+              <span className="w-2 h-2 rounded-full bg-[#F15E1C]" />
               Unread Only
             </button>
 
@@ -293,11 +310,11 @@ export default function UnifiedInboxPage() {
               onClick={() => setFlaggedOnly(!flaggedOnly)}
               className={`px-3 py-1.5 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
                 flaggedOnly
-                  ? "bg-[#ffec69]/30 border-[#fab60a] text-[#855d00]"
+                  ? "bg-[#FFEC69]/30 border-[#FAB60A] text-[#855D00]"
                   : "bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A]"
               }`}
             >
-              <span className="material-symbols-outlined text-[16px] text-[#fab60a]">star</span>
+              <span className="material-symbols-outlined text-[16px] text-[#FAB60A]">star</span>
               Flagged Only
             </button>
           </div>
@@ -320,7 +337,7 @@ export default function UnifiedInboxPage() {
                 setFlaggedOnly(false);
                 setSearchQuery("");
               }}
-              className="text-[#f15e1c] hover:underline font-bold text-xs flex items-center gap-1"
+              className="text-[#F15E1C] hover:underline font-bold text-xs flex items-center gap-1"
             >
               <span className="material-symbols-outlined text-[14px]">refresh</span>
               Clear Filters
@@ -357,14 +374,14 @@ export default function UnifiedInboxPage() {
       )}
 
       {viewState === "ERROR" && (
-        <div className="p-8 rounded-2xl bg-[#fff2ec] border border-[#f15e1c]/30 text-center space-y-4 max-w-2xl mx-auto my-8 shadow-xs">
-          <div className="w-12 h-12 rounded-full bg-[#f15e1c]/10 text-[#f15e1c] flex items-center justify-center mx-auto">
+        <div className="p-8 rounded-2xl bg-[#FFF2EC] border border-[#F15E1C]/30 text-center space-y-4 max-w-2xl mx-auto my-8 shadow-xs">
+          <div className="w-12 h-12 rounded-full bg-[#F15E1C]/10 text-[#F15E1C] flex items-center justify-center mx-auto">
             <span className="material-symbols-outlined text-2xl">sync_problem</span>
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-bold text-[#f15e1c] font-heading">Unified Mailbox Sync Interrupted</h3>
+            <h3 className="text-lg font-bold text-[#F15E1C] font-heading">Unified Mailbox Sync Interrupted</h3>
             <p className="text-xs text-[#475569] leading-relaxed max-w-md mx-auto">
-              Unable to reach OAuth provider endpoints for <span className="font-bold">director@company.com (Zoho #1)</span>. The connection timed out during TLS handshake verification.
+              Unable to reach OAuth provider endpoints for connected accounts. The connection timed out during TLS handshake verification.
             </p>
           </div>
           <div className="pt-2 flex items-center justify-center gap-3">
@@ -376,20 +393,13 @@ export default function UnifiedInboxPage() {
             >
               Retry Unified Sync
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => alert("Re-authenticating accounts...")}
-            >
-              Re-authenticate Zoho
-            </Button>
           </div>
         </div>
       )}
 
       {(viewState === "EMPTY" || (viewState === "NORMAL" && filteredEmails.length === 0)) && (
-        <div className="p-12 rounded-2xl bg-[#f7d7b0]/20 border border-[#f7d7b0] text-center space-y-4 max-w-xl mx-auto my-8 shadow-xs">
-          <div className="w-16 h-16 rounded-full bg-[#ffec69]/40 text-[#fab60a] flex items-center justify-center mx-auto border border-[#f7d7b0]">
+        <div className="p-12 rounded-2xl bg-[#F7D7B0]/20 border border-[#F7D7B0] text-center space-y-4 max-w-xl mx-auto my-8 shadow-xs">
+          <div className="w-16 h-16 rounded-full bg-[#FFEC69]/40 text-[#FAB60A] flex items-center justify-center mx-auto border border-[#F7D7B0]">
             <span className="material-symbols-outlined text-3xl">verified</span>
           </div>
           <div className="space-y-1">
@@ -421,27 +431,27 @@ export default function UnifiedInboxPage() {
 
       {viewState === "NORMAL" && filteredEmails.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Email Stream List (Stacked list for mobile/tablet, 5-col stream for desktop/iPad landscape) */}
+          {/* Left Email Stream List */}
           <div className="lg:col-span-5 space-y-3">
             <div className="flex items-center justify-between text-xs text-[#64748B] px-1 font-semibold">
               <span>Showing {filteredEmails.length} emails</span>
               <span>Sorted by Recency</span>
             </div>
 
-            {filteredEmails.map((email) => {
-              const isSelected = selectedEmailId === email.id;
+            {filteredEmails.map((emailItem: UnifiedEmailItem) => {
+              const isSelected = selectedEmailId === emailItem.id;
 
               return (
                 <div
-                  key={email.id}
+                  key={emailItem.id}
                   onClick={() => {
-                    setSelectedEmailId(email.id);
+                    setSelectedEmailId(emailItem.id);
                     setIsMobileDetailOpen(true);
                   }}
                   className={`p-4 rounded-xl border transition-all cursor-pointer space-y-3 relative ${
                     isSelected
-                      ? "bg-white border-[#f15e1c] shadow-sm ring-1 ring-[#f15e1c]"
-                      : email.unread
+                      ? "bg-white border-[#F15E1C] shadow-sm ring-1 ring-[#F15E1C]"
+                      : emailItem.unread
                       ? "bg-white border-[#CBD5E1] shadow-2xs hover:border-[#94A3B8]"
                       : "bg-[#F8FAFC]/90 border-[#E2E8F0] hover:bg-white"
                   }`}
@@ -451,25 +461,25 @@ export default function UnifiedInboxPage() {
                     <div className="flex items-center gap-2 min-w-0">
                       <span
                         className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                          email.provider === "GMAIL"
+                          emailItem.provider === "GMAIL"
                             ? "bg-[#FFF1F2] text-[#E11D48] border border-[#FDA4AF]"
                             : "bg-[#EFF6FF] text-[#2563EB] border border-[#93C5FD]"
                         }`}
                       >
                         <span className="material-symbols-outlined text-[12px]">
-                          {email.provider === "GMAIL" ? "mail" : "domain"}
+                          {emailItem.provider === "GMAIL" ? "mail" : "domain"}
                         </span>
-                        {email.accountLabel} ({email.provider})
+                        {emailItem.accountLabel}
                       </span>
-                      <span className="text-[11px] text-[#64748B] truncate font-medium">{email.accountEmail}</span>
+                      <span className="text-[11px] text-[#64748B] truncate font-medium">{emailItem.accountEmail}</span>
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-[11px] text-[#94A3B8] font-medium">{email.timestamp}</span>
+                      <span className="text-[11px] text-[#94A3B8] font-medium">{emailItem.timestamp}</span>
                       <button
-                        onClick={(e) => toggleFlag(e, email.id)}
+                        onClick={(e) => toggleFlag(e, emailItem.id)}
                         className={`text-[18px] transition-colors ${
-                          email.flagged ? "text-[#FAB60A] material-symbols-outlined fill-1" : "text-[#CBD5E1] hover:text-[#94A3B8] material-symbols-outlined"
+                          emailItem.flagged ? "text-[#FAB60A] material-symbols-outlined fill-1" : "text-[#CBD5E1] hover:text-[#94A3B8] material-symbols-outlined"
                         }`}
                       >
                         star
@@ -480,29 +490,29 @@ export default function UnifiedInboxPage() {
                   {/* Sender & Subject */}
                   <div>
                     <div className="flex items-center justify-between gap-2">
-                      <h4 className={`text-sm tracking-tight truncate ${email.unread ? "font-extrabold text-[#0F172A]" : "font-semibold text-[#334155]"}`}>
-                        {email.senderName}
+                      <h4 className={`text-sm tracking-tight truncate ${emailItem.unread ? "font-extrabold text-[#0F172A]" : "font-semibold text-[#334155]"}`}>
+                        {emailItem.senderName}
                       </h4>
-                      {email.unread && (
+                      {emailItem.unread && (
                         <span className="w-2 h-2 rounded-full bg-[#2563EB] flex-shrink-0" title="Unread" />
                       )}
                     </div>
-                    <p className={`text-xs mt-0.5 line-clamp-1 ${email.unread ? "font-bold text-[#0F172A]" : "font-medium text-[#475569]"}`}>
-                      {email.subject}
+                    <p className={`text-xs mt-0.5 line-clamp-1 ${emailItem.unread ? "font-bold text-[#0F172A]" : "font-medium text-[#475569]"}`}>
+                      {emailItem.subject}
                     </p>
                   </div>
 
                   {/* Snippet */}
                   <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed">
-                    {email.snippet}
+                    {emailItem.snippet}
                   </p>
 
                   {/* AI Metadata Badges */}
                   <div className="flex items-center flex-wrap gap-1.5 pt-1">
-                    <PriorityBadge priority={email.priority} size="sm" />
-                    <IntentBadge intent={email.intent} size="sm" />
-                    <RiskBadge risk={email.risk} size="sm" />
-                    {email.hasAttachment && (
+                    <PriorityBadge priority={emailItem.priority} size="sm" />
+                    <IntentBadge intent={emailItem.intent} size="sm" />
+                    <RiskBadge risk={emailItem.risk} size="sm" />
+                    {emailItem.hasAttachment && (
                       <span className="inline-flex items-center gap-1 text-[10px] text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded font-bold">
                         <span className="material-symbols-outlined text-[12px]">attach_file</span>
                         File
@@ -514,7 +524,7 @@ export default function UnifiedInboxPage() {
             })}
           </div>
 
-          {/* Right Email Detail Pane (Desktop & iPad Landscape Split View) */}
+          {/* Right Email Detail Pane */}
           <div className="hidden lg:block lg:col-span-7 space-y-4 sticky top-6">
             {activeEmail && (
               <EmailDetailView email={activeEmail} />
@@ -544,4 +554,3 @@ export default function UnifiedInboxPage() {
     </div>
   );
 }
-

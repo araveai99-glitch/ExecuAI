@@ -5,72 +5,55 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { AccountItem, AccountStatus } from "@/lib/types/execuai";
 
+import { useAuth } from "@/lib/auth-context";
+
 export default function AccountsManagementPage() {
-  // Master Accounts Dataset covering all 5 required states
-  const [accounts, setAccounts] = React.useState<AccountItem[]>([
-    {
-      id: "ACC-101",
-      accountLabel: "Gmail #1",
-      provider: "GMAIL",
-      emailAddress: "ceo@company.com",
-      status: "CONNECTED",
-      lastSync: "12s ago",
-      scopes: ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.compose"],
-      connectedDate: "Aug 12, 2026",
-      unreadCount: 14,
-      totalSyncedThreads: 1240,
-    },
-    {
-      id: "ACC-102",
-      accountLabel: "Gmail #2",
-      provider: "GMAIL",
-      emailAddress: "sales@company.com",
-      status: "SYNCING",
-      lastSync: "Syncing stream...",
-      scopes: ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.compose"],
-      connectedDate: "Sep 01, 2026",
-      unreadCount: 8,
-      totalSyncedThreads: 840,
-    },
-    {
-      id: "ACC-103",
-      accountLabel: "Zoho #1",
-      provider: "ZOHO",
-      emailAddress: "director@company.com",
-      status: "ERROR",
-      lastSync: "14m ago",
-      syncError: "TLS Handshake Timeout: Endpoint mx.zoho.com refused OAuth handshake retry.",
-      scopes: ["ZohoMail.messages.READ", "ZohoMail.messages.CREATE"],
-      connectedDate: "Jul 28, 2026",
-      unreadCount: 6,
-      totalSyncedThreads: 610,
-    },
-    {
-      id: "ACC-104",
-      accountLabel: "Gmail #3",
-      provider: "GMAIL",
-      emailAddress: "alexander.founder@gmail.com",
-      status: "PAUSED",
-      lastSync: "2h ago",
-      scopes: ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.compose"],
-      connectedDate: "Jan 15, 2026",
-      unreadCount: 22,
-      totalSyncedThreads: 3100,
-    },
-    {
-      id: "ACC-105",
-      accountLabel: "Zoho #2",
-      provider: "ZOHO",
-      emailAddress: "board.sec@company.com",
-      status: "RECONNECT_REQUIRED",
-      lastSync: "1d ago",
-      syncError: "OAuth Refresh Token Expired: Requires executive re-authentication.",
-      scopes: ["ZohoMail.messages.READ", "ZohoMail.messages.CREATE"],
-      connectedDate: "Mar 10, 2026",
-      unreadCount: 0,
-      totalSyncedThreads: 420,
-    },
-  ]);
+  const { user, connectAccount, removeAccount } = useAuth();
+  
+  // Transform user's connected accounts to AccountItem format
+  const dynamicAccounts = React.useMemo<AccountItem[]>(() => {
+    if (!user || !user.connectedAccounts || user.connectedAccounts.length === 0) {
+      const primary = user?.email || "user@example.com";
+      return [
+        {
+          id: "ACC-101",
+          accountLabel: "Primary Account",
+          provider: "GMAIL",
+          emailAddress: primary,
+          status: "CONNECTED",
+          lastSync: "Just now",
+          scopes: ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.compose"],
+          connectedDate: "Today",
+          unreadCount: 4,
+          totalSyncedThreads: 142,
+        },
+      ];
+    }
+
+    return user.connectedAccounts.map((acc, index) => {
+      const provUpper = acc.provider.toUpperCase() as "GMAIL" | "ZOHO";
+      return {
+        id: `ACC-${101 + index}`,
+        accountLabel: `${acc.provider} #${index + 1}`,
+        provider: provUpper.includes("ZOHO") ? "ZOHO" : "GMAIL",
+        emailAddress: acc.email,
+        status: "CONNECTED" as AccountStatus,
+        lastSync: "12s ago",
+        scopes: provUpper.includes("ZOHO")
+          ? ["ZohoMail.messages.READ", "ZohoMail.messages.CREATE"]
+          : ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.compose"],
+        connectedDate: new Date(acc.connectedAt || Date.now()).toLocaleDateString(),
+        unreadCount: (index + 1) * 3,
+        totalSyncedThreads: (index + 1) * 240,
+      };
+    });
+  }, [user]);
+
+  const [accounts, setAccounts] = React.useState<AccountItem[]>(dynamicAccounts);
+
+  React.useEffect(() => {
+    setAccounts(dynamicAccounts);
+  }, [dynamicAccounts]);
 
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [selectedRemoveAccount, setSelectedRemoveAccount] = React.useState<AccountItem | null>(null);
@@ -124,7 +107,7 @@ export default function AccountsManagementPage() {
   const handleConfirmRemove = () => {
     if (!selectedRemoveAccount) return;
     const targetEmail = selectedRemoveAccount.emailAddress;
-    setAccounts((prev) => prev.filter((a) => a.id !== selectedRemoveAccount.id));
+    removeAccount(targetEmail);
     setSelectedRemoveAccount(null);
     showToast(`Removed connected account ${targetEmail} from workspace.`);
   };
