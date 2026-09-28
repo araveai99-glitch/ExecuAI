@@ -7,6 +7,8 @@ import { Header } from "@/components/ui/Header";
 import { MobileNavigation } from "@/components/ui/MobileNavigation";
 import { useAuth } from "@/lib/auth-context";
 
+import { UserDataProvider } from "@/lib/user-data-context";
+
 export default function AppShellLayout({
   children,
 }: {
@@ -80,36 +82,38 @@ export default function AppShellLayout({
   })) || [];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased">
-      {/* Persistent Desktop Sidebar */}
-      <Sidebar
-        currentPath={currentPathId}
-        onNavigate={handleNavigate}
-        connectedMailboxes={connectedMailboxes}
-        userName={activeUserName}
-        userRole={activeUserRole}
-      />
+    <UserDataProvider>
+      <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased">
+        {/* Persistent Desktop Sidebar */}
+        <Sidebar
+          currentPath={currentPathId}
+          onNavigate={handleNavigate}
+          connectedMailboxes={connectedMailboxes}
+          userName={activeUserName}
+          userRole={activeUserRole}
+        />
 
-      {/* Persistent Top Header */}
-      <Header
-        userName={activeUserName}
-        syncedCount={connectedMailboxes.length || 1}
-        onSearch={(q) => console.log("Global search:", q)}
-      />
+        {/* Persistent Top Header */}
+        <Header
+          userName={activeUserName}
+          syncedCount={connectedMailboxes.length || 1}
+          onSearch={(q) => console.log("Global search:", q)}
+        />
 
-      {/* Main Content Area */}
-      <main className="pl-0 lg:pl-64 pt-16 pb-20 lg:pb-8 min-h-screen bg-[#F8FAFC]">
-        <div className="w-full max-w-[1720px] mx-auto p-4 sm:p-6 lg:p-8">
-          {children}
-        </div>
-      </main>
+        {/* Main Content Area */}
+        <main className="pl-0 lg:pl-64 pt-16 pb-20 lg:pb-8 min-h-screen bg-[#F8FAFC]">
+          <div className="w-full max-w-[1720px] mx-auto p-4 sm:p-6 lg:p-8">
+            {children}
+          </div>
+        </main>
 
-      {/* Mobile Sticky Bottom Navigation (<1024px) */}
-      <MobileNavigation
-        currentPath={currentPathId}
-        onNavigate={handleNavigate}
-      />
-    </div>
+        {/* Mobile Sticky Bottom Navigation (<1024px) */}
+        <MobileNavigation
+          currentPath={currentPathId}
+          onNavigate={handleNavigate}
+        />
+      </div>
+    </UserDataProvider>
   );
 }
 

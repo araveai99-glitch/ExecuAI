@@ -8,25 +8,29 @@ import { RiskBadge } from "@/components/ui/RiskBadge";
 import { IntentBadge } from "@/components/ui/IntentBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmailDetailView } from "@/components/execuai/EmailDetailView";
-import { initialUnifiedEmails } from "@/lib/data/mockExecuData";
 import { UnifiedEmailItem } from "@/lib/types/execuai";
 import { useAuth } from "@/lib/auth-context";
+import { useUserData } from "@/lib/user-data-context";
 
 export default function UnifiedInboxPage() {
   const { user } = useAuth();
-  
-  // Dynamic user accounts
-  const userPrimaryEmail = user?.email || "user@example.com";
-  const connectedList = user?.connectedAccounts || [{ provider: "Gmail", email: userPrimaryEmail, connectedAt: new Date().toISOString() }];
-  const userAccountEmails = connectedList.map((a) => a.email);
+  const {
+    connectedAccounts,
+    selectedAccountFilter,
+    setSelectedAccountFilter,
+    allUserEmails,
+    filteredEmails,
+    searchQuery,
+    setSearchQuery,
+    toggleFlagged,
+    toggleUnread,
+  } = useUserData();
 
   // Simulator State Toggles
   const [viewState, setViewState] = React.useState<"NORMAL" | "LOADING" | "ERROR" | "EMPTY">("NORMAL");
 
   // Selection & Filter States
-  const [selectedEmailId, setSelectedEmailId] = React.useState<string>("EMAIL-1001");
-  const [searchQuery, setSearchQuery] = React.useState<string>("");
-  const [accountFilter, setAccountFilter] = React.useState<string>("ALL");
+  const [selectedEmailId, setSelectedEmailId] = React.useState<string>("");
   const [priorityFilter, setPriorityFilter] = React.useState<string>("ALL");
   const [intentFilter, setIntentFilter] = React.useState<string>("ALL");
   const [riskFilter, setRiskFilter] = React.useState<string>("ALL");
@@ -36,94 +40,46 @@ export default function UnifiedInboxPage() {
   // Mobile Detail Modal State
   const [isMobileDetailOpen, setIsMobileDetailOpen] = React.useState<boolean>(false);
 
-  // Dynamic Emails based on user's accounts
-  const dynamicEmails = React.useMemo(() => {
-    return initialUnifiedEmails.map((e, idx) => {
-      const assignedAccount = userAccountEmails[idx % userAccountEmails.length] || userPrimaryEmail;
-      return {
-        ...e,
-        accountEmail: assignedAccount,
-        accountLabel: assignedAccount.includes("gmail") ? "Gmail Account" : "Zoho Account",
-      };
-    });
-  }, [userAccountEmails, userPrimaryEmail]);
-
-  // Master Email List State
-  const [emails, setEmails] = React.useState<UnifiedEmailItem[]>(dynamicEmails);
-
+  // Set initial selected email when list updates
   React.useEffect(() => {
-    setEmails(dynamicEmails);
-  }, [dynamicEmails]);
+    if (filteredEmails.length > 0 && !selectedEmailId) {
+      setSelectedEmailId(filteredEmails[0].id);
+    }
+  }, [filteredEmails, selectedEmailId]);
 
-  // Toggle Starred / Flagged
-  const toggleFlag = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    setEmails((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, flagged: !item.flagged } : item))
-    );
-  };
-
-  // Toggle Unread
-  const toggleUnread = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    setEmails((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, unread: !item.unread } : item))
-    );
-  };
-
-  // Filter Logic
-  const filteredEmails = React.useMemo(() => {
+  // Secondary Filter Logic applied on top of context filteredEmails
+  const displayEmails = React.useMemo(() => {
     if (viewState === "EMPTY") return [];
 
-    return emails.filter((item) => {
-      if (accountFilter !== "ALL" && item.accountEmail.toLowerCase() !== accountFilter.toLowerCase()) {
-        return false;
-      }
-      if (priorityFilter !== "ALL" && item.priority !== priorityFilter) {
-        return false;
-      }
-      if (intentFilter !== "ALL" && item.intent !== intentFilter) {
-        return false;
-      }
-      if (riskFilter !== "ALL" && item.risk !== riskFilter) {
-        return false;
-      }
-      if (unreadOnly && !item.unread) {
-        return false;
-      }
-      if (flaggedOnly && !item.flagged) {
-        return false;
-      }
-      if (searchQuery.trim() !== "") {
-        const query = searchQuery.toLowerCase();
-        const matchSender = item.senderName.toLowerCase().includes(query) || item.senderEmail.toLowerCase().includes(query);
-        const matchSubject = item.subject.toLowerCase().includes(query);
-        const matchSnippet = item.snippet.toLowerCase().includes(query);
-        const matchAccount = item.accountEmail.toLowerCase().includes(query) || item.accountLabel.toLowerCase().includes(query);
-        const matchSummary = item.aiSummary ? item.aiSummary.toLowerCase().includes(query) : false;
-        if (!matchSender && !matchSubject && !matchSnippet && !matchAccount && !matchSummary) {
-          return false;
-        }
-      }
-
+    return filteredEmails.filter((item) => {
+      if (priorityFilter !== "ALL" && item.priority !== priorityFilter) return false;
+      if (intentFilter !== "ALL" && item.intent !== intentFilter) return false;
+      if (riskFilter !== "ALL" && item.risk !== riskFilter) return false;
+      if (unreadOnly && !item.unread) return false;
+      if (flaggedOnly && !item.flagged) return false;
       return true;
     });
-  }, [emails, viewState, accountFilter, priorityFilter, intentFilter, riskFilter, unreadOnly, flaggedOnly, searchQuery]);
+  }, [filteredEmails, viewState, priorityFilter, intentFilter, riskFilter, unreadOnly, flaggedOnly]);
 
   // Currently Selected Email
   const activeEmail = React.useMemo(() => {
-    return emails.find((e) => e.id === selectedEmailId) || filteredEmails[0] || emails[0];
-  }, [emails, selectedEmailId, filteredEmails]);
+    return (
+      displayEmails.find((e) => e.id === selectedEmailId) ||
+      displayEmails[0] ||
+      allUserEmails[0] ||
+      null
+    );
+  }, [displayEmails, selectedEmailId, allUserEmails]);
 
   // Active Count Telemetry
-  const unreadCount = React.useMemo(() => emails.filter((e) => e.unread).length, [emails]);
-  const criticalCount = React.useMemo(() => emails.filter((e) => e.priority === "CRITICAL").length, [emails]);
+  const unreadCount = React.useMemo(() => allUserEmails.filter((e) => e.unread).length, [allUserEmails]);
+  const criticalCount = React.useMemo(() => allUserEmails.filter((e) => e.priority === "CRITICAL").length, [allUserEmails]);
 
   // Account Tabs Config
   const accountTabs = React.useMemo(() => {
-    const tabs = [{ id: "ALL", label: "All Connected Accounts", badge: `${emails.length}` }];
-    connectedList.forEach((acc) => {
-      const count = emails.filter((e) => e.accountEmail.toLowerCase() === acc.email.toLowerCase()).length;
+    const tabs = [{ id: "ALL", label: "All Connected Accounts", badge: `${allUserEmails.length}` }];
+    connectedAccounts.forEach((acc) => {
+      const count = allUserEmails.filter((e) => e.accountEmail.toLowerCase() === acc.email.toLowerCase()).length;
       tabs.push({
         id: acc.email,
         label: `${acc.provider} (${acc.email})`,
@@ -131,7 +87,7 @@ export default function UnifiedInboxPage() {
       });
     });
     return tabs;
-  }, [connectedList, emails]);
+  }, [connectedAccounts, allUserEmails]);
 
   return (
     <div className="space-y-6 max-w-full overflow-x-hidden pb-12 font-sans text-[#0F172A]">
@@ -202,8 +158,8 @@ export default function UnifiedInboxPage() {
           <div className="overflow-x-auto pb-1 max-w-full">
             <Tabs
               variant="segmented"
-              activeTab={accountFilter}
-              onChange={setAccountFilter}
+              activeTab={selectedAccountFilter}
+              onChange={setSelectedAccountFilter}
               tabs={accountTabs}
             />
           </div>
@@ -320,7 +276,7 @@ export default function UnifiedInboxPage() {
           </div>
 
           {/* Reset Filters CTA */}
-          {(accountFilter !== "ALL" ||
+          {(selectedAccountFilter !== "ALL" ||
             priorityFilter !== "ALL" ||
             intentFilter !== "ALL" ||
             riskFilter !== "ALL" ||
@@ -329,7 +285,7 @@ export default function UnifiedInboxPage() {
             searchQuery !== "") && (
             <button
               onClick={() => {
-                setAccountFilter("ALL");
+                setSelectedAccountFilter("ALL");
                 setPriorityFilter("ALL");
                 setIntentFilter("ALL");
                 setRiskFilter("ALL");
@@ -397,13 +353,13 @@ export default function UnifiedInboxPage() {
         </div>
       )}
 
-      {(viewState === "EMPTY" || (viewState === "NORMAL" && filteredEmails.length === 0)) && (
+      {(viewState === "EMPTY" || (viewState === "NORMAL" && displayEmails.length === 0)) && (
         <div className="p-12 rounded-2xl bg-[#F7D7B0]/20 border border-[#F7D7B0] text-center space-y-4 max-w-xl mx-auto my-8 shadow-xs">
           <div className="w-16 h-16 rounded-full bg-[#FFEC69]/40 text-[#FAB60A] flex items-center justify-center mx-auto border border-[#F7D7B0]">
             <span className="material-symbols-outlined text-3xl">verified</span>
           </div>
           <div className="space-y-1">
-            <h3 className="text-xl font-bold text-[#0F172A] font-heading">You're all caught up.</h3>
+            <h3 className="text-xl font-bold text-[#0F172A] font-heading">You&apos;re all caught up.</h3>
             <p className="text-xs text-[#64748B]">
               No emails matching your active filter criteria require attention across connected accounts.
             </p>
@@ -414,7 +370,7 @@ export default function UnifiedInboxPage() {
               size="sm"
               onClick={() => {
                 setViewState("NORMAL");
-                setAccountFilter("ALL");
+                setSelectedAccountFilter("ALL");
                 setPriorityFilter("ALL");
                 setIntentFilter("ALL");
                 setRiskFilter("ALL");
@@ -429,17 +385,17 @@ export default function UnifiedInboxPage() {
         </div>
       )}
 
-      {viewState === "NORMAL" && filteredEmails.length > 0 && (
+      {viewState === "NORMAL" && displayEmails.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Email Stream List */}
           <div className="lg:col-span-5 space-y-3">
             <div className="flex items-center justify-between text-xs text-[#64748B] px-1 font-semibold">
-              <span>Showing {filteredEmails.length} emails</span>
+              <span>Showing {displayEmails.length} emails</span>
               <span>Sorted by Recency</span>
             </div>
 
-            {filteredEmails.map((emailItem: UnifiedEmailItem) => {
-              const isSelected = selectedEmailId === emailItem.id;
+            {displayEmails.map((emailItem: UnifiedEmailItem) => {
+              const isSelected = activeEmail?.id === emailItem.id;
 
               return (
                 <div
@@ -469,7 +425,7 @@ export default function UnifiedInboxPage() {
                         <span className="material-symbols-outlined text-[12px]">
                           {emailItem.provider === "GMAIL" ? "mail" : "domain"}
                         </span>
-                        {emailItem.accountLabel}
+                        {emailItem.provider}
                       </span>
                       <span className="text-[11px] text-[#64748B] truncate font-medium">{emailItem.accountEmail}</span>
                     </div>
@@ -477,7 +433,10 @@ export default function UnifiedInboxPage() {
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className="text-[11px] text-[#94A3B8] font-medium">{emailItem.timestamp}</span>
                       <button
-                        onClick={(e) => toggleFlag(e, emailItem.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFlagged(emailItem.id);
+                        }}
                         className={`text-[18px] transition-colors ${
                           emailItem.flagged ? "text-[#FAB60A] material-symbols-outlined fill-1" : "text-[#CBD5E1] hover:text-[#94A3B8] material-symbols-outlined"
                         }`}
@@ -554,3 +513,4 @@ export default function UnifiedInboxPage() {
     </div>
   );
 }
+

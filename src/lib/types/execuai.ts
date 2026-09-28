@@ -1,4 +1,4 @@
-export type MailboxProvider = "GMAIL" | "ZOHO";
+export type MailboxProvider = "GMAIL" | "ZOHO" | "OUTLOOK" | "OTHER";
 
 export type PriorityLevel =
   | "CRITICAL"
