@@ -285,10 +285,19 @@ export class GmailApiService {
     });
 
     if (listRes.status === 401) {
-      throw new Error("Gmail connection expired. Reconnect Gmail.");
+      throw new Error("401 Unauthorized: Gmail access token expired or invalid.");
+    }
+    if (listRes.status === 403) {
+      throw new Error("403 Forbidden: Insufficient Gmail scope or Gmail API disabled in Google Cloud Console. Scope required: https://www.googleapis.com/auth/gmail.readonly");
+    }
+    if (listRes.status === 400) {
+      throw new Error("400 Bad Request: Invalid request sent to Gmail API.");
+    }
+    if (listRes.status === 404) {
+      throw new Error("404 Not Found: Gmail user resource not found.");
     }
     if (!listRes.ok) {
-      throw new Error(`Gmail API list error: ${listRes.statusText} (${listRes.status})`);
+      throw new Error(`Gmail API error (${listRes.status}): ${listRes.statusText}`);
     }
 
     const listData = await listRes.json();

@@ -40,8 +40,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Securely store credentials in server token store
-    ServerGmailTokenStore.saveCredential({
+    // 2. Securely store credentials in server database token store
+    await ServerGmailTokenStore.saveCredential({
       userId,
       email: verifiedEmail.toLowerCase(),
       accessToken,

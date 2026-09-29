@@ -73,6 +73,23 @@ model EmailAccount {
   @@map("email_accounts")
 }
 
+// 3b. GMAIL TOKENS (Persistent OAuth Token Storage)
+model GmailToken {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  email        String   @unique
+  accessToken  String   @map("access_token")
+  refreshToken String?  @map("refresh_token")
+  expiresAt    BigInt   @map("expires_at")
+  scope        String?  @default("https://www.googleapis.com/auth/gmail.readonly")
+  status       String   @default("CONNECTED")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("gmail_tokens")
+}
+
+
 // 4. EMAIL THREADS (Belongs to Email Account)
 model EmailThread {
   id             String        @id @default(uuid())

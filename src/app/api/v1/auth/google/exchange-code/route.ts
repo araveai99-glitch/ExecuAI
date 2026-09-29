@@ -129,8 +129,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Securely save credentials on SERVER ONLY — Never expose accessToken or refreshToken to browser
-    ServerGmailTokenStore.saveCredential({
+    // Securely save credentials on SERVER ONLY into Database — Never expose accessToken or refreshToken to browser
+    await ServerGmailTokenStore.saveCredential({
       userId,
       email: verifiedEmail,
       name,
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
       lastSyncedAt: new Date().toISOString(),
     });
 
-    console.log(`[GMAIL AUTH] Credentials stored securely server-side for user ${userId} / email ${verifiedEmail}`);
+    console.log(`[GMAIL AUTH] Credentials stored securely in database server-side for user ${userId} / email ${verifiedEmail}`);
 
     return NextResponse.json({
       success: true,

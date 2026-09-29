@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 1. Retrieve all server-stored Gmail credentials strictly for this user session
-    const credentials = ServerGmailTokenStore.getAllUserCredentials(userId);
+    const credentials = await ServerGmailTokenStore.getAllUserCredentials(userId);
 
     console.log(`[GMAIL SYNC] GET /api/v1/inbox — Found ${credentials.length} server-stored credential(s)`);
 
@@ -84,14 +84,35 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      // 3. Call Gmail API on server using valid access token
+      // 3. Call Gmail API on server using valid access token (with automatic 401 single retry)
       try {
         console.log(`[GMAIL SYNC] Fetching Gmail INBOX for ${cleanEmail} via server API...`);
-        const messages = await GmailApiService.fetchRealGmailMessages(tokenResult.accessToken, cleanEmail, 30);
-        const drafts = await GmailApiService.fetchRealGmailDrafts(tokenResult.accessToken, cleanEmail);
+        let activeToken = tokenResult.accessToken;
+        let messages: UnifiedEmailItem[] = [];
+        let drafts: any[] = [];
+
+        try {
+          messages = await GmailApiService.fetchRealGmailMessages(activeToken, cleanEmail, 30);
+          drafts = await GmailApiService.fetchRealGmailDrafts(activeToken, cleanEmail);
+        } catch (fetchErr: any) {
+          if (fetchErr.message?.includes("401") || fetchErr.message?.toLowerCase().includes("expired")) {
+            console.warn(`[GMAIL SYNC] Received 401 Unauthorized for ${cleanEmail}. Triggering token refresh & retry...`);
+            const refreshRes = await ServerGmailTokenStore.refreshAccessToken(cred.userId, cleanEmail);
+
+            if (refreshRes.accessToken) {
+              activeToken = refreshRes.accessToken;
+              console.log(`[GMAIL SYNC] Token refreshed successfully for ${cleanEmail}. Retrying Gmail API call ONCE...`);
+              messages = await GmailApiService.fetchRealGmailMessages(activeToken, cleanEmail, 30);
+              drafts = await GmailApiService.fetchRealGmailDrafts(activeToken, cleanEmail);
+            } else {
+              throw new Error(refreshRes.error || "401 Unauthorized: Unable to refresh expired access token. Please re-authorize Gmail.");
+            }
+          } else {
+            throw fetchErr;
+          }
+        }
 
         console.log(`[GMAIL SYNC] Account ${cleanEmail}: ${messages.length} messages, ${drafts.length} drafts fetched`);
-
         allFetchedEmails.push(...messages);
 
         const convertedDrafts: DraftItem[] = drafts.map((d) => {
@@ -134,7 +155,7 @@ export async function GET(req: NextRequest) {
         cred.status = "CONNECTED";
         cred.lastSyncedAt = new Date().toISOString();
         cred.messagesCount = messages.length;
-        ServerGmailTokenStore.saveCredential(cred);
+        await ServerGmailTokenStore.saveCredential(cred);
 
         accountsStatusList.push({
           email: cleanEmail,
@@ -147,7 +168,7 @@ export async function GET(req: NextRequest) {
         accountsStatusList.push({
           email: cleanEmail,
           provider: "Gmail",
-          status: "ERROR",
+          status: err.message?.includes("401") || err.message?.includes("403") ? "RECONNECT_REQUIRED" : "ERROR",
           lastSync: cred.lastSyncedAt || "Error",
           syncError: err.message,
         });

@@ -12,9 +12,9 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const credentials = ServerGmailTokenStore.getAllUserCredentials(userId);
+    const credentials = await ServerGmailTokenStore.getAllUserCredentials(userId);
 
-    const accounts = credentials.map((cred, idx) => ({
+    const accounts = credentials.map((cred: any, idx: number) => ({
       id: `acc_g_${idx + 1}`,
       accountLabel: `Gmail (${cred.email})`,
       provider: "GMAIL",
