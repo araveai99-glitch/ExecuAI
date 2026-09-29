@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth-context";
 import { GmailApiService } from "@/lib/services/GmailApiService";
+import { buildGoogleAuthUrl, isGoogleOAuthConfigured, getGoogleRedirectUri } from "@/lib/config/google-oauth";
 
 export default function ConnectGmailPage() {
   const router = useRouter();
@@ -17,16 +18,19 @@ export default function ConnectGmailPage() {
 
   const handleOAuthConnect = () => {
     setIsAuthorizing(true);
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "998127389102-google-oauth-client-id.apps.googleusercontent.com";
-    const redirectUri = `${window.location.origin}/auth/google-callback`;
-    const scope = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
-      googleClientId
-    )}&redirect_uri=${encodeURIComponent(
-      redirectUri
-    )}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=consent`;
+    setErrorMsg(null);
 
-    window.location.href = authUrl;
+    const authRes = buildGoogleAuthUrl();
+    if (authRes.error || !authRes.url) {
+      setIsAuthorizing(false);
+      setErrorMsg(
+        authRes.error ||
+          "Google OAuth configuration is incomplete. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local with your active Google Cloud Console OAuth Client ID."
+      );
+      return;
+    }
+
+    window.location.href = authRes.url;
   };
 
   const handleManualTokenSubmit = async (e: React.FormEvent) => {
@@ -79,6 +83,22 @@ export default function ConnectGmailPage() {
           <h1 className="text-xl font-bold text-[#0F172A]">Connect Your Real Gmail Account</h1>
         </div>
       </div>
+
+      {!isGoogleOAuthConfigured() && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium space-y-2">
+          <div className="flex items-center gap-2 font-bold text-amber-950">
+            <span className="material-symbols-outlined text-[20px] text-amber-600">warning</span>
+            <span>Google Cloud OAuth Setup Required</span>
+          </div>
+          <p>
+            To authenticate with Google OAuth, set your active Google Cloud OAuth 2.0 Client ID in <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">.env.local</code> under <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code>.
+          </p>
+          <div className="text-[11px] text-amber-800 space-y-1">
+            <div><strong>Authorized Redirect URI:</strong> <code className="bg-white px-1.5 py-0.5 rounded border border-amber-300 font-mono text-[10px]">{getGoogleRedirectUri()}</code></div>
+            <div>Configure this exact URI under Authorized Redirect URIs in your Google Cloud Console.</div>
+          </div>
+        </div>
+      )}
 
       {errorMsg && (
         <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-center gap-2">

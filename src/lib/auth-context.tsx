@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { buildGoogleAuthUrl, isGoogleOAuthConfigured } from "@/lib/config/google-oauth";
 
 export interface UserSubscription {
   plan: "14-Day Trial" | "Executive Solo" | "Executive Pro" | "Enterprise Desk";
@@ -253,19 +254,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthMessage({ type: "info", text: "Initializing Google OAuth 2.0 connection..." });
     setIsLoading(true);
 
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "998127389102-google-oauth-client-id.apps.googleusercontent.com";
-
     if (!customGoogleEmail) {
-      // Real Google OAuth 2.0 Redirect Flow
-      const redirectUri = `${window.location.origin}/auth/google-callback`;
-      const scope = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
-        googleClientId
-      )}&redirect_uri=${encodeURIComponent(
-        redirectUri
-      )}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=consent`;
-      
-      window.location.href = authUrl;
+      const authRes = buildGoogleAuthUrl();
+      if (authRes.error || !authRes.url) {
+        setIsLoading(false);
+        setAuthMessage({
+          type: "error",
+          text: authRes.error || "Google OAuth configuration is incomplete. Please configure NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local.",
+        });
+        return;
+      }
+      window.location.href = authRes.url;
     } else {
       // Authenticate with actual Google user retrieved from Google OAuth userinfo API
       const googleEmail = customGoogleEmail.trim().toLowerCase();
