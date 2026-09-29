@@ -5,7 +5,14 @@ import { GmailApiService } from "@/lib/services/GmailApiService";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { accessToken, refreshToken, email: providedEmail, userId = "usr_current_session" } = body;
+    const { accessToken, refreshToken, email: providedEmail, userId } = body;
+
+    if (!userId || userId === "usr_current_session") {
+      return NextResponse.json(
+        { success: false, error: "Unauthenticated: Valid user session required." },
+        { status: 401 }
+      );
+    }
 
     if (!accessToken) {
       return NextResponse.json(

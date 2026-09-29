@@ -3,12 +3,21 @@
  * Ensures consistent Client ID, Redirect URI, and Scope usage across frontend and backend.
  */
 
-export const GOOGLE_OAUTH_SCOPES = [
+// Scope 1: Normal Google Sign-In / Login (OIDC Identity only, no Gmail permissions)
+export const GOOGLE_LOGIN_SCOPES = [
+  "openid",
+  "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/userinfo.profile",
+].join(" ");
+
+// Scope 2: Gmail Integration (Explicitly requested inside dashboard/onboarding)
+export const GMAIL_CONNECT_SCOPES = [
+  "openid",
+  "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/userinfo.profile",
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.compose",
   "https://www.googleapis.com/auth/gmail.modify",
-  "https://www.googleapis.com/auth/userinfo.email",
-  "https://www.googleapis.com/auth/userinfo.profile",
 ].join(" ");
 
 export function getGoogleClientId(): string {
@@ -37,7 +46,10 @@ export function getGoogleRedirectUri(): string {
   return process.env.GOOGLE_REDIRECT_URI || process.env.GMAIL_REDIRECT_URI || "http://localhost:3000/auth/google-callback";
 }
 
-export function buildGoogleAuthUrl(): { url?: string; error?: string } {
+/**
+ * Builds Google Sign-In / Login OAuth URL (OIDC Identity only)
+ */
+export function buildGoogleLoginUrl(): { url?: string; error?: string } {
   const clientId = getGoogleClientId();
 
   if (!isGoogleOAuthConfigured()) {
@@ -53,8 +65,41 @@ export function buildGoogleAuthUrl(): { url?: string; error?: string } {
   )}&redirect_uri=${encodeURIComponent(
     redirectUri
   )}&response_type=code&scope=${encodeURIComponent(
-    GOOGLE_OAUTH_SCOPES
-  )}&access_type=offline&prompt=consent`;
+    GOOGLE_LOGIN_SCOPES
+  )}&prompt=select_account&state=login`;
 
   return { url: authUrl };
 }
+
+/**
+ * Builds Connect Gmail OAuth URL (Full Mailbox permissions + Offline refresh token)
+ */
+export function buildGoogleConnectUrl(): { url?: string; error?: string } {
+  const clientId = getGoogleClientId();
+
+  if (!isGoogleOAuthConfigured()) {
+    return {
+      error:
+        "Google OAuth configuration is incomplete or invalid. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local with your active Google Cloud Console OAuth Client ID.",
+    };
+  }
+
+  const redirectUri = getGoogleRedirectUri();
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+    clientId
+  )}&redirect_uri=${encodeURIComponent(
+    redirectUri
+  )}&response_type=code&scope=${encodeURIComponent(
+    GMAIL_CONNECT_SCOPES
+  )}&access_type=offline&prompt=consent&state=connect_gmail`;
+
+  return { url: authUrl };
+}
+
+export function buildGoogleAuthUrl(flow: "login" | "connect_gmail" = "connect_gmail"): { url?: string; error?: string } {
+  if (flow === "login") {
+    return buildGoogleLoginUrl();
+  }
+  return buildGoogleConnectUrl();
+}
+

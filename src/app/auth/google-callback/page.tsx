@@ -15,42 +15,76 @@ export default function GoogleCallbackPage() {
   React.useEffect(() => {
     async function handleGoogleCallback() {
       try {
-        const hash = window.location.hash.substring(1);
         const searchParams = new URLSearchParams(window.location.search);
-        const hashParams = new URLSearchParams(hash);
-
         const code = searchParams.get("code");
-        const accessToken = hashParams.get("access_token") || searchParams.get("access_token");
+        const state = searchParams.get("state");
+        const oauthError = searchParams.get("error");
 
-        // 1. Authorization Code Flow (Recommended — obtains Refresh Token)
-        if (code) {
-          setStatus("Exchanging Google authorization code for credentials...");
+        if (oauthError) {
+          setError(`Google OAuth Error: ${oauthError}`);
+          return;
+        }
+
+        if (!code) {
+          setError("No authorization code received from Google.");
+          return;
+        }
+
+        const redirectUri = getGoogleRedirectUri();
+
+        // FLOW 1: Normal Google Sign-In / Login (OIDC Identity Verification)
+        if (state === "login") {
+          setStatus("Verifying Google Sign-In identity...");
           const res = await fetch("/api/v1/auth/google/exchange-code", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               code,
-              redirectUri: getGoogleRedirectUri(),
-              userId: user?.id || "usr_current_session",
+              redirectUri,
+              flow: "login",
             }),
           });
 
           const data = await res.json();
           if (!res.ok || !data.success) {
-            throw new Error(data.error || "Failed to exchange Google OAuth authorization code.");
+            throw new Error(data.error || "Failed to verify Google identity.");
           }
 
           const verifiedEmail = data.email;
           const accountName = data.name || verifiedEmail.split("@")[0];
 
-          setStatus(`Successfully authenticated: ${verifiedEmail}`);
+          setStatus(`Welcome, ${accountName}! Redirecting to dashboard...`);
+          await loginWithGoogle(verifiedEmail, accountName);
+          return;
+        }
 
-          // Update application session & connected accounts
-          if (user) {
-            connectAccount("Gmail", verifiedEmail);
-          } else {
-            await loginWithGoogle(verifiedEmail, accountName, data.accessToken);
+        // FLOW 2: Connect Gmail Mailbox Account inside App/Dashboard
+        if (state === "connect_gmail") {
+          if (!user || !user.id) {
+            throw new Error("You must be signed in to ExecuAI before connecting a Gmail account.");
           }
+
+          setStatus("Connecting Gmail mailbox to your ExecuAI account...");
+          const res = await fetch("/api/v1/auth/google/exchange-code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              code,
+              redirectUri,
+              userId: user.id,
+              flow: "connect_gmail",
+            }),
+          });
+
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || "Failed to connect Gmail mailbox.");
+          }
+
+          const verifiedEmail = data.email;
+          setStatus(`Successfully connected Gmail mailbox: ${verifiedEmail}`);
+
+          connectAccount("Gmail", verifiedEmail);
 
           setTimeout(() => {
             router.push(`/onboarding/gmail-success?email=${encodeURIComponent(verifiedEmail)}`);
@@ -58,53 +92,43 @@ export default function GoogleCallbackPage() {
           return;
         }
 
-        // 2. Direct Access Token Flow
-        if (accessToken) {
-          setStatus("Retrieving authenticated Google profile...");
-          const profile = await GmailApiService.fetchGoogleUserProfile(accessToken);
-          const cleanEmail = profile.email.toLowerCase();
-
-          setStatus(`Saving server-side OAuth credentials for ${cleanEmail}...`);
-          const saveRes = await fetch("/api/v1/auth/google/save-token", {
+        // Fallback: If no state param, default based on user session presence
+        if (user && user.id) {
+          setStatus("Connecting Gmail mailbox...");
+          const res = await fetch("/api/v1/auth/google/exchange-code", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              accessToken,
-              email: cleanEmail,
-              userId: user?.id || "usr_current_session",
+              code,
+              redirectUri,
+              userId: user.id,
+              flow: "connect_gmail",
             }),
           });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || "Failed to complete connection.");
 
-          const saveData = await saveRes.json();
-          if (!saveRes.ok || !saveData.success) {
-            throw new Error(saveData.error || "Failed to store server credentials.");
-          }
+          connectAccount("Gmail", data.email);
+          router.push(`/onboarding/gmail-success?email=${encodeURIComponent(data.email)}`);
+        } else {
+          setStatus("Verifying Google Sign-In identity...");
+          const res = await fetch("/api/v1/auth/google/exchange-code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              code,
+              redirectUri,
+              flow: "login",
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || "Failed to verify identity.");
 
-          setStatus(`Verified Google Account: ${cleanEmail}`);
-
-          if (user) {
-            connectAccount("Gmail", cleanEmail);
-          } else {
-            await loginWithGoogle(cleanEmail, profile.name, accessToken);
-          }
-
-          setTimeout(() => {
-            router.push(`/onboarding/gmail-success?email=${encodeURIComponent(cleanEmail)}`);
-          }, 600);
-          return;
+          await loginWithGoogle(data.email, data.name);
         }
-
-        // Check if error was returned by Google OAuth
-        const oauthError = searchParams.get("error") || hashParams.get("error");
-        if (oauthError) {
-          setError(`Google OAuth Error: ${oauthError}`);
-          return;
-        }
-
-        setError("No Google OAuth code or access token received in redirect response.");
       } catch (err: any) {
-        console.error("Google OAuth error", err);
-        setError(err.message || "Failed to complete Google OAuth authentication.");
+        console.error("Google Callback Exception", err);
+        setError(err.message || "Failed to complete Google authentication.");
       }
     }
 

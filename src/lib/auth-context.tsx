@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { buildGoogleAuthUrl, isGoogleOAuthConfigured } from "@/lib/config/google-oauth";
+import { buildGoogleLoginUrl, isGoogleOAuthConfigured } from "@/lib/config/google-oauth";
 
 export interface UserSubscription {
   plan: "14-Day Trial" | "Executive Solo" | "Executive Pro" | "Enterprise Desk";
@@ -249,13 +249,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  // Google OAuth Flow
-  const loginWithGoogle = async (customGoogleEmail?: string, customGoogleName?: string, accessToken?: string) => {
-    setAuthMessage({ type: "info", text: "Initializing Google OAuth 2.0 connection..." });
+  // Google OIDC Sign-In Flow
+  const loginWithGoogle = async (customGoogleEmail?: string, customGoogleName?: string) => {
+    setAuthMessage({ type: "info", text: "Initializing Google Sign-In..." });
     setIsLoading(true);
 
     if (!customGoogleEmail) {
-      const authRes = buildGoogleAuthUrl();
+      const authRes = buildGoogleLoginUrl();
       if (authRes.error || !authRes.url) {
         setIsLoading(false);
         setAuthMessage({
@@ -266,16 +266,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       window.location.href = authRes.url;
     } else {
-      // Authenticate with actual Google user retrieved from Google OAuth userinfo API
+      // Authenticate with verified Google user identity retrieved from Google OIDC Token / UserInfo API
       const googleEmail = customGoogleEmail.trim().toLowerCase();
       const googleName = customGoogleName || googleEmail.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-
-      if (accessToken) {
-        localStorage.setItem(
-          `execuai_gmail_token_${googleEmail}`,
-          JSON.stringify({ accessToken, email: googleEmail, name: googleName, expiresAt: Date.now() + 3600 * 1000 })
-        );
-      }
 
       let match = usersDb.find((u) => u.email.toLowerCase() === googleEmail);
       if (!match) {
@@ -287,25 +280,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isAdmin: googleEmail.includes("admin"),
           emailVerified: true,
           subscription: createDefaultSubscription(googleEmail),
-          connectedAccounts: [
-            { provider: "Gmail", email: googleEmail, connectedAt: new Date().toISOString() },
-          ],
+          connectedAccounts: [], // Pure identity sign-in — Gmail permissions connected separately via Connect Gmail
         };
         saveDb([...usersDb, match]);
-      } else {
-        // Ensure connectedAccounts has the Gmail account
-        const hasAcc = match.connectedAccounts.some((a) => a.email.toLowerCase() === googleEmail);
-        if (!hasAcc) {
-          match = {
-            ...match,
-            connectedAccounts: [
-              ...match.connectedAccounts,
-              { provider: "Gmail", email: googleEmail, connectedAt: new Date().toISOString() },
-            ],
-          };
-          saveDb(usersDb.map((u) => (u.id === match!.id ? match! : u)));
-        }
       }
+
       saveSession(match);
       setIsLoading(false);
       setAuthMessage({ type: "success", text: `Authenticated with Google as ${googleEmail}` });

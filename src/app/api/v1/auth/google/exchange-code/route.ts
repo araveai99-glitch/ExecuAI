@@ -5,7 +5,7 @@ import { GmailApiService } from "@/lib/services/GmailApiService";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { code, redirectUri, userId = "usr_current_session" } = body;
+    const { code, redirectUri, userId, flow = "connect_gmail" } = body;
 
     if (!code) {
       return NextResponse.json(
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(`[GMAIL AUTH] Exchanging OAuth authorization code for tokens (userId: ${userId})...`);
+    console.log(`[GOOGLE AUTH] Exchanging OAuth authorization code (flow: ${flow}, userId: ${userId || "N/A"})...`);
 
     // 1. Exchange authorization code for Google tokens
     const tokenParams = new URLSearchParams({
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     const tokenData = await tokenRes.json();
 
     if (!tokenRes.ok || !tokenData.access_token) {
-      console.error("[GMAIL AUTH] Authorization code exchange failed:", tokenData);
+      console.error("[GOOGLE AUTH] Authorization code exchange failed:", tokenData);
       return NextResponse.json(
         {
           success: false,
@@ -72,29 +72,29 @@ export async function POST(req: NextRequest) {
     const refreshToken = tokenData.refresh_token;
     const expiresIn = tokenData.expires_in || 3600;
 
-    console.log(`[GMAIL AUTH] Access token received. Refresh token present: ${refreshToken ? "YES" : "NO"}`);
-
-    // 2. Identify actual Google/Gmail account identity directly from Gmail API / Google UserInfo
+    // 2. Identify actual Google user identity via Google OAuth UserInfo / Gmail Profile API
     let verifiedEmail = "";
     let name = "";
 
     try {
-      const profile = await GmailApiService.fetchGmailProfile(accessToken);
-      verifiedEmail = profile.emailAddress.toLowerCase();
-      console.log(`[GMAIL AUTH] Authenticated Gmail API profile verified: ${verifiedEmail}`);
-    } catch (err: any) {
-      console.warn(`[GMAIL AUTH] Gmail profile fetch failed: ${err.message}. Trying Google OAuth userinfo...`);
+      const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (userInfoRes.ok) {
+        const uInfo = await userInfoRes.json();
+        verifiedEmail = (uInfo.email || "").toLowerCase();
+        name = uInfo.name || "";
+      }
+    } catch (uiErr: any) {
+      console.warn("[GOOGLE AUTH] Google userinfo fetch error:", uiErr.message);
+    }
+
+    if (!verifiedEmail) {
       try {
-        const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (userInfoRes.ok) {
-          const uInfo = await userInfoRes.json();
-          verifiedEmail = (uInfo.email || "").toLowerCase();
-          name = uInfo.name || "";
-        }
-      } catch (uiErr: any) {
-        console.error("[GMAIL AUTH] Google userinfo fetch failed:", uiErr);
+        const profile = await GmailApiService.fetchGmailProfile(accessToken);
+        verifiedEmail = profile.emailAddress.toLowerCase();
+      } catch (err: any) {
+        console.error("[GOOGLE AUTH] Gmail profile fetch error:", err.message);
       }
     }
 
@@ -105,7 +105,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Securely save credentials on SERVER
+    // 3. Flow 1: Normal Google Login / OIDC Identity verification ONLY
+    if (flow === "login") {
+      console.log(`[GOOGLE LOGIN] Successfully verified Google Sign-In identity: ${verifiedEmail}`);
+      return NextResponse.json({
+        success: true,
+        flow: "login",
+        email: verifiedEmail,
+        name: name || verifiedEmail.split("@")[0],
+        message: "Google login identity verified successfully.",
+      });
+    }
+
+    // 4. Flow 2: Connect Gmail Mailbox Account
+    // Strict validation: Require real user session ID (no fallback to "usr_current_session")
+    if (!userId || userId === "usr_current_session") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthenticated: Valid user session required to connect Gmail account.",
+        },
+        { status: 401 }
+      );
+    }
+
+    // Securely save credentials on SERVER ONLY — Never expose accessToken or refreshToken to browser
     ServerGmailTokenStore.saveCredential({
       userId,
       email: verifiedEmail,
@@ -117,28 +141,19 @@ export async function POST(req: NextRequest) {
       lastSyncedAt: new Date().toISOString(),
     });
 
-    // 4. Initial Gmail sync
-    let initialMessageCount = 0;
-    try {
-      const initialMessages = await GmailApiService.fetchRealGmailMessages(accessToken, verifiedEmail, 25);
-      initialMessageCount = initialMessages.length;
-      console.log(`[GMAIL SYNC] Initial sync completed for ${verifiedEmail}: ${initialMessageCount} messages fetched`);
-    } catch (syncErr: any) {
-      console.error(`[GMAIL SYNC] Initial sync exception for ${verifiedEmail}:`, syncErr);
-    }
+    console.log(`[GMAIL AUTH] Credentials stored securely server-side for user ${userId} / email ${verifiedEmail}`);
 
     return NextResponse.json({
       success: true,
+      flow: "connect_gmail",
       email: verifiedEmail,
       name,
-      accessToken,
-      refreshTokenAvailable: !!refreshToken,
       status: "CONNECTED",
-      initialMessageCount,
-      message: `Google account ${verifiedEmail} successfully authenticated and server credentials saved.`,
+      message: `Gmail account ${verifiedEmail} connected successfully.`,
     });
   } catch (error: any) {
-    console.error("[GMAIL AUTH Exchange Code Error]:", error);
+    console.error("[GOOGLE AUTH Exchange Code Error]:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+

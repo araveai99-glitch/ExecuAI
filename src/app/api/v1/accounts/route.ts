@@ -4,11 +4,15 @@ import { ServerGmailTokenStore } from "@/lib/server/gmail-token-store";
 // Server-side Accounts API Route
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get("userId") || "usr_current_session";
-    let credentials = ServerGmailTokenStore.getAllUserCredentials(userId);
-    if (credentials.length === 0) {
-      credentials = ServerGmailTokenStore.getAllCredentials();
+    const userId = req.nextUrl.searchParams.get("userId");
+    if (!userId || userId === "usr_current_session") {
+      return NextResponse.json({
+        success: true,
+        accounts: [],
+      });
     }
+
+    const credentials = ServerGmailTokenStore.getAllUserCredentials(userId);
 
     const accounts = credentials.map((cred, idx) => ({
       id: `acc_g_${idx + 1}`,

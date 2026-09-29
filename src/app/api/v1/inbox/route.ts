@@ -6,15 +6,31 @@ import { UnifiedEmailItem, DraftItem } from "@/lib/types/execuai";
 // Server-side Unified Inbox API
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get("userId") || "usr_current_session";
+    const userId = req.nextUrl.searchParams.get("userId");
     const accountFilter = req.nextUrl.searchParams.get("accountEmail") || "ALL";
 
-    // 1. Retrieve all server-stored Gmail credentials for this user session
-    let credentials = ServerGmailTokenStore.getAllUserCredentials(userId);
-    if (credentials.length === 0) {
-      // Fallback: check all stored credentials if userId not specified
-      credentials = ServerGmailTokenStore.getAllCredentials();
+    if (!userId || userId === "usr_current_session") {
+      return NextResponse.json({
+        success: true,
+        emails: [],
+        drafts: [],
+        accounts: [],
+        counts: {
+          critical: 0,
+          urgent: 0,
+          needReview: 0,
+          safeToDraft: 0,
+          lowPriority: 0,
+          totalDrafts: 0,
+          syncedMailboxes: 0,
+        },
+        syncStatus: "idle",
+        syncError: null,
+      });
     }
+
+    // 1. Retrieve all server-stored Gmail credentials strictly for this user session
+    const credentials = ServerGmailTokenStore.getAllUserCredentials(userId);
 
     console.log(`[GMAIL SYNC] GET /api/v1/inbox — Found ${credentials.length} server-stored credential(s)`);
 
