@@ -8,6 +8,7 @@ import { PriorityBadge } from "@/components/ui/PriorityBadge";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { IntentBadge } from "@/components/ui/IntentBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { useUserData, CategoryFilterType } from "@/lib/user-data-context";
 import { UnifiedEmailItem } from "@/lib/types/execuai";
@@ -17,15 +18,18 @@ export default function DashboardPage() {
   const {
     connectedAccounts,
     selectedAccountFilter,
+    setSelectedAccountFilter,
     selectedProviderFilter,
     selectedCategoryFilter,
     setSelectedCategoryFilter,
+    isLoading,
+    syncError,
+    refreshGmailSync,
     filteredEmails,
     counts,
     toggleUnread,
     toggleFlagged,
     archiveEmail,
-    deleteEmail,
     saveDraftReply,
     sendReply,
   } = useUserData();
@@ -36,6 +40,10 @@ export default function DashboardPage() {
   const [actionFeedback, setActionFeedback] = React.useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const userName = user?.name || "Executive";
+  const primaryAccountEmail =
+    selectedAccountFilter !== "ALL"
+      ? selectedAccountFilter
+      : connectedAccounts.find((a) => a.provider.toUpperCase().includes("GMAIL"))?.email || user?.email || "All Connected Mailboxes";
 
   const handleOpenEmail = (email: UnifiedEmailItem) => {
     setActiveEmail(email);
@@ -44,9 +52,9 @@ export default function DashboardPage() {
     setActionFeedback(null);
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     if (!activeEmail || !replyText.trim()) return;
-    const res = saveDraftReply(activeEmail.id, replyText);
+    const res = await saveDraftReply(activeEmail.id, replyText);
     setActionFeedback({ type: res.success ? "success" : "error", text: res.message });
   };
 
@@ -67,10 +75,10 @@ export default function DashboardPage() {
       {/* Header Greeting & Dynamic Summary */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-0.5 rounded-full bg-[#FFF2EC] text-[#F15E1C] border border-[#FDE8DF] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#F15E1C] animate-pulse" />
-              Executive Multi-Account Telemetry
+              Connected Gmail: <strong className="text-[#0F172A]">{primaryAccountEmail}</strong>
             </span>
             <span className="text-[#94A3B8]">•</span>
             <span className="text-xs text-[#475569] flex items-center gap-1 font-medium">
@@ -83,24 +91,60 @@ export default function DashboardPage() {
             Welcome, <span className="text-[#F15E1C]">{userName}</span>
           </h1>
           <p className="text-sm text-[#475569] font-medium">
-            Here&apos;s what&apos;s happening across your connected email accounts.
+            Real-time Gmail inbox telemetry & automated executive email triage.
           </p>
         </div>
 
-        {/* Selected Account / Scope Indicator */}
+        {/* Account Selector Dropdown */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs flex items-center gap-2 text-xs font-bold text-[#0F172A]">
-            <span className="material-symbols-outlined text-[#F15E1C] text-[16px]">account_balance_wallet</span>
-            <span>
-              Scope: {selectedAccountFilter !== "ALL" ? selectedAccountFilter : selectedProviderFilter !== "ALL" ? `${selectedProviderFilter} Mailboxes` : "All Mailboxes"}
-            </span>
+            <span className="material-symbols-outlined text-[#F15E1C] text-[16px]">mail</span>
+            <span>Account:</span>
+            <select
+              value={selectedAccountFilter}
+              onChange={(e) => setSelectedAccountFilter(e.target.value)}
+              className="bg-transparent font-bold text-[#0F172A] outline-none cursor-pointer"
+            >
+              <option value="ALL">All Connected Accounts ({connectedAccounts.length})</option>
+              {connectedAccounts.map((acc) => (
+                <option key={acc.email} value={acc.email}>
+                  {acc.provider}: {acc.email}
+                </option>
+              ))}
+            </select>
           </div>
+
+          <button
+            onClick={() => refreshGmailSync()}
+            disabled={isLoading}
+            className="p-2 rounded-xl bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#475569] hover:text-[#0F172A] cursor-pointer"
+            title="Refresh Gmail Sync"
+          >
+            <span className={`material-symbols-outlined text-[18px] ${isLoading ? "animate-spin text-[#F15E1C]" : ""}`}>
+              sync
+            </span>
+          </button>
         </div>
       </div>
 
+      {/* Sync Error Banner (if OAuth expired) */}
+      {syncError && (
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs font-bold flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[20px] text-red-600">error</span>
+            <span>{syncError}</span>
+          </div>
+          <Link href="/onboarding/connect-gmail">
+            <Button variant="danger" size="sm">
+              Reconnect Gmail
+            </Button>
+          </Link>
+        </div>
+      )}
+
       {/* Bento Telemetry Cards (Clickable Category Filters) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* Critical */}
+        {/* Critical Card */}
         <div
           onClick={() => setSelectedCategoryFilter(selectedCategoryFilter === "CRITICAL" ? "ALL" : "CRITICAL")}
           className="cursor-pointer transition-all hover:-translate-y-1"
@@ -118,14 +162,18 @@ export default function DashboardPage() {
               <span className="text-3xl font-extrabold text-[#0F172A]">{counts.critical}</span>
               <span className="text-xs text-[#475569]">{counts.critical === 1 ? "email" : "emails"}</span>
             </div>
-            <div className="mt-2 text-xs font-semibold text-[#DC2626] flex items-center gap-1">
+            <Link
+              href="/app/inbox?category=CRITICAL"
+              onClick={(e) => e.stopPropagation()}
+              className="mt-2 text-xs font-semibold text-[#DC2626] flex items-center gap-1 hover:underline"
+            >
               <span className="material-symbols-outlined text-[14px]">priority_high</span>
-              <span>Click to view critical feed</span>
-            </div>
+              <span>Open Critical Feed →</span>
+            </Link>
           </Card>
         </div>
 
-        {/* Urgent */}
+        {/* Urgent Card */}
         <div
           onClick={() => setSelectedCategoryFilter(selectedCategoryFilter === "URGENT" ? "ALL" : "URGENT")}
           className="cursor-pointer transition-all hover:-translate-y-1"
@@ -143,14 +191,18 @@ export default function DashboardPage() {
               <span className="text-3xl font-extrabold text-[#0F172A]">{counts.urgent}</span>
               <span className="text-xs text-[#475569]">{counts.urgent === 1 ? "email" : "emails"}</span>
             </div>
-            <div className="mt-2 text-xs font-semibold text-[#475569] flex items-center gap-1">
+            <Link
+              href="/app/inbox?category=URGENT"
+              onClick={(e) => e.stopPropagation()}
+              className="mt-2 text-xs font-semibold text-[#475569] flex items-center gap-1 hover:underline"
+            >
               <span className="material-symbols-outlined text-[14px]">schedule</span>
-              <span>Click to view urgent feed</span>
-            </div>
+              <span>Open Urgent Feed →</span>
+            </Link>
           </Card>
         </div>
 
-        {/* Need Review */}
+        {/* Need Review Card */}
         <div
           onClick={() => setSelectedCategoryFilter(selectedCategoryFilter === "NEED_REVIEW" ? "ALL" : "NEED_REVIEW")}
           className="cursor-pointer transition-all hover:-translate-y-1"
@@ -162,20 +214,24 @@ export default function DashboardPage() {
           >
             <div className="flex items-start justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#475569]">Need Review</span>
-              <span className="px-2 py-0.5 rounded-full bg-[#FEF6E0] text-[#795600] text-[10px] font-bold">Gated Items</span>
+              <span className="px-2 py-0.5 rounded-full bg-[#FEF6E0] text-[#795600] text-[10px] font-bold">Gated</span>
             </div>
             <div className="mt-3 flex items-baseline gap-1.5">
               <span className="text-3xl font-extrabold text-[#0F172A]">{counts.needReview}</span>
               <span className="text-xs text-[#475569]">{counts.needReview === 1 ? "email" : "emails"}</span>
             </div>
-            <div className="mt-2 text-xs font-semibold text-[#795600] flex items-center gap-1">
+            <Link
+              href="/app/inbox?category=NEED_REVIEW"
+              onClick={(e) => e.stopPropagation()}
+              className="mt-2 text-xs font-semibold text-[#795600] flex items-center gap-1 hover:underline"
+            >
               <span className="material-symbols-outlined text-[14px]">gavel</span>
-              <span>Click to view gated items</span>
-            </div>
+              <span>Open Gated Feed →</span>
+            </Link>
           </Card>
         </div>
 
-        {/* Safe to Draft */}
+        {/* Safe to Draft Card */}
         <div
           onClick={() => setSelectedCategoryFilter(selectedCategoryFilter === "SAFE_TO_DRAFT" ? "ALL" : "SAFE_TO_DRAFT")}
           className="cursor-pointer transition-all hover:-translate-y-1"
@@ -193,14 +249,18 @@ export default function DashboardPage() {
               <span className="text-3xl font-extrabold text-[#0F172A]">{counts.safeToDraft}</span>
               <span className="text-xs text-[#475569]">{counts.safeToDraft === 1 ? "email" : "emails"}</span>
             </div>
-            <div className="mt-2 text-xs font-semibold text-[#2E936F] flex items-center gap-1">
+            <Link
+              href="/app/inbox?category=SAFE_TO_DRAFT"
+              onClick={(e) => e.stopPropagation()}
+              className="mt-2 text-xs font-semibold text-[#2E936F] flex items-center gap-1 hover:underline"
+            >
               <span className="material-symbols-outlined text-[14px]">verified</span>
-              <span>Click to view AI ready drafts</span>
-            </div>
+              <span>Open Draft Feed →</span>
+            </Link>
           </Card>
         </div>
 
-        {/* Low Priority */}
+        {/* Low Priority Card */}
         <div
           onClick={() => setSelectedCategoryFilter(selectedCategoryFilter === "LOW_PRIORITY" ? "ALL" : "LOW_PRIORITY")}
           className="cursor-pointer transition-all hover:-translate-y-1"
@@ -218,10 +278,14 @@ export default function DashboardPage() {
               <span className="text-3xl font-extrabold text-[#475569]">{counts.lowPriority}</span>
               <span className="text-xs text-[#475569]">{counts.lowPriority === 1 ? "email" : "emails"}</span>
             </div>
-            <div className="mt-2 text-xs text-[#94A3B8] flex items-center gap-1">
+            <Link
+              href="/app/inbox?category=LOW_PRIORITY"
+              onClick={(e) => e.stopPropagation()}
+              className="mt-2 text-xs text-[#94A3B8] flex items-center gap-1 hover:underline"
+            >
               <span className="material-symbols-outlined text-[14px]">archive</span>
-              <span>Click to view low priority</span>
-            </div>
+              <span>Open Low Priority →</span>
+            </Link>
           </Card>
         </div>
       </div>
@@ -301,10 +365,24 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {filteredEmails.length === 0 ? (
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="space-y-3">
+            <div className="p-4 rounded-xl bg-white border border-[#E2E8F0] space-y-2">
+              <Skeleton width="120px" height="16px" radius="6px" />
+              <Skeleton width="200px" height="18px" radius="4px" />
+              <Skeleton width="100%" height="32px" radius="4px" />
+            </div>
+            <div className="p-4 rounded-xl bg-white border border-[#E2E8F0] space-y-2">
+              <Skeleton width="120px" height="16px" radius="6px" />
+              <Skeleton width="200px" height="18px" radius="4px" />
+              <Skeleton width="100%" height="32px" radius="4px" />
+            </div>
+          </div>
+        ) : filteredEmails.length === 0 ? (
           <EmptyState
-            title="No emails match the active filter"
-            description="All emails in this category have been triaged or no emails exist under the selected account."
+            title="No emails found in this category"
+            description="All messages in this mailbox category have been triaged or no emails exist under the selected account."
             icon="verified"
             actionLabel="Reset Category Filter"
             onAction={() => setSelectedCategoryFilter("ALL")}
@@ -336,7 +414,7 @@ export default function DashboardPage() {
 
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-[#0F172A]">{email.senderName}</span>
-                      <span className="text-xs text-[#64748B]">({email.senderRole})</span>
+                      <span className="text-xs text-[#64748B]">&lt;{email.senderEmail}&gt;</span>
                     </div>
 
                     <h3 className="text-base font-bold text-[#0F172A] group-hover:text-[#F15E1C] transition-colors truncate">
@@ -379,7 +457,7 @@ export default function DashboardPage() {
                 </div>
                 <h2 className="text-lg font-bold text-[#0F172A] mt-1">{activeEmail.subject}</h2>
                 <p className="text-xs text-[#64748B]">
-                  From: <strong className="text-[#0F172A]">{activeEmail.senderName}</strong> ({activeEmail.senderEmail})
+                  From: <strong className="text-[#0F172A]">{activeEmail.senderName}</strong> (&lt;{activeEmail.senderEmail}&gt;)
                 </p>
               </div>
               <button
@@ -496,5 +574,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-

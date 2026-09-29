@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
 import { PriorityBadge } from "@/components/ui/PriorityBadge";
@@ -10,26 +11,37 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmailDetailView } from "@/components/execuai/EmailDetailView";
 import { UnifiedEmailItem } from "@/lib/types/execuai";
 import { useAuth } from "@/lib/auth-context";
-import { useUserData } from "@/lib/user-data-context";
+import { useUserData, CategoryFilterType } from "@/lib/user-data-context";
 
 export default function UnifiedInboxPage() {
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get("category") as CategoryFilterType | null;
+
   const { user } = useAuth();
   const {
     connectedAccounts,
     selectedAccountFilter,
     setSelectedAccountFilter,
+    selectedCategoryFilter,
+    setSelectedCategoryFilter,
     allUserEmails,
     filteredEmails,
+    isLoading,
+    syncError,
+    refreshGmailSync,
     searchQuery,
     setSearchQuery,
     toggleFlagged,
-    toggleUnread,
   } = useUserData();
 
-  // Simulator State Toggles
-  const [viewState, setViewState] = React.useState<"NORMAL" | "LOADING" | "ERROR" | "EMPTY">("NORMAL");
+  // Set category filter from URL search param if present
+  React.useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategoryFilter(initialCategory);
+    }
+  }, [initialCategory, setSelectedCategoryFilter]);
 
-  // Selection & Filter States
+  // Selection & Secondary Filter States
   const [selectedEmailId, setSelectedEmailId] = React.useState<string>("");
   const [priorityFilter, setPriorityFilter] = React.useState<string>("ALL");
   const [intentFilter, setIntentFilter] = React.useState<string>("ALL");
@@ -42,15 +54,13 @@ export default function UnifiedInboxPage() {
 
   // Set initial selected email when list updates
   React.useEffect(() => {
-    if (filteredEmails.length > 0 && !selectedEmailId) {
+    if (filteredEmails.length > 0 && (!selectedEmailId || !filteredEmails.some((e) => e.id === selectedEmailId))) {
       setSelectedEmailId(filteredEmails[0].id);
     }
   }, [filteredEmails, selectedEmailId]);
 
   // Secondary Filter Logic applied on top of context filteredEmails
   const displayEmails = React.useMemo(() => {
-    if (viewState === "EMPTY") return [];
-
     return filteredEmails.filter((item) => {
       if (priorityFilter !== "ALL" && item.priority !== priorityFilter) return false;
       if (intentFilter !== "ALL" && item.intent !== intentFilter) return false;
@@ -59,17 +69,16 @@ export default function UnifiedInboxPage() {
       if (flaggedOnly && !item.flagged) return false;
       return true;
     });
-  }, [filteredEmails, viewState, priorityFilter, intentFilter, riskFilter, unreadOnly, flaggedOnly]);
+  }, [filteredEmails, priorityFilter, intentFilter, riskFilter, unreadOnly, flaggedOnly]);
 
   // Currently Selected Email
   const activeEmail = React.useMemo(() => {
     return (
       displayEmails.find((e) => e.id === selectedEmailId) ||
       displayEmails[0] ||
-      allUserEmails[0] ||
       null
     );
-  }, [displayEmails, selectedEmailId, allUserEmails]);
+  }, [displayEmails, selectedEmailId]);
 
   // Active Count Telemetry
   const unreadCount = React.useMemo(() => allUserEmails.filter((e) => e.unread).length, [allUserEmails]);
@@ -91,56 +100,14 @@ export default function UnifiedInboxPage() {
 
   return (
     <div className="space-y-6 max-w-full overflow-x-hidden pb-12 font-sans text-[#0F172A]">
-      {/* Dynamic State Switcher (Simulator Controls) */}
-      <div className="bg-[#0F172A] text-white p-3 rounded-2xl shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#F15E1C] animate-ping" />
-          <span className="font-bold text-[#FFEC69] uppercase tracking-wide text-[11px]">Inbox Simulation Mode:</span>
-          <span className="text-[#94A3B8]">Toggle UI states to inspect empty, loading, or error behaviors</span>
-        </div>
-
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <button
-            onClick={() => setViewState("NORMAL")}
-            className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
-              viewState === "NORMAL" ? "bg-[#F15E1C] text-white" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
-            }`}
-          >
-            Live Stream
-          </button>
-          <button
-            onClick={() => setViewState("LOADING")}
-            className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
-              viewState === "LOADING" ? "bg-[#FAB60A] text-[#0F172A]" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
-            }`}
-          >
-            Skeleton Loading
-          </button>
-          <button
-            onClick={() => setViewState("EMPTY")}
-            className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
-              viewState === "EMPTY" ? "bg-[#CBD5E1] text-[#0F172A]" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
-            }`}
-          >
-            Empty State
-          </button>
-          <button
-            onClick={() => setViewState("ERROR")}
-            className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
-              viewState === "ERROR" ? "bg-[#F15E1C] text-white" : "bg-[#1E293B] text-[#94A3B8] hover:text-white"
-            }`}
-          >
-            Error State
-          </button>
-        </div>
-      </div>
-
       {/* Header & Main Control Bar */}
       <section className="bg-white rounded-2xl p-4 sm:p-6 shadow-xs border border-[#E2E8F0] space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight font-heading">Unified Executive Inbox</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight font-heading">
+                {selectedCategoryFilter !== "ALL" ? `${selectedCategoryFilter.replace("_", " ")} GMAIL INBOX` : "Unified Executive Inbox"}
+              </h1>
               <span className="bg-[#F7D7B0]/50 text-[#0F172A] text-xs px-2.5 py-0.5 rounded-full font-bold">
                 {unreadCount} Unread Emails
               </span>
@@ -150,7 +117,7 @@ export default function UnifiedInboxPage() {
               </span>
             </div>
             <p className="text-xs text-[#64748B]">
-              Real-time multi-mailbox aggregation across your connected accounts.
+              Real-time message stream fetched from your authenticated Gmail account.
             </p>
           </div>
 
@@ -174,7 +141,7 @@ export default function UnifiedInboxPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search emails, people, or topics across all connected accounts..."
+            placeholder="Search emails, sender, subject, or content across connected accounts..."
             className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#F15E1C] focus:bg-white transition-all"
           />
           {searchQuery && (
@@ -277,6 +244,7 @@ export default function UnifiedInboxPage() {
 
           {/* Reset Filters CTA */}
           {(selectedAccountFilter !== "ALL" ||
+            selectedCategoryFilter !== "ALL" ||
             priorityFilter !== "ALL" ||
             intentFilter !== "ALL" ||
             riskFilter !== "ALL" ||
@@ -286,6 +254,7 @@ export default function UnifiedInboxPage() {
             <button
               onClick={() => {
                 setSelectedAccountFilter("ALL");
+                setSelectedCategoryFilter("ALL");
                 setPriorityFilter("ALL");
                 setIntentFilter("ALL");
                 setRiskFilter("ALL");
@@ -293,7 +262,7 @@ export default function UnifiedInboxPage() {
                 setFlaggedOnly(false);
                 setSearchQuery("");
               }}
-              className="text-[#F15E1C] hover:underline font-bold text-xs flex items-center gap-1"
+              className="text-[#F15E1C] hover:underline font-bold text-xs flex items-center gap-1 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[14px]">refresh</span>
               Clear Filters
@@ -303,7 +272,7 @@ export default function UnifiedInboxPage() {
       </section>
 
       {/* Main Content Workbench */}
-      {viewState === "LOADING" && (
+      {isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-5 space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -327,41 +296,37 @@ export default function UnifiedInboxPage() {
             <Skeleton width="100%" height="200px" radius="12px" />
           </div>
         </div>
-      )}
-
-      {viewState === "ERROR" && (
+      ) : syncError ? (
         <div className="p-8 rounded-2xl bg-[#FFF2EC] border border-[#F15E1C]/30 text-center space-y-4 max-w-2xl mx-auto my-8 shadow-xs">
           <div className="w-12 h-12 rounded-full bg-[#F15E1C]/10 text-[#F15E1C] flex items-center justify-center mx-auto">
             <span className="material-symbols-outlined text-2xl">sync_problem</span>
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-bold text-[#F15E1C] font-heading">Unified Mailbox Sync Interrupted</h3>
+            <h3 className="text-lg font-bold text-[#F15E1C] font-heading">Gmail Sync Exception</h3>
             <p className="text-xs text-[#475569] leading-relaxed max-w-md mx-auto">
-              Unable to reach OAuth provider endpoints for connected accounts. The connection timed out during TLS handshake verification.
+              {syncError}
             </p>
           </div>
           <div className="pt-2 flex items-center justify-center gap-3">
             <Button
               variant="primary"
               size="sm"
-              onClick={() => setViewState("NORMAL")}
+              onClick={() => refreshGmailSync()}
               leftIcon={<span className="material-symbols-outlined text-[16px]">refresh</span>}
             >
-              Retry Unified Sync
+              Sync Gmail Again
             </Button>
           </div>
         </div>
-      )}
-
-      {(viewState === "EMPTY" || (viewState === "NORMAL" && displayEmails.length === 0)) && (
+      ) : displayEmails.length === 0 ? (
         <div className="p-12 rounded-2xl bg-[#F7D7B0]/20 border border-[#F7D7B0] text-center space-y-4 max-w-xl mx-auto my-8 shadow-xs">
           <div className="w-16 h-16 rounded-full bg-[#FFEC69]/40 text-[#FAB60A] flex items-center justify-center mx-auto border border-[#F7D7B0]">
             <span className="material-symbols-outlined text-3xl">verified</span>
           </div>
           <div className="space-y-1">
-            <h3 className="text-xl font-bold text-[#0F172A] font-heading">You&apos;re all caught up.</h3>
+            <h3 className="text-xl font-bold text-[#0F172A] font-heading">No emails found in this category.</h3>
             <p className="text-xs text-[#64748B]">
-              No emails matching your active filter criteria require attention across connected accounts.
+              No messages match your active filter criteria across the connected Gmail account.
             </p>
           </div>
           <div className="pt-2">
@@ -369,8 +334,8 @@ export default function UnifiedInboxPage() {
               variant="secondary"
               size="sm"
               onClick={() => {
-                setViewState("NORMAL");
                 setSelectedAccountFilter("ALL");
+                setSelectedCategoryFilter("ALL");
                 setPriorityFilter("ALL");
                 setIntentFilter("ALL");
                 setRiskFilter("ALL");
@@ -383,14 +348,12 @@ export default function UnifiedInboxPage() {
             </Button>
           </div>
         </div>
-      )}
-
-      {viewState === "NORMAL" && displayEmails.length > 0 && (
+      ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Email Stream List */}
           <div className="lg:col-span-5 space-y-3">
             <div className="flex items-center justify-between text-xs text-[#64748B] px-1 font-semibold">
-              <span>Showing {displayEmails.length} emails</span>
+              <span>Showing {displayEmails.length} actual Gmail messages</span>
               <span>Sorted by Recency</span>
             </div>
 
@@ -415,17 +378,9 @@ export default function UnifiedInboxPage() {
                   {/* Account Badge & Timestamp */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span
-                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                          emailItem.provider === "GMAIL"
-                            ? "bg-[#FFF1F2] text-[#E11D48] border border-[#FDA4AF]"
-                            : "bg-[#EFF6FF] text-[#2563EB] border border-[#93C5FD]"
-                        }`}
-                      >
-                        <span className="material-symbols-outlined text-[12px]">
-                          {emailItem.provider === "GMAIL" ? "mail" : "domain"}
-                        </span>
-                        {emailItem.provider}
+                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 bg-[#FFF1F2] text-[#E11D48] border border-[#FDA4AF]">
+                        <span className="material-symbols-outlined text-[12px]">mail</span>
+                        Gmail
                       </span>
                       <span className="text-[11px] text-[#64748B] truncate font-medium">{emailItem.accountEmail}</span>
                     </div>
@@ -497,7 +452,7 @@ export default function UnifiedInboxPage() {
         <div className="fixed inset-0 z-50 lg:hidden bg-black/60 backdrop-blur-xs flex flex-col justify-end p-0 sm:p-4">
           <div className="bg-white w-full max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl p-4 sm:p-6 space-y-5 shadow-2xl animate-in slide-in-from-bottom duration-200">
             <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
-              <span className="text-xs font-bold text-[#0F172A]">Email Thread & AI Analysis</span>
+              <span className="text-xs font-bold text-[#0F172A]">Gmail Message & AI Analysis</span>
               <button
                 onClick={() => setIsMobileDetailOpen(false)}
                 className="w-8 h-8 rounded-full bg-[#F1F5F9] text-[#0F172A] flex items-center justify-center font-bold"
@@ -513,4 +468,3 @@ export default function UnifiedInboxPage() {
     </div>
   );
 }
-

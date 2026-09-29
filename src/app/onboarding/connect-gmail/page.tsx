@@ -3,17 +3,67 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/lib/auth-context";
+import { GmailApiService } from "@/lib/services/GmailApiService";
 
 export default function ConnectGmailPage() {
   const router = useRouter();
+  const { user, connectAccount } = useAuth();
   const [isAuthorizing, setIsAuthorizing] = React.useState(false);
+  const [showTokenInput, setShowTokenInput] = React.useState(false);
+  const [manualToken, setManualToken] = React.useState("");
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = React.useState<string | null>(null);
 
   const handleOAuthConnect = () => {
     setIsAuthorizing(true);
-    setTimeout(() => {
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "998127389102-google-oauth-client-id.apps.googleusercontent.com";
+    const redirectUri = `${window.location.origin}/auth/google-callback`;
+    const scope = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+      googleClientId
+    )}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=consent`;
+
+    window.location.href = authUrl;
+  };
+
+  const handleManualTokenSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualToken.trim()) return;
+
+    setIsAuthorizing(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    try {
+      // Fetch actual user profile using token
+      const profile = await GmailApiService.fetchGoogleUserProfile(manualToken.trim());
+      const cleanEmail = profile.email.toLowerCase();
+
+      // Save token for account
+      localStorage.setItem(
+        `execuai_gmail_token_${cleanEmail}`,
+        JSON.stringify({
+          accessToken: manualToken.trim(),
+          email: cleanEmail,
+          name: profile.name,
+          expiresAt: Date.now() + 3600 * 1000,
+        })
+      );
+
+      // Connect account in AuthContext
+      connectAccount("Gmail", cleanEmail);
+
+      setSuccessMsg(`Successfully authenticated ${cleanEmail}`);
+      setTimeout(() => {
+        router.push(`/onboarding/gmail-success?email=${encodeURIComponent(cleanEmail)}`);
+      }, 800);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Invalid Google Access Token or unable to connect Gmail API.");
       setIsAuthorizing(false);
-      router.push("/onboarding/gmail-success");
-    }, 1200);
+    }
   };
 
   return (
@@ -26,13 +76,27 @@ export default function ConnectGmailPage() {
           <span className="text-[10px] font-bold uppercase tracking-wider text-[#2E936F]">
             Step 2a: Provider Authentication
           </span>
-          <h1 className="text-xl font-bold text-[#0F172A]">Connect Your Gmail Account</h1>
+          <h1 className="text-xl font-bold text-[#0F172A]">Connect Your Real Gmail Account</h1>
         </div>
       </div>
 
+      {errorMsg && (
+        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-center gap-2">
+          <span className="material-symbols-outlined text-[18px]">error</span>
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+          <span className="material-symbols-outlined text-[18px]">check_circle</span>
+          <span>{successMsg}</span>
+        </div>
+      )}
+
       <div className="space-y-4 text-xs text-[#475569]">
         <p className="leading-relaxed">
-          ExecuAI uses official Google OAuth 2.0 authentication. Clicking connect will redirect you to Google&apos;s secure authorization page to select your executive Gmail account.
+          ExecuAI connects to your actual Gmail mailbox using Google&apos;s official OAuth 2.0 API. Clicking connect will authenticate your Google account and retrieve messages directly from your Gmail inbox.
         </p>
 
         {/* Permissions Requested Breakdown */}
@@ -43,29 +107,59 @@ export default function ConnectGmailPage() {
           <div className="space-y-2 text-[#0F172A]">
             <div className="flex items-start gap-2">
               <span className="text-[#2E936F] font-bold">•</span>
-              <span><strong>Read Emails & Threads:</strong> Used to fetch and parse incoming messages into common email objects.</span>
+              <span><strong>Read Emails & Threads (INBOX):</strong> Used to fetch actual messages belonging ONLY to your authenticated Gmail mailbox.</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-[#2E936F] font-bold">•</span>
-              <span><strong>Create & Save Drafts:</strong> Used to prepare personalized response drafts in your Gmail inbox.</span>
+              <span><strong>Create & Send Drafts:</strong> Used to prepare and dispatch replies directly through your Gmail account.</span>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Safety Callout */}
-        <div className="p-3 rounded-xl bg-[#EFF4FF] border border-[#79d9b0]/30 text-[#2E936F] text-[11px] font-semibold flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px]">shield</span>
-          <span>Explicitly Excluded: ExecuAI does not request unrestricted auto-sending rights or password access.</span>
-        </div>
+      {/* Manual Token Option */}
+      <div className="pt-2 border-t border-[#E2E8F0] space-y-3">
+        <button
+          type="button"
+          onClick={() => setShowTokenInput(!showTokenInput)}
+          className="text-xs font-bold text-[#F15E1C] hover:underline flex items-center gap-1 cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[16px]">key</span>
+          {showTokenInput ? "Hide Google Access Token input" : "Or connect using direct Google OAuth Access Token"}
+        </button>
+
+        {showTokenInput && (
+          <form onSubmit={handleManualTokenSubmit} className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-3">
+            <label className="block text-xs font-bold text-[#0F172A]">
+              Google OAuth 2.0 Access Token:
+            </label>
+            <input
+              type="text"
+              placeholder="Paste Google OAuth Access Token (ya29...)"
+              value={manualToken}
+              onChange={(e) => setManualToken(e.target.value)}
+              className="w-full p-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-[#0F172A] outline-none focus:border-[#F15E1C]"
+            />
+            <Button
+              type="submit"
+              variant="secondary"
+              size="sm"
+              isLoading={isAuthorizing}
+              className="w-full sm:w-auto"
+            >
+              Verify Token & Sync Gmail
+            </Button>
+          </form>
+        )}
       </div>
 
       <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
         <button
           type="button"
-          onClick={() => router.push("/onboarding/connect-zoho")}
+          onClick={() => router.push("/app/dashboard")}
           className="text-xs text-[#475569] hover:text-[#0F172A] font-semibold"
         >
-          Skip for now → Connect Zoho first
+          Go to Dashboard →
         </button>
 
         <Button
@@ -73,7 +167,7 @@ export default function ConnectGmailPage() {
           size="lg"
           isLoading={isAuthorizing}
           onClick={handleOAuthConnect}
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto cursor-pointer"
         >
           <span className="font-bold">G</span>
           <span>Connect Gmail via Google OAuth</span>

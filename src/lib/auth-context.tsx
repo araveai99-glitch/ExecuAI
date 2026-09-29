@@ -39,7 +39,7 @@ interface AuthContextType {
   authMessage: { type: "info" | "success" | "error"; text: string } | null;
   registerUser: (name: string, email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   loginWithEmail: (email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
-  loginWithGoogle: (customGoogleEmail?: string, customGoogleName?: string) => Promise<void>;
+  loginWithGoogle: (customGoogleEmail?: string, customGoogleName?: string, accessToken?: string) => Promise<void>;
   verifyEmailCode: (code: string) => Promise<boolean>;
   resendVerificationCode: () => Promise<boolean>;
   connectAccount: (provider: string, accountEmail: string) => void;
@@ -249,48 +249,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Google OAuth Flow
-  const loginWithGoogle = async (customGoogleEmail?: string, customGoogleName?: string) => {
+  const loginWithGoogle = async (customGoogleEmail?: string, customGoogleName?: string, accessToken?: string) => {
     setAuthMessage({ type: "info", text: "Initializing Google OAuth 2.0 connection..." });
     setIsLoading(true);
 
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "998127389102-google-oauth-client-id.apps.googleusercontent.com";
 
-    if (googleClientId && !customGoogleEmail) {
+    if (!customGoogleEmail) {
       // Real Google OAuth 2.0 Redirect Flow
       const redirectUri = `${window.location.origin}/auth/google-callback`;
-      const scope = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${encodeURIComponent(
+      const scope = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+        googleClientId
+      )}&redirect_uri=${encodeURIComponent(
         redirectUri
       )}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=consent`;
       
       window.location.href = authUrl;
     } else {
-      // Authenticate with Google user dynamically
-      setTimeout(() => {
-        setIsLoading(false);
-        const googleEmail = (customGoogleEmail || "user.google@example.com").toLowerCase();
-        const googleName = customGoogleName || googleEmail.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+      // Authenticate with actual Google user retrieved from Google OAuth userinfo API
+      const googleEmail = customGoogleEmail.trim().toLowerCase();
+      const googleName = customGoogleName || googleEmail.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
-        let match = usersDb.find((u) => u.email.toLowerCase() === googleEmail);
-        if (!match) {
+      if (accessToken) {
+        localStorage.setItem(
+          `execuai_gmail_token_${googleEmail}`,
+          JSON.stringify({ accessToken, email: googleEmail, name: googleName, expiresAt: Date.now() + 3600 * 1000 })
+        );
+      }
+
+      let match = usersDb.find((u) => u.email.toLowerCase() === googleEmail);
+      if (!match) {
+        match = {
+          id: `usr_g_${Date.now()}`,
+          name: googleName,
+          email: googleEmail,
+          role: "Executive Officer",
+          isAdmin: googleEmail.includes("admin"),
+          emailVerified: true,
+          subscription: createDefaultSubscription(googleEmail),
+          connectedAccounts: [
+            { provider: "Gmail", email: googleEmail, connectedAt: new Date().toISOString() },
+          ],
+        };
+        saveDb([...usersDb, match]);
+      } else {
+        // Ensure connectedAccounts has the Gmail account
+        const hasAcc = match.connectedAccounts.some((a) => a.email.toLowerCase() === googleEmail);
+        if (!hasAcc) {
           match = {
-            id: `usr_g_${Date.now()}`,
-            name: googleName,
-            email: googleEmail,
-            role: "Executive Officer",
-            isAdmin: googleEmail.includes("admin"),
-            emailVerified: true,
-            subscription: createDefaultSubscription(googleEmail),
+            ...match,
             connectedAccounts: [
+              ...match.connectedAccounts,
               { provider: "Gmail", email: googleEmail, connectedAt: new Date().toISOString() },
             ],
           };
-          saveDb([...usersDb, match]);
+          saveDb(usersDb.map((u) => (u.id === match!.id ? match! : u)));
         }
-        saveSession(match);
-        setAuthMessage({ type: "success", text: `Authenticated with Google as ${googleEmail}` });
-        router.push("/app/dashboard");
-      }, 600);
+      }
+      saveSession(match);
+      setIsLoading(false);
+      setAuthMessage({ type: "success", text: `Authenticated with Google as ${googleEmail}` });
+      router.push("/app/dashboard");
     }
   };
 

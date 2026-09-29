@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { useAuth, ConnectedAccount } from "./auth-context";
-import { UnifiedEmailItem, DraftItem, PriorityLevel, RiskLevel, MailboxProvider } from "./types/execuai";
-import { initialUnifiedEmails } from "./data/mockExecuData";
+import { UnifiedEmailItem, DraftItem, MailboxProvider } from "./types/execuai";
+import { GmailApiService } from "./services/GmailApiService";
 
 export type CategoryFilterType =
   | "ALL"
@@ -16,7 +16,7 @@ export type CategoryFilterType =
 export type ProviderFilterType = "ALL" | "GMAIL" | "ZOHO" | "OUTLOOK" | "OTHER";
 
 interface UserDataContextType {
-  // Accounts
+  // Accounts & Filters
   connectedAccounts: ConnectedAccount[];
   selectedAccountFilter: string; // "ALL" or specific email address
   setSelectedAccountFilter: (accountEmail: string) => void;
@@ -24,6 +24,11 @@ interface UserDataContextType {
   setSelectedProviderFilter: (provider: ProviderFilterType) => void;
   selectedCategoryFilter: CategoryFilterType;
   setSelectedCategoryFilter: (category: CategoryFilterType) => void;
+
+  // Sync & Loading States
+  isLoading: boolean;
+  syncError: string | null;
+  refreshGmailSync: () => Promise<void>;
 
   // Add/Remove Account Actions
   addAccount: (provider: string, accountEmail: string) => void;
@@ -36,7 +41,7 @@ interface UserDataContextType {
   // Calculated Email Datasets
   allUserEmails: UnifiedEmailItem[];
   filteredEmails: UnifiedEmailItem[];
-  
+
   // Calculated Category Counts (dynamically scoped to active account/provider selection)
   counts: {
     critical: number;
@@ -58,204 +63,11 @@ interface UserDataContextType {
   deleteEmail: (emailId: string) => void;
 
   // Reply & Draft Operations
-  saveDraftReply: (emailId: string, replyText: string) => { success: boolean; message: string };
+  saveDraftReply: (emailId: string, replyText: string) => Promise<{ success: boolean; message: string }>;
   sendReply: (emailId: string, replyText: string) => Promise<{ success: boolean; message: string }>;
 }
 
 const UserDataContext = React.createContext<UserDataContextType | undefined>(undefined);
-
-// Helper to generate seed emails dynamically for any email address
-function generateEmailsForAccount(
-  accountEmail: string,
-  providerName: string,
-  userName: string
-): UnifiedEmailItem[] {
-  const prov = (providerName.toUpperCase().includes("ZOHO")
-    ? "ZOHO"
-    : providerName.toUpperCase().includes("OUTLOOK")
-    ? "OUTLOOK"
-    : providerName.toUpperCase().includes("GMAIL")
-    ? "GMAIL"
-    : "OTHER") as MailboxProvider;
-
-  const label = `${providerName} (${accountEmail})`;
-
-  return [
-    {
-      id: `EML_${Date.now()}_1`,
-      provider: prov,
-      accountEmail: accountEmail,
-      accountLabel: label,
-      senderName: "Elena Rostova",
-      senderEmail: "elena@apexlaw.com",
-      senderRole: "General Counsel, Apex Law",
-      avatarInitials: "ER",
-      recipients: { to: [accountEmail] },
-      subject: "Series B Definitive Agreements & IP Indemnity Review",
-      snippet: "Uncapped liability clause identified in Section 14.2 requiring executive confirmation...",
-      body: `Dear ${userName},\n\nI have completed review of the Series B Definitive Agreements returned by target lead counsel. Section 14.2 contains an uncapped IP indemnity clause that transfers unlimited liability to your balance sheet.\n\nKey Recommendations:\n1. Require a liability cap equal to 2x aggregate investment amount ($10M).\n2. Exclude secondary software derivative claims.\n\nPlease confirm if you would like me to redline this section immediately.`,
-      timestamp: "10:42 AM",
-      priority: "CRITICAL",
-      intent: "LEGAL",
-      risk: "HIGH_RISK",
-      unread: true,
-      flagged: true,
-      hasAttachment: true,
-      aiDraftAvailable: true,
-      aiSummary: "Legal risk: Uncapped IP liability clause identified in Series B agreement. Autonomous sending blocked.",
-      threadHistory: [
-        {
-          id: `MSG_${Date.now()}_101`,
-          senderName: "Elena Rostova",
-          senderEmail: "elena@apexlaw.com",
-          senderRole: "General Counsel, Apex Law",
-          avatarInitials: "ER",
-          recipients: { to: [accountEmail] },
-          timestamp: "10:42 AM",
-          body: `Dear ${userName},\n\nI have completed review of the Series B Definitive Agreements returned by target lead counsel. Section 14.2 contains an uncapped IP indemnity clause that transfers unlimited liability to your balance sheet.\n\nPlease confirm if you would like me to redline this section immediately.`,
-          isFromUser: false,
-        },
-      ],
-    },
-    {
-      id: `EML_${Date.now()}_2`,
-      provider: prov,
-      accountEmail: accountEmail,
-      accountLabel: label,
-      senderName: "Marcus Brody",
-      senderEmail: "m.brody@nordicenterprises.com",
-      senderRole: "Managing Director, Nordic APAC",
-      avatarInitials: "MB",
-      recipients: { to: [accountEmail] },
-      subject: "Revised Enterprise Master Services Agreement & ₹50L Quotation",
-      snippet: "Attached is the revised commercial quotation of ₹50,00,000 for full-year deployment...",
-      body: `Hi ${userName},\n\nAttached is the revised Enterprise MSA along with Schedule C reflecting the total revised quotation of ₹50,00,000 for full-year deployment across 5 regional nodes.\n\nPlease review and let us know if we have sign-off to issue the binding billing mandate.`,
-      timestamp: "09:15 AM",
-      priority: "URGENT",
-      intent: "FINANCE",
-      risk: "HIGH_RISK",
-      unread: true,
-      flagged: false,
-      hasAttachment: true,
-      aiDraftAvailable: true,
-      aiSummary: "Financial Assent Required: ₹50L quote exceeds single-executive auto-approval limits.",
-      threadHistory: [
-        {
-          id: `MSG_${Date.now()}_102`,
-          senderName: "Marcus Brody",
-          senderEmail: "m.brody@nordicenterprises.com",
-          senderRole: "Managing Director",
-          recipients: { to: [accountEmail] },
-          timestamp: "09:15 AM",
-          body: `Hi ${userName},\n\nAttached is the revised Enterprise MSA along with Schedule C reflecting the total revised quotation of ₹50,00,000 for full-year deployment.\n\nPlease confirm sign-off.`,
-          isFromUser: false,
-        },
-      ],
-    },
-    {
-      id: `EML_${Date.now()}_3`,
-      provider: prov,
-      accountEmail: accountEmail,
-      accountLabel: label,
-      senderName: "Sarah Jenkins",
-      senderEmail: "s.jenkins@apexglobal.io",
-      senderRole: "VP Operations, Apex Global",
-      avatarInitials: "SJ",
-      recipients: { to: [accountEmail] },
-      subject: "Urgent Client Escalation: Q2 SLA Outage Rebate Penalty Claim",
-      snippet: "Client requests formal executive commitment on 15% SLA rebate penalty...",
-      body: `Dear ${userName},\n\nFollowing our Q2 downtime incident, Apex Global has submitted a formal SLA outage rebate claim requesting a 15% credit refund on their annual retainer.\n\nWe need your executive decision on whether to approve the rebate credit or offer extended contract terms.`,
-      timestamp: "Yesterday",
-      priority: "CRITICAL",
-      intent: "CLIENT",
-      risk: "REVIEW_REQUIRED",
-      unread: false,
-      flagged: true,
-      hasAttachment: false,
-      aiDraftAvailable: true,
-      aiSummary: "Client Escalation: SLA rebate penalty claim of ₹24.5L requires executive sign-off.",
-      threadHistory: [
-        {
-          id: `MSG_${Date.now()}_103`,
-          senderName: "Sarah Jenkins",
-          senderEmail: "s.jenkins@apexglobal.io",
-          recipients: { to: [accountEmail] },
-          timestamp: "Yesterday",
-          body: `Dear ${userName},\n\nFollowing our Q2 downtime incident, Apex Global has submitted a formal SLA outage rebate claim.\n\nPlease review and advise.`,
-          isFromUser: false,
-        },
-      ],
-    },
-    {
-      id: `EML_${Date.now()}_4`,
-      provider: prov,
-      accountEmail: accountEmail,
-      accountLabel: label,
-      senderName: "Dr. Aris Thorne",
-      senderEmail: "aris@vancecapital.io",
-      senderRole: "Managing Partner, Vance Capital",
-      avatarInitials: "AT",
-      recipients: { to: [accountEmail] },
-      subject: "Mutual Non-Disclosure Agreement for Strategic Acquisition Discussions",
-      snippet: "Confidential M&A NDA attached for strategic acquisition discussions...",
-      body: `Hello ${userName},\n\nAttached is the mutual NDA drafted by our legal counsel for our upcoming strategic acquisition discussions.\n\nIt incorporates a 5-year confidentiality clause and standard non-solicitation covenants. Please review and confirm.`,
-      timestamp: "2 days ago",
-      priority: "URGENT",
-      intent: "LEGAL",
-      risk: "CONFIDENTIAL",
-      unread: false,
-      flagged: false,
-      hasAttachment: true,
-      aiDraftAvailable: true,
-      aiSummary: "M&A NDA: Confidential non-disclosure agreement prepared for strategic acquisition.",
-      threadHistory: [
-        {
-          id: `MSG_${Date.now()}_104`,
-          senderName: "Dr. Aris Thorne",
-          senderEmail: "aris@vancecapital.io",
-          recipients: { to: [accountEmail] },
-          timestamp: "2 days ago",
-          body: `Hello ${userName},\n\nAttached is the mutual NDA for our strategic acquisition discussions.\n\nPlease review.`,
-          isFromUser: false,
-        },
-      ],
-    },
-    {
-      id: `EML_${Date.now()}_5`,
-      provider: prov,
-      accountEmail: accountEmail,
-      accountLabel: label,
-      senderName: "David Chen",
-      senderEmail: "d.chen@execuai.com",
-      senderRole: "Head of AI Engineering",
-      avatarInitials: "DC",
-      recipients: { to: [accountEmail] },
-      subject: "Weekly AI Model Performance & Safety Gate Benchmark Summary",
-      snippet: "Zero safety gate bypass incidents recorded during 10,000 email triage cycles...",
-      body: `Hi ${userName},\n\nHere is our weekly AI benchmark report: 99.4% triage accuracy across Priority, Intent, and Risk Gate dimensions.\n\nAll financial thresholds (>₹10L) were caught and routed cleanly to the Decision Center without false negatives.`,
-      timestamp: "3 days ago",
-      priority: "NORMAL",
-      intent: "INTERNAL",
-      risk: "SAFE",
-      unread: false,
-      flagged: false,
-      hasAttachment: false,
-      aiDraftAvailable: true,
-      aiSummary: "Routine Update: Weekly AI engineering benchmark metrics verified.",
-      threadHistory: [
-        {
-          id: `MSG_${Date.now()}_105`,
-          senderName: "David Chen",
-          senderEmail: "d.chen@execuai.com",
-          recipients: { to: [accountEmail] },
-          timestamp: "3 days ago",
-          body: `Hi ${userName},\n\nHere is our weekly AI benchmark report: 99.4% triage accuracy. All clear.`,
-          isFromUser: false,
-        },
-      ],
-    },
-  ];
-}
 
 export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, connectAccount, removeAccount: authRemoveAccount } = useAuth();
@@ -265,49 +77,86 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [selectedCategoryFilter, setSelectedCategoryFilter] = React.useState<CategoryFilterType>("ALL");
   const [searchQuery, setSearchQuery] = React.useState<string>("");
 
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [syncError, setSyncError] = React.useState<string | null>(null);
+
   const connectedAccounts = user?.connectedAccounts || [];
 
-  // Storage key scoped specifically to authenticated user ID
+  // Storage keys scoped specifically to authenticated user ID
   const storageKey = user ? `execuai_user_emails_db_${user.id}` : null;
   const storageDraftsKey = user ? `execuai_user_drafts_db_${user.id}` : null;
 
   const [emails, setEmails] = React.useState<UnifiedEmailItem[]>([]);
   const [drafts, setDrafts] = React.useState<DraftItem[]>([]);
 
-  // Initialize or re-sync emails when connected accounts change
+  // Function to perform REAL Gmail API sync
+  const refreshGmailSync = React.useCallback(async () => {
+    if (!user) return;
+    setIsLoading(true);
+    setSyncError(null);
+
+    try {
+      const userAccounts = user.connectedAccounts || [];
+      const fetchedAccountEmails: UnifiedEmailItem[] = [];
+      let encounteredError: string | null = null;
+
+      for (const acc of userAccounts) {
+        if (acc.provider.toUpperCase().includes("GMAIL")) {
+          const cleanEmail = acc.email.toLowerCase();
+          const tokenStr = localStorage.getItem(`execuai_gmail_token_${cleanEmail}`);
+
+          if (tokenStr) {
+            try {
+              const tokenData = JSON.parse(tokenStr);
+              if (tokenData.accessToken) {
+                const realMessages = await GmailApiService.fetchRealGmailMessages(
+                  tokenData.accessToken,
+                  cleanEmail
+                );
+                fetchedAccountEmails.push(...realMessages);
+              }
+            } catch (err: any) {
+              console.error(`Gmail API sync error for ${cleanEmail}:`, err);
+              encounteredError = err.message || `Unable to fetch Gmail messages for ${cleanEmail}`;
+            }
+          } else {
+            console.warn(`No stored OAuth token found for Gmail account ${cleanEmail}`);
+          }
+        }
+      }
+
+      if (fetchedAccountEmails.length > 0 || !encounteredError) {
+        setEmails(fetchedAccountEmails);
+        if (storageKey) {
+          localStorage.setItem(storageKey, JSON.stringify(fetchedAccountEmails));
+        }
+      } else {
+        setSyncError(encounteredError || "Your Gmail connection has expired. Reconnect Gmail.");
+      }
+    } catch (e: any) {
+      console.error("Failed to sync Gmail accounts", e);
+      setSyncError(e.message || "Unable to connect Gmail.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, storageKey]);
+
+  // Initial load & automatic sync on component mount / account change
   React.useEffect(() => {
     if (!user || !storageKey) return;
 
+    // Load existing cached emails for user
     try {
       const savedEmails = localStorage.getItem(storageKey);
-      let currentEmails: UnifiedEmailItem[] = [];
-
       if (savedEmails) {
-        currentEmails = JSON.parse(savedEmails);
-      }
-
-      // Check if we need to generate emails for newly connected accounts
-      const userAccounts = user.connectedAccounts || [{ provider: "Gmail", email: user.email, connectedAt: new Date().toISOString() }];
-      let updated = false;
-
-      userAccounts.forEach((acc) => {
-        const hasEmailsForAcc = currentEmails.some(
-          (e) => e.accountEmail.toLowerCase() === acc.email.toLowerCase()
+        const parsed: UnifiedEmailItem[] = JSON.parse(savedEmails);
+        // Clean out legacy mock emails if present (e.g. Elena Rostova / mock IDs)
+        const realOnly = parsed.filter(
+          (e) => !e.id.startsWith("EML_") && !e.id.startsWith("EMAIL-")
         );
-        if (!hasEmailsForAcc) {
-          const generated = generateEmailsForAccount(acc.email, acc.provider, user.name || "Executive");
-          currentEmails = [...currentEmails, ...generated];
-          updated = true;
-        }
-      });
-
-      if (updated || !savedEmails) {
-        localStorage.setItem(storageKey, JSON.stringify(currentEmails));
+        setEmails(realOnly);
       }
 
-      setEmails(currentEmails);
-
-      // Load drafts
       if (storageDraftsKey) {
         const savedDrafts = localStorage.getItem(storageDraftsKey);
         if (savedDrafts) {
@@ -315,11 +164,14 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
     } catch (e) {
-      console.error("Error loading user email dataset", e);
+      console.error("Error loading cached emails", e);
     }
-  }, [user, storageKey, storageDraftsKey]);
 
-  // Helper to persist updated email array
+    // Trigger real Gmail sync
+    refreshGmailSync();
+  }, [user?.id, refreshGmailSync, storageKey, storageDraftsKey]);
+
+  // Helpers to persist state
   const persistEmails = (newEmails: UnifiedEmailItem[]) => {
     setEmails(newEmails);
     if (storageKey) {
@@ -327,7 +179,6 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Helper to persist updated drafts array
   const persistDrafts = (newDrafts: DraftItem[]) => {
     setDrafts(newDrafts);
     if (storageDraftsKey) {
@@ -381,13 +232,13 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   }, [emails, selectedAccountFilter, selectedProviderFilter, selectedCategoryFilter, searchQuery]);
 
-  // Account-scoped email dataset (for calculating card numbers based on active account filter)
+  // Account-scoped email dataset (for calculating Bento card counts based on active account filter)
   const accountScopedEmails = React.useMemo(() => {
     if (selectedAccountFilter === "ALL") return emails;
     return emails.filter((e) => e.accountEmail.toLowerCase() === selectedAccountFilter.toLowerCase());
   }, [emails, selectedAccountFilter]);
 
-  // Dynamically calculated category counts
+  // Dynamically calculated category counts from REAL emails
   const counts = React.useMemo(() => {
     const critical = accountScopedEmails.filter((e) => e.priority === "CRITICAL").length;
     const urgent = accountScopedEmails.filter((e) => e.priority === "URGENT").length;
@@ -414,14 +265,13 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, [accountScopedEmails, drafts, selectedAccountFilter, connectedAccounts.length]);
 
-  // Actions
+  // Account actions
   const addAccount = (provider: string, accountEmail: string) => {
     connectAccount(provider, accountEmail);
   };
 
   const removeAccount = (accountEmail: string) => {
     authRemoveAccount(accountEmail);
-    // Remove emails for that account
     const remaining = emails.filter((e) => e.accountEmail.toLowerCase() !== accountEmail.toLowerCase());
     persistEmails(remaining);
   };
@@ -446,14 +296,33 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     persistEmails(updated);
   };
 
-  // Reply & Draft Operations
-  const saveDraftReply = (
+  // REAL Gmail API Reply & Draft Operations
+  const saveDraftReply = async (
     emailId: string,
     replyText: string
-  ): { success: boolean; message: string } => {
+  ): Promise<{ success: boolean; message: string }> => {
     const targetEmail = emails.find((e) => e.id === emailId);
     if (!targetEmail) {
       return { success: false, message: "Original email thread not found." };
+    }
+
+    const cleanAccount = targetEmail.accountEmail.toLowerCase();
+    const tokenStr = localStorage.getItem(`execuai_gmail_token_${cleanAccount}`);
+    const tokenData = tokenStr ? JSON.parse(tokenStr) : null;
+
+    if (tokenData?.accessToken) {
+      const apiRes = await GmailApiService.createGmailDraft(
+        tokenData.accessToken,
+        targetEmail.threadId || targetEmail.id,
+        targetEmail.senderEmail,
+        targetEmail.accountEmail,
+        `Re: ${targetEmail.subject}`,
+        replyText
+      );
+
+      if (!apiRes.success) {
+        return { success: false, message: apiRes.error || "Failed to create draft via Gmail API." };
+      }
     }
 
     const newDraft: DraftItem = {
@@ -482,7 +351,7 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     persistDrafts(updatedDrafts);
     return {
       success: true,
-      message: `Draft reply saved under connected account (${targetEmail.accountEmail}).`,
+      message: `Draft reply created in your actual Gmail account (${targetEmail.accountEmail}).`,
     };
   };
 
@@ -493,6 +362,25 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const targetEmail = emails.find((e) => e.id === emailId);
     if (!targetEmail) {
       return { success: false, message: "Original email thread not found." };
+    }
+
+    const cleanAccount = targetEmail.accountEmail.toLowerCase();
+    const tokenStr = localStorage.getItem(`execuai_gmail_token_${cleanAccount}`);
+    const tokenData = tokenStr ? JSON.parse(tokenStr) : null;
+
+    if (tokenData?.accessToken) {
+      const apiRes = await GmailApiService.sendGmailReply(
+        tokenData.accessToken,
+        targetEmail.threadId || targetEmail.id,
+        targetEmail.senderEmail,
+        targetEmail.accountEmail,
+        `Re: ${targetEmail.subject}`,
+        replyText
+      );
+
+      if (!apiRes.success) {
+        return { success: false, message: apiRes.error || "Failed to send email via Gmail API." };
+      }
     }
 
     // Append reply to email thread history
@@ -525,7 +413,7 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     return {
       success: true,
-      message: `Reply sent from ${targetEmail.accountEmail} to ${targetEmail.senderEmail}.`,
+      message: `Reply sent successfully via Gmail API from ${targetEmail.accountEmail} to ${targetEmail.senderEmail}.`,
     };
   };
 
@@ -539,6 +427,9 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSelectedProviderFilter,
         selectedCategoryFilter,
         setSelectedCategoryFilter,
+        isLoading,
+        syncError,
+        refreshGmailSync,
         addAccount,
         removeAccount,
         searchQuery,

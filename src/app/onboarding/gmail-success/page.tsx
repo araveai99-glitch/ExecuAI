@@ -2,9 +2,20 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/lib/auth-context";
 
 export default function GmailSuccessPage() {
+  const searchParams = useSearchParams();
+  const { user } = useAuth();
+
+  const authenticatedEmail =
+    searchParams.get("email") ||
+    user?.connectedAccounts?.find((a) => a.provider.toUpperCase().includes("GMAIL"))?.email ||
+    user?.email ||
+    "authenticated.user@gmail.com";
+
   return (
     <div className="bg-white p-6 sm:p-10 rounded-2xl border border-[#E2E8F0] shadow-md space-y-6 text-center">
       <div className="w-14 h-14 rounded-2xl bg-[#EFF4FF] text-[#2E936F] font-bold flex items-center justify-center mx-auto border border-[#79d9b0]/40">
@@ -17,7 +28,7 @@ export default function GmailSuccessPage() {
         </span>
         <h1 className="text-2xl font-bold text-[#0F172A]">Gmail Account Connected Successfully</h1>
         <p className="text-xs text-[#475569]">
-          ExecuAI has established secure Read & Draft OAuth synchronization for your Gmail account.
+          ExecuAI has established secure OAuth 2.0 synchronization for your Gmail account.
         </p>
       </div>
 
@@ -29,12 +40,12 @@ export default function GmailSuccessPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-[#0F172A]">ceo@company.com</span>
+              <span className="text-sm font-bold text-[#0F172A]">{authenticatedEmail}</span>
               <span className="px-2 py-0.5 rounded-full bg-[#EFF4FF] text-[#2E936F] text-[10px] font-bold">
                 Connected
               </span>
             </div>
-            <p className="text-[11px] text-[#475569]">Google Workspace • OAuth 2.0 PKCE • Read + Draft</p>
+            <p className="text-[11px] text-[#475569]">Google Workspace • OAuth 2.0 • Real Gmail API Stream</p>
           </div>
         </div>
         <span className="material-symbols-outlined text-[#2E936F] text-[20px]">verified</span>
@@ -46,9 +57,9 @@ export default function GmailSuccessPage() {
             + Connect Another Gmail Account
           </Button>
         </Link>
-        <Link href="/onboarding/connect-zoho" className="w-full sm:w-auto">
+        <Link href="/app/dashboard" className="w-full sm:w-auto">
           <Button variant="primary" size="md" className="w-full sm:w-auto">
-            Next: Connect Zoho Account
+            Go to Executive Dashboard
             <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </Button>
         </Link>

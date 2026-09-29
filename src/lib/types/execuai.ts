@@ -93,6 +93,7 @@ export interface AiClassificationRationale {
 
 export interface UnifiedEmailItem {
   id: string;
+  threadId?: string;
   provider: MailboxProvider;
   accountEmail: string;
   accountLabel: string; // "Gmail #1", "Gmail #2", "Zoho #1"

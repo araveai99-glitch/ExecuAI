@@ -3,46 +3,47 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { GmailApiService } from "@/lib/services/GmailApiService";
 
 export default function GoogleCallbackPage() {
   const router = useRouter();
   const { loginWithGoogle } = useAuth();
   const [status, setStatus] = React.useState("Completing Google OAuth 2.0 verification...");
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     async function handleGoogleCallback() {
       try {
-        // Parse hash params or query params from Google redirect
+        // Parse access_token from hash or query parameters
         const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash || window.location.search);
         const accessToken = params.get("access_token");
 
         if (accessToken) {
-          // Fetch Google user profile
-          const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
-          if (res.ok) {
-            const googleUser = await res.json();
-            setStatus(`Authenticated as ${googleUser.email}...`);
-            await loginWithGoogle(googleUser.email, googleUser.name);
-            return;
-          }
+          setStatus("Retrieving authenticated Google profile...");
+          const profile = await GmailApiService.fetchGoogleUserProfile(accessToken);
+
+          setStatus(`Verified Google Account: ${profile.email}`);
+          await loginWithGoogle(profile.email, profile.name, accessToken);
+          return;
         }
-        
-        // Fallback for standard demo callback
-        const email = params.get("email") || "user.google@example.com";
-        const name = params.get("name") || email.split("@")[0];
-        await loginWithGoogle(email, name);
-      } catch (err) {
+
+        // Check if an error was returned by Google OAuth
+        const oauthError = params.get("error");
+        if (oauthError) {
+          setError(`Google OAuth Error: ${oauthError}`);
+          return;
+        }
+
+        setError("No Google OAuth access token received in redirect response.");
+      } catch (err: any) {
         console.error("Google OAuth error", err);
-        setStatus("Redirecting to login...");
-        router.push("/auth/login");
+        setError(err.message || "Failed to complete Google OAuth authentication.");
       }
     }
 
     handleGoogleCallback();
-  }, [loginWithGoogle, router]);
+  }, [loginWithGoogle]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-center font-sans">
@@ -66,8 +67,27 @@ export default function GoogleCallbackPage() {
           />
         </svg>
       </div>
-      <h2 className="text-xl font-bold text-[#0F172A] font-heading">{status}</h2>
-      <p className="text-xs text-[#64748B] mt-1">Establishing secure OAuth 2.0 session & initializing user workspace...</p>
+
+      {error ? (
+        <div className="space-y-4 max-w-md">
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">
+            {error}
+          </div>
+          <button
+            onClick={() => router.push("/auth/login")}
+            className="px-4 py-2 rounded-xl bg-[#F15E1C] text-white text-xs font-bold"
+          >
+            Return to Login
+          </button>
+        </div>
+      ) : (
+        <>
+          <h2 className="text-xl font-bold text-[#0F172A] font-heading">{status}</h2>
+          <p className="text-xs text-[#64748B] mt-1">
+            Establishing secure OAuth 2.0 session & syncing Gmail messages...
+          </p>
+        </>
+      )}
     </div>
   );
 }
