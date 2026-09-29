@@ -52,9 +52,9 @@ export function buildGoogleAuthUrl(): { url?: string; error?: string } {
     clientId
   )}&redirect_uri=${encodeURIComponent(
     redirectUri
-  )}&response_type=token&scope=${encodeURIComponent(
+  )}&response_type=code&scope=${encodeURIComponent(
     GOOGLE_OAUTH_SCOPES
-  )}&prompt=consent`;
+  )}&access_type=offline&prompt=consent`;
 
   return { url: authUrl };
 }

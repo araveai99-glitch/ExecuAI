@@ -53,7 +53,7 @@ export default function ConnectGmailPage() {
         body: JSON.stringify({
           accessToken: manualToken.trim(),
           email: cleanEmail,
-          userId: "usr_current_session",
+          userId: user?.id || "usr_current_session",
         }),
       });
 
