@@ -128,7 +128,7 @@ export type DraftLength = "short" | "medium" | "detailed";
 export interface DraftItem {
   id: string;
   emailId: string;
-  originalEmail: UnifiedEmailItem;
+  originalEmail?: UnifiedEmailItem;
   currentTone: DraftTone;
   currentLength: DraftLength;
   draftSubject: string;

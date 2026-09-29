@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth-context";
 
-export default function GmailSuccessPage() {
+function GmailSuccessContent() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
 
@@ -65,5 +65,13 @@ export default function GmailSuccessPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function GmailSuccessPage() {
+  return (
+    <React.Suspense fallback={<div className="p-12 text-center text-xs text-[#64748B]">Loading Gmail connection details...</div>}>
+      <GmailSuccessContent />
+    </React.Suspense>
   );
 }

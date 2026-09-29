@@ -23,7 +23,9 @@ export default function DashboardPage() {
     selectedCategoryFilter,
     setSelectedCategoryFilter,
     isLoading,
+    syncStatus,
     syncError,
+    lastSyncedAgo,
     refreshGmailSync,
     filteredEmails,
     counts,
@@ -72,18 +74,23 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 font-sans text-[#0F172A]">
-      {/* Header Greeting & Dynamic Summary */}
+      {/* Header Greeting & Dynamic Telemetry Summary */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-0.5 rounded-full bg-[#FFF2EC] text-[#F15E1C] border border-[#FDE8DF] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#F15E1C] animate-pulse" />
+              <span className={`w-1.5 h-1.5 rounded-full ${isLoading ? "bg-[#F15E1C] animate-pulse" : "bg-[#2E936F]"}`} />
               Connected Gmail: <strong className="text-[#0F172A]">{primaryAccountEmail}</strong>
             </span>
             <span className="text-[#94A3B8]">•</span>
             <span className="text-xs text-[#475569] flex items-center gap-1 font-medium">
               <span className="material-symbols-outlined text-[14px] text-[#2E936F]">sync</span>
               {counts.syncedMailboxes} {counts.syncedMailboxes === 1 ? "Mailbox Synced" : "Mailboxes Synced"}
+            </span>
+            <span className="text-[#94A3B8]">•</span>
+            <span className="text-xs text-[#64748B] font-semibold flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px] text-[#64748B]">schedule</span>
+              {isLoading ? "Syncing Gmail..." : lastSyncedAgo}
             </span>
           </div>
 
@@ -95,7 +102,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Account Selector Dropdown */}
+        {/* Account Selector & Working Refresh Button */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs flex items-center gap-2 text-xs font-bold text-[#0F172A]">
             <span className="material-symbols-outlined text-[#F15E1C] text-[16px]">mail</span>
@@ -105,7 +112,7 @@ export default function DashboardPage() {
               onChange={(e) => setSelectedAccountFilter(e.target.value)}
               className="bg-transparent font-bold text-[#0F172A] outline-none cursor-pointer"
             >
-              <option value="ALL">All Connected Accounts ({connectedAccounts.length})</option>
+              <option value="ALL">All Accounts ({connectedAccounts.length})</option>
               {connectedAccounts.map((acc) => (
                 <option key={acc.email} value={acc.email}>
                   {acc.provider}: {acc.email}
@@ -117,28 +124,34 @@ export default function DashboardPage() {
           <button
             onClick={() => refreshGmailSync()}
             disabled={isLoading}
-            className="p-2 rounded-xl bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#475569] hover:text-[#0F172A] cursor-pointer"
-            title="Refresh Gmail Sync"
+            className="px-3.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#475569] hover:text-[#0F172A] cursor-pointer flex items-center gap-1.5 text-xs font-bold transition-all"
+            title="Fetch new/updated Gmail data"
           >
             <span className={`material-symbols-outlined text-[18px] ${isLoading ? "animate-spin text-[#F15E1C]" : ""}`}>
               sync
             </span>
+            <span>{isLoading ? "Syncing..." : "↻ Sync"}</span>
           </button>
         </div>
       </div>
 
-      {/* Sync Error Banner (if OAuth expired) */}
+      {/* Sync Error Banner (if OAuth expired or API failed) */}
       {syncError && (
         <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs font-bold flex items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[20px] text-red-600">error</span>
-            <span>{syncError}</span>
+            <span>Gmail sync failed: {syncError}</span>
           </div>
-          <Link href="/onboarding/connect-gmail">
-            <Button variant="danger" size="sm">
-              Reconnect Gmail
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" size="sm" onClick={() => refreshGmailSync()}>
+              Retry Sync
             </Button>
-          </Link>
+            <Link href="/onboarding/connect-gmail">
+              <Button variant="danger" size="sm">
+                Reconnect Gmail
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
 

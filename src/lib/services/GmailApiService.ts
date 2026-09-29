@@ -1,5 +1,12 @@
 import { UnifiedEmailItem, PriorityLevel, IntentCategory, RiskLevel } from "../types/execuai";
 
+export interface GmailProfile {
+  emailAddress: string;
+  messagesTotal: number;
+  threadsTotal: number;
+  historyId?: string;
+}
+
 export interface GoogleUserProfile {
   email: string;
   name: string;
@@ -22,7 +29,7 @@ export function base64UrlEncode(str: string): string {
 }
 
 /**
- * Decodes Base64URL string from Gmail API payload
+ * Decodes Base64URL string from Gmail API payload with UTF-8 support
  */
 export function decodeBase64Url(base64UrlStr: string): string {
   try {
@@ -43,24 +50,29 @@ export function decodeBase64Url(base64UrlStr: string): string {
  */
 export function getBodyFromPayload(payload: any): string {
   if (!payload) return "";
-  if (payload.body && payload.body.data) {
+  if (payload.body && payload.body.data && typeof payload.body.data === "string" && payload.body.data.trim().length > 0) {
     return decodeBase64Url(payload.body.data);
   }
   if (payload.parts && Array.isArray(payload.parts)) {
+    // 1. First pass: look for plain text in immediate parts
     for (const part of payload.parts) {
       if (part.mimeType === "text/plain" && part.body && part.body.data) {
         return decodeBase64Url(part.body.data);
       }
     }
+    // 2. Second pass: look for html text in immediate parts
     for (const part of payload.parts) {
       if (part.mimeType === "text/html" && part.body && part.body.data) {
         const html = decodeBase64Url(part.body.data);
         return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
       }
     }
+    // 3. Third pass: recursively search nested parts (e.g. multipart/alternative)
     for (const part of payload.parts) {
-      const nested = getBodyFromPayload(part);
-      if (nested) return nested;
+      if (part.parts && Array.isArray(part.parts)) {
+        const nested = getBodyFromPayload(part);
+        if (nested) return nested;
+      }
     }
   }
   return "";
@@ -180,6 +192,74 @@ export class GmailApiService {
   }
 
   /**
+   * Fetches real Gmail user profile from Gmail API users.getProfile endpoint
+   */
+  public static async fetchGmailProfile(accessToken: string): Promise<GmailProfile> {
+    const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (res.status === 401) {
+      throw new Error("Gmail connection expired. Reconnect Gmail.");
+    }
+    if (!res.ok) {
+      throw new Error(`Gmail API profile error: ${res.statusText} (${res.status})`);
+    }
+    const data = await res.json();
+    return {
+      emailAddress: data.emailAddress,
+      messagesTotal: data.messagesTotal || 0,
+      threadsTotal: data.threadsTotal || 0,
+      historyId: data.historyId,
+    };
+  }
+
+  /**
+   * Fetches actual Gmail Drafts from Gmail API users.drafts.list
+   */
+  public static async fetchRealGmailDrafts(
+    accessToken: string,
+    accountEmail: string
+  ): Promise<Array<{ id: string; messageId: string; subject: string; snippet: string; date: string }>> {
+    try {
+      const listRes = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/drafts?maxResults=20", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!listRes.ok) return [];
+
+      const data = await listRes.json();
+      const draftsList: Array<{ id: string; message?: { id: string } }> = data.drafts || [];
+      const drafts: Array<{ id: string; messageId: string; subject: string; snippet: string; date: string }> = [];
+
+      for (const d of draftsList) {
+        try {
+          const draftDetailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/drafts/${d.id}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (draftDetailRes.ok) {
+            const detail = await draftDetailRes.json();
+            const headers: Array<{ name: string; value: string }> = detail.message?.payload?.headers || [];
+            const subjHeader = headers.find((h) => h.name.toLowerCase() === "subject");
+            const dateHeader = headers.find((h) => h.name.toLowerCase() === "date");
+            drafts.push({
+              id: d.id,
+              messageId: detail.message?.id || d.id,
+              subject: subjHeader ? subjHeader.value : "(Draft)",
+              snippet: detail.message?.snippet || "",
+              date: dateHeader ? dateHeader.value : "Draft",
+            });
+          }
+        } catch (e) {
+          // ignore individual draft detail failure
+        }
+      }
+      return drafts;
+    } catch (e) {
+      console.error("Error fetching Gmail drafts:", e);
+      return [];
+    }
+  }
+
+  /**
    * Fetches actual Gmail messages from the authenticated Gmail mailbox
    */
   public static async fetchRealGmailMessages(
@@ -187,7 +267,18 @@ export class GmailApiService {
     accountEmail: string,
     maxResults = 25
   ): Promise<UnifiedEmailItem[]> {
-    // Query Gmail API for messages in INBOX (strictly excluding TRASH and SPAM)
+    // 1. Verify Gmail Profile & Email Address
+    let gmailProfile: GmailProfile | null = null;
+    try {
+      gmailProfile = await this.fetchGmailProfile(accessToken);
+      console.log(`[Gmail API Telemetry] Authenticated Profile Email: ${gmailProfile.emailAddress}, Total Messages: ${gmailProfile.messagesTotal}, Total Threads: ${gmailProfile.threadsTotal}`);
+    } catch (profileErr) {
+      console.warn(`[Gmail API Telemetry] Could not fetch profile directly:`, profileErr);
+    }
+
+    const verifiedAccountEmail = (gmailProfile?.emailAddress || accountEmail).toLowerCase();
+
+    // 2. Query Gmail API for messages strictly in INBOX (label:INBOX)
     const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}&q=label:INBOX -label:TRASH -label:SPAM`;
     const listRes = await fetch(listUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -202,6 +293,8 @@ export class GmailApiService {
 
     const listData = await listRes.json();
     const messageSummaries: Array<{ id: string; threadId: string }> = listData.messages || [];
+
+    console.log(`[Gmail API Telemetry] Gmail API returned ${messageSummaries.length} message IDs for ${verifiedAccountEmail}`);
 
     if (messageSummaries.length === 0) {
       return [];
@@ -222,7 +315,10 @@ export class GmailApiService {
         const msgData = await msgRes.json();
         const labels: string[] = msgData.labelIds || [];
 
-        // STRICT CHECK: NEVER SHOW TRASH, SPAM, DRAFT, OR SENT MESSAGES IN INBOX
+        // STRICT CHECK: MUST BE IN INBOX, AND NEVER TRASH, SPAM, DRAFT, OR SENT
+        if (!labels.includes("INBOX")) {
+          continue;
+        }
         if (labels.includes("TRASH") || labels.includes("SPAM") || labels.includes("DRAFT") || labels.includes("SENT")) {
           continue;
         }
@@ -251,7 +347,7 @@ export class GmailApiService {
         // Parse recipients
         const recipientsTo = toRaw
           ? toRaw.split(",").map((s) => s.trim().replace(/^.*<([^>]+)>$/, "$1"))
-          : [accountEmail];
+          : [verifiedAccountEmail];
         const recipientsCc = ccRaw
           ? ccRaw.split(",").map((s) => s.trim().replace(/^.*<([^>]+)>$/, "$1"))
           : [];
@@ -284,8 +380,8 @@ export class GmailApiService {
           id: msgData.id, // Real Gmail message ID
           threadId: msgData.threadId, // Real Gmail thread ID
           provider: "GMAIL",
-          accountEmail: accountEmail.toLowerCase(),
-          accountLabel: `Gmail (${accountEmail.toLowerCase()})`,
+          accountEmail: verifiedAccountEmail,
+          accountLabel: `Gmail (${verifiedAccountEmail})`,
           senderName: senderName || senderEmail,
           senderEmail: senderEmail,
           senderRole: "External Correspondent",
@@ -325,6 +421,7 @@ export class GmailApiService {
       }
     }
 
+    console.log(`[Gmail API Telemetry] Successfully processed ${emailItems.length} Inbox messages for ${verifiedAccountEmail}`);
     return emailItems;
   }
 
@@ -438,3 +535,4 @@ export class GmailApiService {
     }
   }
 }
+

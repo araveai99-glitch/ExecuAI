@@ -27,7 +27,10 @@ interface UserDataContextType {
 
   // Sync & Loading States
   isLoading: boolean;
+  syncStatus: "idle" | "syncing" | "synced" | "error";
   syncError: string | null;
+  lastSyncedAt: Date | null;
+  lastSyncedAgo: string;
   refreshGmailSync: () => Promise<void>;
 
   // Add/Remove Account Actions
@@ -78,7 +81,10 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [searchQuery, setSearchQuery] = React.useState<string>("");
 
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [syncStatus, setSyncStatus] = React.useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [syncError, setSyncError] = React.useState<string | null>(null);
+  const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
+  const [validSyncedMailboxCount, setValidSyncedMailboxCount] = React.useState<number>(0);
 
   const connectedAccounts = user?.connectedAccounts || [];
 
@@ -93,27 +99,82 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const refreshGmailSync = React.useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
+    setSyncStatus("syncing");
     setSyncError(null);
 
     try {
       const userAccounts = user.connectedAccounts || [];
       const fetchedAccountEmails: UnifiedEmailItem[] = [];
+      const fetchedAccountDrafts: DraftItem[] = [];
+      let validMailboxes = 0;
       let encounteredError: string | null = null;
 
-      for (const acc of userAccounts) {
+      // Also discover any stored OAuth tokens in localStorage
+      const allLocalStorageKeys = typeof window !== "undefined" ? Object.keys(localStorage) : [];
+      const tokenKeys = allLocalStorageKeys.filter((k) => k.startsWith("execuai_gmail_token"));
+
+      // Target accounts to sync
+      const accountsToSync = [...userAccounts];
+      // If user has no connected accounts in profile but localStorage has tokens, auto-discover
+      tokenKeys.forEach((key) => {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.email && !accountsToSync.some((a) => a.email.toLowerCase() === parsed.email.toLowerCase())) {
+              accountsToSync.push({
+                provider: "Gmail",
+                email: parsed.email.toLowerCase(),
+                connectedAt: new Date().toISOString(),
+              });
+            }
+          }
+        } catch (e) {}
+      });
+
+      for (const acc of accountsToSync) {
         if (acc.provider.toUpperCase().includes("GMAIL")) {
           const cleanEmail = acc.email.toLowerCase();
-          const tokenStr = localStorage.getItem(`execuai_gmail_token_${cleanEmail}`);
+          let tokenStr = localStorage.getItem(`execuai_gmail_token_${cleanEmail}`);
+          if (!tokenStr) {
+            tokenStr = localStorage.getItem("execuai_gmail_token_latest") || localStorage.getItem("execuai_gmail_token");
+          }
 
           if (tokenStr) {
             try {
               const tokenData = JSON.parse(tokenStr);
               if (tokenData.accessToken) {
+                // Verify Gmail profile first
+                const profile = await GmailApiService.fetchGmailProfile(tokenData.accessToken);
+                const verifiedEmail = (profile.emailAddress || cleanEmail).toLowerCase();
+
+                // Fetch real inbox messages
                 const realMessages = await GmailApiService.fetchRealGmailMessages(
                   tokenData.accessToken,
-                  cleanEmail
+                  verifiedEmail
                 );
                 fetchedAccountEmails.push(...realMessages);
+
+                // Fetch real Gmail drafts
+                const realDrafts = await GmailApiService.fetchRealGmailDrafts(
+                  tokenData.accessToken,
+                  verifiedEmail
+                );
+                const convertedDrafts: DraftItem[] = realDrafts.map((d) => ({
+                  id: d.id,
+                  emailId: d.messageId,
+                  draftSubject: d.subject,
+                  draftBody: d.snippet,
+                  status: "DRAFT_PREPARED",
+                  currentTone: "professional",
+                  currentLength: "medium",
+                  lastSavedAgo: d.date,
+                  requiresHumanApproval: true,
+                  humanApprovalReason: "Actual Gmail Draft",
+                }));
+                fetchedAccountDrafts.push(...convertedDrafts);
+
+                validMailboxes++;
               }
             } catch (err: any) {
               console.error(`Gmail API sync error for ${cleanEmail}:`, err);
@@ -125,21 +186,43 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
 
-      if (fetchedAccountEmails.length > 0 || !encounteredError) {
-        setEmails(fetchedAccountEmails);
+      setValidSyncedMailboxCount(validMailboxes);
+
+      if (validMailboxes > 0 || fetchedAccountEmails.length > 0) {
+        // Deduplicate messages by ID
+        const uniqueMap = new Map<string, UnifiedEmailItem>();
+        fetchedAccountEmails.forEach((e) => uniqueMap.set(e.id, e));
+        const deduplicatedEmails = Array.from(uniqueMap.values());
+
+        setEmails(deduplicatedEmails);
         if (storageKey) {
-          localStorage.setItem(storageKey, JSON.stringify(fetchedAccountEmails));
+          localStorage.setItem(storageKey, JSON.stringify(deduplicatedEmails));
         }
+
+        // Merge drafts
+        setDrafts(fetchedAccountDrafts);
+        if (storageDraftsKey) {
+          localStorage.setItem(storageDraftsKey, JSON.stringify(fetchedAccountDrafts));
+        }
+
+        setLastSyncedAt(new Date());
+        setSyncStatus("synced");
       } else {
-        setSyncError(encounteredError || "Your Gmail connection has expired. Reconnect Gmail.");
+        if (userAccounts.length === 0) {
+          setSyncStatus("idle");
+        } else {
+          setSyncStatus("error");
+          setSyncError(encounteredError || "Your Gmail connection has expired. Reconnect Gmail.");
+        }
       }
     } catch (e: any) {
       console.error("Failed to sync Gmail accounts", e);
+      setSyncStatus("error");
       setSyncError(e.message || "Unable to connect Gmail.");
     } finally {
       setIsLoading(false);
     }
-  }, [user, storageKey]);
+  }, [user, storageKey, storageDraftsKey]);
 
   // Initial load & automatic sync on component mount / account change
   React.useEffect(() => {
@@ -150,7 +233,7 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const savedEmails = localStorage.getItem(storageKey);
       if (savedEmails) {
         const parsed: UnifiedEmailItem[] = JSON.parse(savedEmails);
-        // Clean out legacy mock emails if present (e.g. Elena Rostova / mock IDs)
+        // Clean out legacy mock emails if present
         const realOnly = parsed.filter(
           (e) => !e.id.startsWith("EML_") && !e.id.startsWith("EMAIL-")
         );
@@ -185,6 +268,18 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       localStorage.setItem(storageDraftsKey, JSON.stringify(newDrafts));
     }
   };
+
+  // Helper for human-formatted sync time
+  const lastSyncedAgo = React.useMemo(() => {
+    if (!lastSyncedAt) return "Not synced yet";
+    const seconds = Math.floor((Date.now() - lastSyncedAt.getTime()) / 1000);
+    if (seconds < 30) return "Synced just now";
+    if (seconds < 60) return `Synced ${seconds}s ago`;
+    const mins = Math.floor(seconds / 60);
+    if (mins < 60) return `Synced ${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    return `Synced ${hours}h ago`;
+  }, [lastSyncedAt]);
 
   // Filtered emails computation
   const filteredEmails = React.useMemo(() => {
@@ -261,9 +356,9 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       safeToDraft,
       lowPriority,
       totalDrafts: scopedDrafts.length,
-      syncedMailboxes: connectedAccounts.length || 1,
+      syncedMailboxes: validSyncedMailboxCount || (connectedAccounts.length > 0 && emails.length > 0 ? connectedAccounts.length : 0),
     };
-  }, [accountScopedEmails, drafts, selectedAccountFilter, connectedAccounts.length]);
+  }, [accountScopedEmails, drafts, selectedAccountFilter, validSyncedMailboxCount, connectedAccounts.length, emails.length]);
 
   // Account actions
   const addAccount = (provider: string, accountEmail: string) => {
@@ -428,7 +523,10 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         selectedCategoryFilter,
         setSelectedCategoryFilter,
         isLoading,
+        syncStatus,
         syncError,
+        lastSyncedAt,
+        lastSyncedAgo,
         refreshGmailSync,
         addAccount,
         removeAccount,
