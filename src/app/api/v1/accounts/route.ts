@@ -1,18 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ServerGmailTokenStore } from "@/lib/server/gmail-token-store";
 
-// Tenant Scoped Accounts API Route
+// Server-side Accounts API Route
 export async function GET(req: NextRequest) {
   try {
-    const tenantOrgId = req.headers.get("x-organization-id") || "org_exec_9910";
+    const userId = req.nextUrl.searchParams.get("userId") || "usr_current_session";
+    let credentials = ServerGmailTokenStore.getAllUserCredentials(userId);
+    if (credentials.length === 0) {
+      credentials = ServerGmailTokenStore.getAllCredentials();
+    }
+
+    const accounts = credentials.map((cred, idx) => ({
+      id: `acc_g_${idx + 1}`,
+      accountLabel: `Gmail (${cred.email})`,
+      provider: "GMAIL",
+      emailAddress: cred.email,
+      status: cred.status || "CONNECTED",
+      lastSync: cred.lastSyncedAt ? "Synced recently" : "Not synced",
+      syncError: cred.syncError,
+      connectedDate: "Connected",
+      messagesCount: cred.messagesCount || 0,
+    }));
 
     return NextResponse.json({
       success: true,
-      tenantOrgId,
-      accounts: [],
-      message: "Accounts endpoint active. Fetch connected accounts from user session or database.",
+      accounts,
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
-

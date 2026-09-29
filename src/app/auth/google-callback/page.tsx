@@ -23,6 +23,18 @@ export default function GoogleCallbackPage() {
           setStatus("Retrieving authenticated Google profile...");
           const profile = await GmailApiService.fetchGoogleUserProfile(accessToken);
 
+          setStatus(`Saving server-side OAuth credentials for ${profile.email}...`);
+          // Save credentials securely on the server
+          await fetch("/api/v1/auth/google/save-token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              accessToken,
+              email: profile.email,
+              userId: "usr_current_session",
+            }),
+          });
+
           setStatus(`Verified Google Account: ${profile.email}`);
           await loginWithGoogle(profile.email, profile.name, accessToken);
           return;

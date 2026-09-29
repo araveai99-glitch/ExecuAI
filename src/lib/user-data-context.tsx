@@ -95,7 +95,7 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [emails, setEmails] = React.useState<UnifiedEmailItem[]>([]);
   const [drafts, setDrafts] = React.useState<DraftItem[]>([]);
 
-  // Function to perform REAL Gmail API sync
+  // Function to perform REAL Gmail API sync via Server API
   const refreshGmailSync = React.useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
@@ -103,95 +103,20 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setSyncError(null);
 
     try {
-      const userAccounts = user.connectedAccounts || [];
-      const fetchedAccountEmails: UnifiedEmailItem[] = [];
-      const fetchedAccountDrafts: DraftItem[] = [];
-      let validMailboxes = 0;
-      let encounteredError: string | null = null;
-
-      // Also discover any stored OAuth tokens in localStorage
-      const allLocalStorageKeys = typeof window !== "undefined" ? Object.keys(localStorage) : [];
-      const tokenKeys = allLocalStorageKeys.filter((k) => k.startsWith("execuai_gmail_token"));
-
-      // Target accounts to sync
-      const accountsToSync = [...userAccounts];
-      // If user has no connected accounts in profile but localStorage has tokens, auto-discover
-      tokenKeys.forEach((key) => {
-        try {
-          const raw = localStorage.getItem(key);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed.email && !accountsToSync.some((a) => a.email.toLowerCase() === parsed.email.toLowerCase())) {
-              accountsToSync.push({
-                provider: "Gmail",
-                email: parsed.email.toLowerCase(),
-                connectedAt: new Date().toISOString(),
-              });
-            }
-          }
-        } catch (e) {}
-      });
-
-      for (const acc of accountsToSync) {
-        if (acc.provider.toUpperCase().includes("GMAIL")) {
-          const cleanEmail = acc.email.toLowerCase();
-          let tokenStr = localStorage.getItem(`execuai_gmail_token_${cleanEmail}`);
-          if (!tokenStr) {
-            tokenStr = localStorage.getItem("execuai_gmail_token_latest") || localStorage.getItem("execuai_gmail_token");
-          }
-
-          if (tokenStr) {
-            try {
-              const tokenData = JSON.parse(tokenStr);
-              if (tokenData.accessToken) {
-                // Verify Gmail profile first
-                const profile = await GmailApiService.fetchGmailProfile(tokenData.accessToken);
-                const verifiedEmail = (profile.emailAddress || cleanEmail).toLowerCase();
-
-                // Fetch real inbox messages
-                const realMessages = await GmailApiService.fetchRealGmailMessages(
-                  tokenData.accessToken,
-                  verifiedEmail
-                );
-                fetchedAccountEmails.push(...realMessages);
-
-                // Fetch real Gmail drafts
-                const realDrafts = await GmailApiService.fetchRealGmailDrafts(
-                  tokenData.accessToken,
-                  verifiedEmail
-                );
-                const convertedDrafts: DraftItem[] = realDrafts.map((d) => ({
-                  id: d.id,
-                  emailId: d.messageId,
-                  draftSubject: d.subject,
-                  draftBody: d.snippet,
-                  status: "DRAFT_PREPARED",
-                  currentTone: "professional",
-                  currentLength: "medium",
-                  lastSavedAgo: d.date,
-                  requiresHumanApproval: true,
-                  humanApprovalReason: "Actual Gmail Draft",
-                }));
-                fetchedAccountDrafts.push(...convertedDrafts);
-
-                validMailboxes++;
-              }
-            } catch (err: any) {
-              console.error(`Gmail API sync error for ${cleanEmail}:`, err);
-              encounteredError = err.message || `Unable to fetch Gmail messages for ${cleanEmail}`;
-            }
-          } else {
-            console.warn(`No stored OAuth token found for Gmail account ${cleanEmail}`);
-          }
-        }
+      const res = await fetch(`/api/v1/inbox?userId=${encodeURIComponent(user.id)}&accountEmail=${encodeURIComponent(selectedAccountFilter)}`);
+      if (!res.ok) {
+        throw new Error(`Server API inbox endpoint error (${res.status})`);
       }
 
-      setValidSyncedMailboxCount(validMailboxes);
+      const data = await res.json();
 
-      if (validMailboxes > 0 || fetchedAccountEmails.length > 0) {
+      if (data.success) {
+        const fetchedEmails: UnifiedEmailItem[] = data.emails || [];
+        const fetchedDrafts: DraftItem[] = data.drafts || [];
+
         // Deduplicate messages by ID
         const uniqueMap = new Map<string, UnifiedEmailItem>();
-        fetchedAccountEmails.forEach((e) => uniqueMap.set(e.id, e));
+        fetchedEmails.forEach((e) => uniqueMap.set(e.id, e));
         const deduplicatedEmails = Array.from(uniqueMap.values());
 
         setEmails(deduplicatedEmails);
@@ -199,30 +124,27 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           localStorage.setItem(storageKey, JSON.stringify(deduplicatedEmails));
         }
 
-        // Merge drafts
-        setDrafts(fetchedAccountDrafts);
+        setDrafts(fetchedDrafts);
         if (storageDraftsKey) {
-          localStorage.setItem(storageDraftsKey, JSON.stringify(fetchedAccountDrafts));
+          localStorage.setItem(storageDraftsKey, JSON.stringify(fetchedDrafts));
         }
 
-        setLastSyncedAt(new Date());
-        setSyncStatus("synced");
+        setValidSyncedMailboxCount(data.counts?.syncedMailboxes || 0);
+        setLastSyncedAt(data.lastSyncedAt ? new Date(data.lastSyncedAt) : new Date());
+        setSyncStatus(data.syncStatus || "synced");
+        setSyncError(data.syncError || null);
       } else {
-        if (userAccounts.length === 0) {
-          setSyncStatus("idle");
-        } else {
-          setSyncStatus("error");
-          setSyncError(encounteredError || "Your Gmail connection has expired. Reconnect Gmail.");
-        }
+        setSyncStatus("error");
+        setSyncError(data.error || "Gmail sync failed. Reconnect Gmail.");
       }
     } catch (e: any) {
-      console.error("Failed to sync Gmail accounts", e);
+      console.error("[UserDataContext] Failed to sync Gmail accounts via server API", e);
       setSyncStatus("error");
-      setSyncError(e.message || "Unable to connect Gmail.");
+      setSyncError(e.message || "Unable to connect to Gmail server API.");
     } finally {
       setIsLoading(false);
     }
-  }, [user, storageKey, storageDraftsKey]);
+  }, [user, selectedAccountFilter, storageKey, storageDraftsKey]);
 
   // Initial load & automatic sync on component mount / account change
   React.useEffect(() => {

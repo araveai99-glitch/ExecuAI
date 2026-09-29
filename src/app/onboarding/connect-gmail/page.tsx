@@ -42,16 +42,16 @@ export default function ConnectGmailPage() {
       const profile = await GmailApiService.fetchGoogleUserProfile(manualToken.trim());
       const cleanEmail = profile.email.toLowerCase();
 
-      // Save token for account
-      localStorage.setItem(
-        `execuai_gmail_token_${cleanEmail}`,
-        JSON.stringify({
+      // Save credentials securely on the server
+      await fetch("/api/v1/auth/google/save-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           accessToken: manualToken.trim(),
           email: cleanEmail,
-          name: profile.name,
-          expiresAt: Date.now() + 3600 * 1000,
-        })
-      );
+          userId: "usr_current_session",
+        }),
+      });
 
       // Connect account in AuthContext
       connectAccount("Gmail", cleanEmail);
