@@ -181,9 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isAdmin: cleanEmail.includes("admin"),
           emailVerified: false,
           subscription: createDefaultSubscription(cleanEmail),
-          connectedAccounts: [
-            { provider: "Gmail", email: cleanEmail, connectedAt: new Date().toISOString() },
-          ],
+          connectedAccounts: [], // Only add Gmail accounts after real Google OAuth authorization
         };
 
         const updatedDb = [...usersDb, newUser];
@@ -222,9 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isAdmin: cleanEmail.includes("admin"),
             emailVerified: true,
             subscription: createDefaultSubscription(cleanEmail),
-            connectedAccounts: [
-              { provider: "Gmail", email: cleanEmail, connectedAt: new Date().toISOString() },
-            ],
+            connectedAccounts: [], // Pure identity sign-in — Gmail permissions connected separately via Connect Gmail
           };
 
           const updatedDb = [...usersDb, dynamicUser];

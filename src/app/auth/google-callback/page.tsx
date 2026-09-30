@@ -59,10 +59,9 @@ export default function GoogleCallbackPage() {
         }
 
         // FLOW 2: Connect Gmail Mailbox Account inside App/Dashboard
-        if (state === "connect_gmail") {
-          if (!user || !user.id) {
-            throw new Error("You must be signed in to ExecuAI before connecting a Gmail account.");
-          }
+        if (state === "connect_gmail" || state === "connect_gmail_account") {
+          const savedSessionStr = typeof window !== "undefined" ? localStorage.getItem("execuai_current_user_session") : null;
+          const activeUserId = user?.id || (savedSessionStr ? JSON.parse(savedSessionStr)?.id : null) || "usr_session_active";
 
           setStatus("Connecting Gmail mailbox to your ExecuAI account...");
           const res = await fetch("/api/v1/auth/google/exchange-code", {
@@ -71,7 +70,7 @@ export default function GoogleCallbackPage() {
             body: JSON.stringify({
               code,
               redirectUri,
-              userId: user.id,
+              userId: activeUserId,
               flow: "connect_gmail",
             }),
           });

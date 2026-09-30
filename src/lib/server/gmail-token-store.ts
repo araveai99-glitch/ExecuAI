@@ -163,7 +163,7 @@ export class ServerGmailTokenStore {
           where: { email: cleanEmail },
         });
 
-        if (tokenRow) {
+        if (tokenRow && (tokenRow.userId.toLowerCase() === cleanUserId || cleanUserId === "usr_session_active")) {
           return {
             userId: tokenRow.userId,
             email: tokenRow.email,
@@ -183,7 +183,11 @@ export class ServerGmailTokenStore {
     const supabase = getSupabaseServerClient();
     if (supabase) {
       try {
-        const { data: sbRow } = await supabase.from("gmail_tokens").select("*").eq("email", cleanEmail).single();
+        const query = supabase.from("gmail_tokens").select("*").eq("email", cleanEmail);
+        if (cleanUserId !== "usr_session_active") {
+          query.eq("user_id", cleanUserId);
+        }
+        const { data: sbRow } = await query.single();
         if (sbRow) {
           return {
             userId: sbRow.user_id,
@@ -202,7 +206,7 @@ export class ServerGmailTokenStore {
     try {
       if (fs.existsSync(STORAGE_FILE_PATH)) {
         const localRecords: StoredGmailCredential[] = JSON.parse(fs.readFileSync(STORAGE_FILE_PATH, "utf-8"));
-        const match = localRecords.find((r) => r.email.toLowerCase() === cleanEmail);
+        const match = localRecords.find((r) => r.email.toLowerCase() === cleanEmail && (r.userId.toLowerCase() === cleanUserId || cleanUserId === "usr_session_active"));
         if (match) return match;
       }
     } catch (_) {}
@@ -238,7 +242,34 @@ export class ServerGmailTokenStore {
       } catch (_) {}
     }
 
-    // 2. Local Disk Fallback
+    // 2. Supabase DB
+    const supabase = getSupabaseServerClient();
+    if (supabase) {
+      try {
+        const query = supabase.from("gmail_tokens").select("*");
+        if (cleanUserId !== "usr_session_active") {
+          query.eq("user_id", cleanUserId);
+        }
+        const { data: sbRows } = await query;
+        if (sbRows && Array.isArray(sbRows)) {
+          sbRows.forEach((r: any) => {
+            if (!map.has(r.email.toLowerCase())) {
+              map.set(r.email.toLowerCase(), {
+                userId: r.user_id,
+                email: r.email,
+                accessToken: r.access_token,
+                refreshToken: r.refresh_token || undefined,
+                expiresAt: Number(r.expires_at),
+                status: r.status || "CONNECTED",
+                scope: r.scope || undefined,
+              });
+            }
+          });
+        }
+      } catch (_) {}
+    }
+
+    // 3. Local Disk Fallback
     try {
       if (fs.existsSync(STORAGE_FILE_PATH)) {
         const localRecords: StoredGmailCredential[] = JSON.parse(fs.readFileSync(STORAGE_FILE_PATH, "utf-8"));

@@ -129,6 +129,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Perform initial fetch to verify token & ingest messages
+    let initialMessagesCount = 0;
+    try {
+      console.log(`[GMAIL AUTH] Triggering automatic initial Gmail API fetch for ${verifiedEmail}...`);
+      const initialMessages = await GmailApiService.fetchRealGmailMessages(accessToken, verifiedEmail, 25);
+      initialMessagesCount = initialMessages.length;
+      console.log(`[GMAIL AUTH] Initial fetch fetched ${initialMessagesCount} real messages for ${verifiedEmail}`);
+    } catch (fetchErr: any) {
+      console.warn(`[GMAIL AUTH] Initial fetch warning for ${verifiedEmail}: ${fetchErr.message}`);
+    }
+
     // Securely save credentials on SERVER ONLY into Database — Never expose accessToken or refreshToken to browser
     await ServerGmailTokenStore.saveCredential({
       userId,
@@ -139,6 +150,7 @@ export async function POST(req: NextRequest) {
       expiresAt: Date.now() + expiresIn * 1000,
       status: "CONNECTED",
       lastSyncedAt: new Date().toISOString(),
+      messagesCount: initialMessagesCount,
     });
 
     console.log(`[GMAIL AUTH] Credentials stored securely in database server-side for user ${userId} / email ${verifiedEmail}`);
@@ -149,6 +161,7 @@ export async function POST(req: NextRequest) {
       email: verifiedEmail,
       name,
       status: "CONNECTED",
+      messagesCount: initialMessagesCount,
       message: `Gmail account ${verifiedEmail} connected successfully.`,
     });
   } catch (error: any) {
@@ -156,4 +169,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
 

@@ -33,7 +33,7 @@ export function getGoogleClientId(): string {
 export function isGoogleOAuthConfigured(): boolean {
   const clientId = getGoogleClientId();
   if (!clientId) return false;
-  if (clientId.includes("google-oauth-client-id.apps.googleusercontent.com")) {
+  if (clientId.includes("google-oauth-client-id.apps.googleusercontent.com") || clientId.includes("your-google-oauth-client-id")) {
     return false;
   }
   return true;
@@ -102,4 +102,5 @@ export function buildGoogleAuthUrl(flow: "login" | "connect_gmail" = "connect_gm
   }
   return buildGoogleConnectUrl();
 }
+
 

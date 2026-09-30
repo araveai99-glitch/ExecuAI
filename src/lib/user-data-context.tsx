@@ -129,6 +129,14 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           localStorage.setItem(storageDraftsKey, JSON.stringify(fetchedDrafts));
         }
 
+        if (Array.isArray(data.accounts)) {
+          data.accounts.forEach((acc: { email: string; provider?: string }) => {
+            if (acc.email) {
+              connectAccount(acc.provider || "Gmail", acc.email);
+            }
+          });
+        }
+
         setValidSyncedMailboxCount(data.counts?.syncedMailboxes || 0);
         setLastSyncedAt(data.lastSyncedAt ? new Date(data.lastSyncedAt) : new Date());
         setSyncStatus(data.syncStatus || "synced");

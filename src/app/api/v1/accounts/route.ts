@@ -34,3 +34,27 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const userId = req.nextUrl.searchParams.get("userId");
+    const email = req.nextUrl.searchParams.get("email");
+
+    if (!userId || !email) {
+      return NextResponse.json(
+        { success: false, error: "userId and email are required" },
+        { status: 400 }
+      );
+    }
+
+    await ServerGmailTokenStore.removeCredential(userId, email);
+
+    return NextResponse.json({
+      success: true,
+      message: `Account ${email} disconnected successfully.`,
+    });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
