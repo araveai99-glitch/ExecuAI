@@ -11,28 +11,55 @@ export default function ConnectGmailPage() {
   const { user } = useAuth();
   const [isAuthorizing, setIsAuthorizing] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  const [serverConfigured, setServerConfigured] = React.useState<boolean | null>(null);
 
-  const handleOAuthConnect = () => {
-    if (!user) {
-      setErrorMsg("You must be logged in to ExecuAI to connect a Gmail account. Please sign in first.");
-      return;
-    }
+  React.useEffect(() => {
+    // Check server configuration status
+    fetch("/api/v1/auth/google/url?flow=connect_gmail")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.isConfigured) {
+          setServerConfigured(true);
+        } else {
+          setServerConfigured(false);
+        }
+      })
+      .catch(() => setServerConfigured(null));
+  }, []);
 
+  const handleOAuthConnect = async () => {
     setIsAuthorizing(true);
     setErrorMsg(null);
 
-    const authRes = buildGoogleConnectUrl();
-    if (authRes.error || !authRes.url) {
+    try {
+      // 1. Try client-side configuration
+      const authRes = buildGoogleConnectUrl();
+      if (authRes.url) {
+        window.location.href = authRes.url;
+        return;
+      }
+
+      // 2. Try server-side endpoint configuration
+      const apiRes = await fetch("/api/v1/auth/google/url?flow=connect_gmail");
+      const apiData = await apiRes.json();
+
+      if (apiData.success && apiData.url) {
+        window.location.href = apiData.url;
+        return;
+      }
+
       setIsAuthorizing(false);
       setErrorMsg(
-        authRes.error ||
-          "Google OAuth configuration is incomplete. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local with your active Google Cloud Console OAuth Client ID."
+        apiData.error ||
+          "Google OAuth Client ID is missing. Please set GOOGLE_CLIENT_ID or NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local with your active Google Cloud Console OAuth Client ID."
       );
-      return;
+    } catch (e: any) {
+      setIsAuthorizing(false);
+      setErrorMsg(e.message || "Unable to initialize Google OAuth session.");
     }
-
-    window.location.href = authRes.url;
   };
+
+  const showWarning = serverConfigured === false && !isGoogleOAuthConfigured();
 
   return (
     <div className="bg-white p-6 sm:p-10 rounded-2xl border border-[#E2E8F0] shadow-md space-y-6">
@@ -48,14 +75,14 @@ export default function ConnectGmailPage() {
         </div>
       </div>
 
-      {!isGoogleOAuthConfigured() && (
+      {showWarning && (
         <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium space-y-2">
           <div className="flex items-center gap-2 font-bold text-amber-950">
             <span className="material-symbols-outlined text-[20px] text-amber-600">warning</span>
             <span>Google Cloud OAuth Setup Required</span>
           </div>
           <p>
-            To authenticate with Google OAuth, set your active Google Cloud OAuth 2.0 Client ID in <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">.env.local</code> under <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code>.
+            To authenticate with Google OAuth, set your active Google Cloud OAuth 2.0 Client ID in <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">.env.local</code> under <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code> or <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">GOOGLE_CLIENT_ID</code>.
           </p>
           <div className="text-[11px] text-amber-800 space-y-1">
             <div><strong>Authorized Redirect URI:</strong> <code className="bg-white px-1.5 py-0.5 rounded border border-amber-300 font-mono text-[10px]">{getGoogleRedirectUri()}</code></div>
@@ -117,3 +144,4 @@ export default function ConnectGmailPage() {
     </div>
   );
 }
+

@@ -32,11 +32,7 @@ export function getGoogleClientId(): string {
 
 export function isGoogleOAuthConfigured(): boolean {
   const clientId = getGoogleClientId();
-  if (!clientId) return false;
-  if (clientId.includes("google-oauth-client-id.apps.googleusercontent.com") || clientId.includes("your-google-oauth-client-id")) {
-    return false;
-  }
-  return true;
+  return Boolean(clientId && clientId.trim().length > 0);
 }
 
 export function getGoogleRedirectUri(): string {
@@ -51,15 +47,15 @@ export function getGoogleRedirectUri(): string {
  */
 export function buildGoogleLoginUrl(): { url?: string; error?: string } {
   const clientId = getGoogleClientId();
+  const redirectUri = getGoogleRedirectUri();
 
-  if (!isGoogleOAuthConfigured()) {
+  if (!clientId) {
     return {
       error:
-        "Google OAuth configuration is incomplete or invalid. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local with your active Google Cloud Console OAuth Client ID.",
+        "Google OAuth configuration is missing. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local with your active Google Cloud Console OAuth Client ID.",
     };
   }
 
-  const redirectUri = getGoogleRedirectUri();
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
     clientId
   )}&redirect_uri=${encodeURIComponent(
@@ -76,15 +72,15 @@ export function buildGoogleLoginUrl(): { url?: string; error?: string } {
  */
 export function buildGoogleConnectUrl(): { url?: string; error?: string } {
   const clientId = getGoogleClientId();
+  const redirectUri = getGoogleRedirectUri();
 
-  if (!isGoogleOAuthConfigured()) {
+  if (!clientId) {
     return {
       error:
-        "Google OAuth configuration is incomplete or invalid. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local with your active Google Cloud Console OAuth Client ID.",
+        "Google OAuth configuration is missing. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local with your active Google Cloud Console OAuth Client ID.",
     };
   }
 
-  const redirectUri = getGoogleRedirectUri();
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
     clientId
   )}&redirect_uri=${encodeURIComponent(
@@ -102,5 +98,6 @@ export function buildGoogleAuthUrl(flow: "login" | "connect_gmail" = "connect_gm
   }
   return buildGoogleConnectUrl();
 }
+
 
 
