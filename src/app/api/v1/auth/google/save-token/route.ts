@@ -54,8 +54,8 @@ export async function POST(req: NextRequest) {
     // 3. Perform Initial Gmail Sync on Server
     let initialMessageCount = 0;
     try {
-      const initialMessages = await GmailApiService.fetchRealGmailMessages(accessToken, verifiedEmail, 25);
-      initialMessageCount = initialMessages.length;
+      const initialRes = await GmailApiService.fetchRealGmailMessages(accessToken, verifiedEmail, 25);
+      initialMessageCount = initialRes.messages ? initialRes.messages.length : 0;
       console.log(`[GMAIL SYNC] Initial sync completed for ${verifiedEmail}: ${initialMessageCount} messages fetched`);
     } catch (syncErr: any) {
       console.error(`[GMAIL SYNC] Initial sync exception for ${verifiedEmail}:`, syncErr);

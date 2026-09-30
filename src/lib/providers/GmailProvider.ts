@@ -38,13 +38,13 @@ export class GmailProvider implements EmailProvider {
 
     try {
       // Use real Gmail API to fetch messages
-      const realMessages = await GmailApiService.fetchRealGmailMessages(
+      const realRes = await GmailApiService.fetchRealGmailMessages(
         encryptedTokens,
         emailAccountId,
         options?.maxResults || 25
       );
 
-      const normalized: NormalizedEmail[] = realMessages.map((msg) => ({
+      const normalized: NormalizedEmail[] = (realRes.messages || []).map((msg: any) => ({
         id: msg.id,
         provider: "GMAIL",
         providerMessageId: msg.id,

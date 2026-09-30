@@ -50,31 +50,45 @@ export function decodeBase64Url(base64UrlStr: string): string {
  */
 export function getBodyFromPayload(payload: any): string {
   if (!payload) return "";
+
+  // 1. Direct payload body
   if (payload.body && payload.body.data && typeof payload.body.data === "string" && payload.body.data.trim().length > 0) {
     return decodeBase64Url(payload.body.data);
   }
+
   if (payload.parts && Array.isArray(payload.parts)) {
-    // 1. First pass: look for plain text in immediate parts
-    for (const part of payload.parts) {
-      if (part.mimeType === "text/plain" && part.body && part.body.data) {
-        return decodeBase64Url(part.body.data);
+    // Recursive search helper across any MIME depth
+    const findPartBody = (parts: any[], targetMime: string): string | null => {
+      for (const part of parts) {
+        if (part.mimeType === targetMime && part.body && part.body.data) {
+          return decodeBase64Url(part.body.data);
+        }
+        if (part.parts && Array.isArray(part.parts)) {
+          const nested = findPartBody(part.parts, targetMime);
+          if (nested) return nested;
+        }
       }
+      return null;
+    };
+
+    // 1. Prefer text/plain
+    const plainText = findPartBody(payload.parts, "text/plain");
+    if (plainText && plainText.trim().length > 0) {
+      return plainText;
     }
-    // 2. Second pass: look for html text in immediate parts
-    for (const part of payload.parts) {
-      if (part.mimeType === "text/html" && part.body && part.body.data) {
-        const html = decodeBase64Url(part.body.data);
-        return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-      }
-    }
-    // 3. Third pass: recursively search nested parts (e.g. multipart/alternative)
-    for (const part of payload.parts) {
-      if (part.parts && Array.isArray(part.parts)) {
-        const nested = getBodyFromPayload(part);
-        if (nested) return nested;
-      }
+
+    // 2. Fallback to text/html
+    const htmlText = findPartBody(payload.parts, "text/html");
+    if (htmlText && htmlText.trim().length > 0) {
+      return htmlText
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
     }
   }
+
   return "";
 }
 
@@ -265,8 +279,10 @@ export class GmailApiService {
   public static async fetchRealGmailMessages(
     accessToken: string,
     accountEmail: string,
-    maxResults = 25
-  ): Promise<UnifiedEmailItem[]> {
+    maxResults = 25,
+    pageToken?: string,
+    qParam?: string
+  ): Promise<{ messages: UnifiedEmailItem[]; nextPageToken?: string }> {
     // 1. Verify Gmail Profile & Email Address
     let gmailProfile: GmailProfile | null = null;
     try {
@@ -278,8 +294,13 @@ export class GmailApiService {
 
     const verifiedAccountEmail = (gmailProfile?.emailAddress || accountEmail).toLowerCase();
 
-    // 2. Query Gmail API for messages strictly in INBOX (label:INBOX)
-    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}&q=label:INBOX -label:TRASH -label:SPAM`;
+    // 2. Query Gmail API for messages in INBOX
+    const query = qParam || "label:INBOX -label:TRASH -label:SPAM";
+    let listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}&q=${encodeURIComponent(query)}`;
+    if (pageToken) {
+      listUrl += `&pageToken=${encodeURIComponent(pageToken)}`;
+    }
+
     const listRes = await fetch(listUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -302,11 +323,12 @@ export class GmailApiService {
 
     const listData = await listRes.json();
     const messageSummaries: Array<{ id: string; threadId: string }> = listData.messages || [];
+    const nextPageToken: string | undefined = listData.nextPageToken;
 
-    console.log(`[Gmail API Telemetry] Gmail API returned ${messageSummaries.length} message IDs for ${verifiedAccountEmail}`);
+    console.log(`[Gmail API Telemetry] Gmail API returned ${messageSummaries.length} message IDs (nextPageToken: ${!!nextPageToken}) for ${verifiedAccountEmail}`);
 
     if (messageSummaries.length === 0) {
-      return [];
+      return { messages: [], nextPageToken };
     }
 
     // Batch fetch message details
@@ -324,11 +346,8 @@ export class GmailApiService {
         const msgData = await msgRes.json();
         const labels: string[] = msgData.labelIds || [];
 
-        // STRICT CHECK: MUST BE IN INBOX, AND NEVER TRASH, SPAM, DRAFT, OR SENT
-        if (!labels.includes("INBOX")) {
-          continue;
-        }
-        if (labels.includes("TRASH") || labels.includes("SPAM") || labels.includes("DRAFT") || labels.includes("SENT")) {
+        // Exclude system trash, spam, and drafts
+        if (labels.includes("TRASH") || labels.includes("SPAM") || labels.includes("DRAFT")) {
           continue;
         }
 
@@ -431,7 +450,7 @@ export class GmailApiService {
     }
 
     console.log(`[Gmail API Telemetry] Successfully processed ${emailItems.length} Inbox messages for ${verifiedAccountEmail}`);
-    return emailItems;
+    return { messages: emailItems, nextPageToken };
   }
 
   /**
@@ -543,5 +562,67 @@ export class GmailApiService {
       return { success: false, error: err.message };
     }
   }
+
+  /**
+   * Incremental Polling Sync via Gmail history.list API
+   * Fetches new message IDs since startHistoryId
+   */
+  public static async fetchGmailHistoryUpdates(
+    accessToken: string,
+    startHistoryId: string
+  ): Promise<{ newHistoryId: string; addedMessageIds: string[]; resetRequired?: boolean; error?: string }> {
+    try {
+      const historyUrl = `https://gmail.googleapis.com/gmail/v1/users/me/history?startHistoryId=${encodeURIComponent(
+        startHistoryId
+      )}&historyTypes=messageAdded`;
+
+      const res = await fetch(historyUrl, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (res.status === 404 || res.status === 400) {
+        // historyId is stale or out of range, fallback full sync required
+        console.warn(`[Gmail History API] historyId ${startHistoryId} expired or invalid. Full sync required.`);
+        return { newHistoryId: startHistoryId, addedMessageIds: [], resetRequired: true };
+      }
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        return {
+          newHistoryId: startHistoryId,
+          addedMessageIds: [],
+          error: errData.error?.message || `History API error (${res.status})`,
+        };
+      }
+
+      const data = await res.json();
+      const newHistoryId: string = data.historyId || startHistoryId;
+      const historyList: any[] = data.history || [];
+      const addedMessageIds = new Set<string>();
+
+      for (const item of historyList) {
+        if (item.messagesAdded && Array.isArray(item.messagesAdded)) {
+          for (const msgAdded of item.messagesAdded) {
+            if (msgAdded.message?.id) {
+              addedMessageIds.add(msgAdded.message.id);
+            }
+          }
+        }
+      }
+
+      console.log(
+        `[Gmail History Sync] Polling history.list since ${startHistoryId} -> found ${addedMessageIds.size} new message(s), updated historyId: ${newHistoryId}`
+      );
+
+      return {
+        newHistoryId,
+        addedMessageIds: Array.from(addedMessageIds),
+      };
+    } catch (err: any) {
+      console.error("[Gmail History Sync Error]:", err);
+      return { newHistoryId: startHistoryId, addedMessageIds: [], error: err.message };
+    }
+  }
 }
+
 

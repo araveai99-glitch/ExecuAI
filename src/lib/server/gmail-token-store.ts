@@ -11,6 +11,7 @@ export interface StoredGmailCredential {
   expiresAt: number; // timestamp in ms
   status: "CONNECTED" | "SYNCING" | "RECONNECT_REQUIRED" | "PENDING";
   scope?: string;
+  historyId?: string;
   lastSyncedAt?: string;
   messagesCount?: number;
   syncError?: string;
@@ -58,31 +59,43 @@ export class ServerGmailTokenStore {
         });
 
         const finalRefreshToken = cred.refreshToken || existing?.refreshToken || undefined;
+        const finalHistoryId = cred.historyId || existing?.historyId || undefined;
+
+        const updateData: any = {
+          userId: cleanUserId,
+          accessToken: cred.accessToken,
+          ...(finalRefreshToken ? { refreshToken: finalRefreshToken } : {}),
+          expiresAt: expiresAtBigInt,
+          status: cred.status || "CONNECTED",
+          scope: cred.scope || "https://www.googleapis.com/auth/gmail.readonly",
+          updatedAt: new Date(),
+        };
+        if (finalHistoryId) {
+          updateData.historyId = finalHistoryId;
+        }
+
+        const createData: any = {
+          userId: cleanUserId,
+          email: cleanEmail,
+          accessToken: cred.accessToken,
+          refreshToken: finalRefreshToken,
+          expiresAt: expiresAtBigInt,
+          status: cred.status || "CONNECTED",
+          scope: cred.scope || "https://www.googleapis.com/auth/gmail.readonly",
+        };
+        if (finalHistoryId) {
+          createData.historyId = finalHistoryId;
+        }
 
         await db.gmailToken.upsert({
           where: { email: cleanEmail },
-          update: {
-            userId: cleanUserId,
-            accessToken: cred.accessToken,
-            ...(finalRefreshToken ? { refreshToken: finalRefreshToken } : {}),
-            expiresAt: expiresAtBigInt,
-            status: cred.status || "CONNECTED",
-            scope: cred.scope || "https://www.googleapis.com/auth/gmail.readonly",
-            updatedAt: new Date(),
-          },
-          create: {
-            userId: cleanUserId,
-            email: cleanEmail,
-            accessToken: cred.accessToken,
-            refreshToken: finalRefreshToken,
-            expiresAt: expiresAtBigInt,
-            status: cred.status || "CONNECTED",
-            scope: cred.scope || "https://www.googleapis.com/auth/gmail.readonly",
-          },
+          update: updateData,
+          create: createData,
         });
 
-        console.log(`[GMAIL TOKENS DB] Saved OAuth tokens in database for ${cleanEmail} (Refresh token present: ${!!finalRefreshToken})`);
+        console.log(`[GMAIL TOKENS DB] Saved OAuth tokens in database for ${cleanEmail} (Refresh token present: ${!!finalRefreshToken}, historyId: ${finalHistoryId || "N/A"})`);
         cred.refreshToken = finalRefreshToken;
+        cred.historyId = finalHistoryId;
       } catch (dbErr: any) {
         console.warn(`[GMAIL TOKENS DB] Prisma write note/fallback for ${cleanEmail}: ${dbErr.message}`);
       }
@@ -94,6 +107,7 @@ export class ServerGmailTokenStore {
       try {
         const { data: existingSb } = await supabase.from("gmail_tokens").select("*").eq("email", cleanEmail).single();
         const finalRefreshToken = cred.refreshToken || existingSb?.refresh_token || undefined;
+        const finalHistoryId = cred.historyId || existingSb?.history_id || undefined;
 
         await supabase.from("gmail_tokens").upsert({
           user_id: cleanUserId,
@@ -103,11 +117,13 @@ export class ServerGmailTokenStore {
           expires_at: cred.expiresAt,
           status: cred.status || "CONNECTED",
           scope: cred.scope || "https://www.googleapis.com/auth/gmail.readonly",
+          history_id: finalHistoryId,
           updated_at: new Date().toISOString(),
         }, { onConflict: "email" });
 
         console.log(`[GMAIL TOKENS DB] Saved OAuth tokens in Supabase DB for ${cleanEmail}`);
         cred.refreshToken = finalRefreshToken;
+        cred.historyId = finalHistoryId;
       } catch (sbErr: any) {
         console.warn(`[GMAIL TOKENS DB] Supabase write note: ${sbErr.message}`);
       }
@@ -128,12 +144,14 @@ export class ServerGmailTokenStore {
 
       const existingRecord = existingIdx >= 0 ? localRecords[existingIdx] : null;
       const finalRefreshToken = cred.refreshToken || existingRecord?.refreshToken;
+      const finalHistoryId = cred.historyId || existingRecord?.historyId;
 
       const recordToSave: StoredGmailCredential = {
         ...cred,
         email: cleanEmail,
         userId: cleanUserId,
         refreshToken: finalRefreshToken,
+        historyId: finalHistoryId,
       };
 
       if (existingIdx >= 0) {
@@ -163,7 +181,13 @@ export class ServerGmailTokenStore {
           where: { email: cleanEmail },
         });
 
-        if (tokenRow && (tokenRow.userId.toLowerCase() === cleanUserId || cleanUserId === "usr_session_active")) {
+        if (
+          tokenRow &&
+          (tokenRow.userId.toLowerCase() === cleanUserId ||
+            tokenRow.userId.toLowerCase() === "usr_session_active" ||
+            tokenRow.userId.toLowerCase() === "usr_default_session" ||
+            cleanUserId === "usr_session_active")
+        ) {
           return {
             userId: tokenRow.userId,
             email: tokenRow.email,
@@ -172,6 +196,7 @@ export class ServerGmailTokenStore {
             expiresAt: Number(tokenRow.expiresAt),
             status: tokenRow.status as any,
             scope: tokenRow.scope || undefined,
+            historyId: tokenRow.historyId || undefined,
           };
         }
       } catch (dbErr: any) {
@@ -184,11 +209,14 @@ export class ServerGmailTokenStore {
     if (supabase) {
       try {
         const query = supabase.from("gmail_tokens").select("*").eq("email", cleanEmail);
-        if (cleanUserId !== "usr_session_active") {
-          query.eq("user_id", cleanUserId);
-        }
         const { data: sbRow } = await query.single();
-        if (sbRow) {
+        if (
+          sbRow &&
+          (sbRow.user_id?.toLowerCase() === cleanUserId ||
+            sbRow.user_id?.toLowerCase() === "usr_session_active" ||
+            sbRow.user_id?.toLowerCase() === "usr_default_session" ||
+            cleanUserId === "usr_session_active")
+        ) {
           return {
             userId: sbRow.user_id,
             email: sbRow.email,
@@ -197,6 +225,7 @@ export class ServerGmailTokenStore {
             expiresAt: Number(sbRow.expires_at),
             status: sbRow.status || "CONNECTED",
             scope: sbRow.scope || undefined,
+            historyId: sbRow.history_id || undefined,
           };
         }
       } catch (_) {}
@@ -206,7 +235,14 @@ export class ServerGmailTokenStore {
     try {
       if (fs.existsSync(STORAGE_FILE_PATH)) {
         const localRecords: StoredGmailCredential[] = JSON.parse(fs.readFileSync(STORAGE_FILE_PATH, "utf-8"));
-        const match = localRecords.find((r) => r.email.toLowerCase() === cleanEmail && (r.userId.toLowerCase() === cleanUserId || cleanUserId === "usr_session_active"));
+        const match = localRecords.find(
+          (r) =>
+            r.email.toLowerCase() === cleanEmail &&
+            (r.userId.toLowerCase() === cleanUserId ||
+              r.userId.toLowerCase() === "usr_session_active" ||
+              r.userId.toLowerCase() === "usr_default_session" ||
+              cleanUserId === "usr_session_active")
+        );
         if (match) return match;
       }
     } catch (_) {}
@@ -217,9 +253,22 @@ export class ServerGmailTokenStore {
   /**
    * Retrieves all stored credentials for a user from Database
    */
-  public static async getAllUserCredentials(userId: string): Promise<StoredGmailCredential[]> {
+  public static async getAllUserCredentials(userId: string, userEmails: string[] = []): Promise<StoredGmailCredential[]> {
     const cleanUserId = userId.toLowerCase();
+    const cleanUserEmails = userEmails.map((e) => e.toLowerCase());
     const map = new Map<string, StoredGmailCredential>();
+
+    const matchesUser = (recUserId: string, recEmail: string) => {
+      const rId = recUserId.toLowerCase();
+      const rEm = recEmail.toLowerCase();
+      return (
+        rId === cleanUserId ||
+        rId === "usr_session_active" ||
+        rId === "usr_default_session" ||
+        cleanUserId === "usr_session_active" ||
+        cleanUserEmails.includes(rEm)
+      );
+    };
 
     // 1. Prisma DB
     const db = getPrismaClient();
@@ -227,15 +276,16 @@ export class ServerGmailTokenStore {
       try {
         const rows = await db.gmailToken.findMany();
         rows.forEach((r: any) => {
-          if (r.userId.toLowerCase() === cleanUserId || cleanUserId === "usr_session_active") {
+          if (matchesUser(r.userId, r.email)) {
             map.set(r.email.toLowerCase(), {
-              userId: r.userId,
+              userId: cleanUserId !== "usr_session_active" ? cleanUserId : r.userId,
               email: r.email,
               accessToken: r.accessToken,
               refreshToken: r.refreshToken || undefined,
               expiresAt: Number(r.expiresAt),
               status: r.status as any,
               scope: r.scope || undefined,
+              historyId: r.historyId || undefined,
             });
           }
         });
@@ -246,22 +296,19 @@ export class ServerGmailTokenStore {
     const supabase = getSupabaseServerClient();
     if (supabase) {
       try {
-        const query = supabase.from("gmail_tokens").select("*");
-        if (cleanUserId !== "usr_session_active") {
-          query.eq("user_id", cleanUserId);
-        }
-        const { data: sbRows } = await query;
+        const { data: sbRows } = await supabase.from("gmail_tokens").select("*");
         if (sbRows && Array.isArray(sbRows)) {
           sbRows.forEach((r: any) => {
-            if (!map.has(r.email.toLowerCase())) {
+            if (!map.has(r.email.toLowerCase()) && matchesUser(r.user_id || "", r.email || "")) {
               map.set(r.email.toLowerCase(), {
-                userId: r.user_id,
+                userId: cleanUserId !== "usr_session_active" ? cleanUserId : r.user_id,
                 email: r.email,
                 accessToken: r.access_token,
                 refreshToken: r.refresh_token || undefined,
                 expiresAt: Number(r.expires_at),
                 status: r.status || "CONNECTED",
                 scope: r.scope || undefined,
+                historyId: r.history_id || undefined,
               });
             }
           });
@@ -274,8 +321,11 @@ export class ServerGmailTokenStore {
       if (fs.existsSync(STORAGE_FILE_PATH)) {
         const localRecords: StoredGmailCredential[] = JSON.parse(fs.readFileSync(STORAGE_FILE_PATH, "utf-8"));
         localRecords.forEach((r: StoredGmailCredential) => {
-          if (!map.has(r.email.toLowerCase()) && (r.userId.toLowerCase() === cleanUserId || cleanUserId === "usr_session_active")) {
-            map.set(r.email.toLowerCase(), r);
+          if (!map.has(r.email.toLowerCase()) && matchesUser(r.userId, r.email)) {
+            map.set(r.email.toLowerCase(), {
+              ...r,
+              userId: cleanUserId !== "usr_session_active" ? cleanUserId : r.userId,
+            });
           }
         });
       }

@@ -72,35 +72,49 @@ export async function POST(req: NextRequest) {
     const refreshToken = tokenData.refresh_token;
     const expiresIn = tokenData.expires_in || 3600;
 
-    // 2. Identify actual Google user identity via Google OAuth UserInfo / Gmail Profile API
+    // 2. VERIFY TOKEN: Call Gmail API users.getProfile to confirm token & retrieve Gmail identity + historyId
+    let gmailProfile: { emailAddress: string; historyId?: string; messagesTotal?: number } | null = null;
     let verifiedEmail = "";
     let name = "";
 
+    // Fetch userinfo for display name
     try {
       const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (userInfoRes.ok) {
         const uInfo = await userInfoRes.json();
-        verifiedEmail = (uInfo.email || "").toLowerCase();
         name = uInfo.name || "";
+        if (uInfo.email) verifiedEmail = uInfo.email.toLowerCase();
       }
     } catch (uiErr: any) {
-      console.warn("[GOOGLE AUTH] Google userinfo fetch error:", uiErr.message);
+      console.warn("[GOOGLE AUTH] Google userinfo fetch warning:", uiErr.message);
     }
 
-    if (!verifiedEmail) {
-      try {
-        const profile = await GmailApiService.fetchGmailProfile(accessToken);
-        verifiedEmail = profile.emailAddress.toLowerCase();
-      } catch (err: any) {
-        console.error("[GOOGLE AUTH] Gmail profile fetch error:", err.message);
+    // MANDATORY STEP: Call users.getProfile to verify Gmail API token validity & account identity
+    try {
+      gmailProfile = await GmailApiService.fetchGmailProfile(accessToken);
+      console.log(`[GOOGLE AUTH VERIFICATION SUCCESS] Gmail API users.getProfile succeeded for: ${gmailProfile.emailAddress} (historyId: ${gmailProfile.historyId})`);
+      
+      const profileEmail = gmailProfile.emailAddress.toLowerCase();
+      if (verifiedEmail && verifiedEmail !== profileEmail) {
+        console.warn(`[GOOGLE AUTH IDENTITY MISMATCH] OIDC email (${verifiedEmail}) != Gmail profile (${profileEmail}). Using verified Gmail identity: ${profileEmail}`);
       }
+      verifiedEmail = profileEmail;
+    } catch (profileErr: any) {
+      console.error("[GOOGLE AUTH VERIFICATION FAILED] Gmail API users.getProfile failed:", profileErr.message);
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Gmail API Token Verification Failed: ${profileErr.message}. Ensure https://www.googleapis.com/auth/gmail.readonly scope is granted in Google Cloud Console.`,
+        },
+        { status: 400 }
+      );
     }
 
     if (!verifiedEmail) {
       return NextResponse.json(
-        { success: false, error: "Failed to identify Google account email address." },
+        { success: false, error: "Failed to identify Google account email address via users.getProfile." },
         { status: 400 }
       );
     }
@@ -118,7 +132,6 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Flow 2: Connect Gmail Mailbox Account
-    // Strict validation: Require real user session ID (no fallback to "usr_current_session")
     if (!userId || userId === "usr_current_session") {
       return NextResponse.json(
         {
@@ -132,15 +145,21 @@ export async function POST(req: NextRequest) {
     // Perform initial fetch to verify token & ingest messages
     let initialMessagesCount = 0;
     try {
-      console.log(`[GMAIL AUTH] Triggering automatic initial Gmail API fetch for ${verifiedEmail}...`);
-      const initialMessages = await GmailApiService.fetchRealGmailMessages(accessToken, verifiedEmail, 25);
-      initialMessagesCount = initialMessages.length;
-      console.log(`[GMAIL AUTH] Initial fetch fetched ${initialMessagesCount} real messages for ${verifiedEmail}`);
+      const initialFetchRes = await GmailApiService.fetchRealGmailMessages(accessToken, verifiedEmail, 25);
+      const fetchedMessages = initialFetchRes.messages || [];
+      initialMessagesCount = fetchedMessages.length;
+      console.log(`[GMAIL AUTH] Initial fetch retrieved ${initialMessagesCount} real messages for ${verifiedEmail}`);
+
+      // Save initial messages into persistent Email Store (DB + disk cache)
+      if (fetchedMessages.length > 0) {
+        const { ServerEmailStore } = await import("@/lib/server/gmail-email-store");
+        await ServerEmailStore.saveEmails(userId, verifiedEmail, fetchedMessages);
+      }
     } catch (fetchErr: any) {
       console.warn(`[GMAIL AUTH] Initial fetch warning for ${verifiedEmail}: ${fetchErr.message}`);
     }
 
-    // Securely save credentials on SERVER ONLY into Database — Never expose accessToken or refreshToken to browser
+    // Securely save credentials on SERVER ONLY into Database — include historyId
     await ServerGmailTokenStore.saveCredential({
       userId,
       email: verifiedEmail,
@@ -149,11 +168,12 @@ export async function POST(req: NextRequest) {
       refreshToken,
       expiresAt: Date.now() + expiresIn * 1000,
       status: "CONNECTED",
+      historyId: gmailProfile?.historyId,
       lastSyncedAt: new Date().toISOString(),
       messagesCount: initialMessagesCount,
     });
 
-    console.log(`[GMAIL AUTH] Credentials stored securely in database server-side for user ${userId} / email ${verifiedEmail}`);
+    console.log(`[GMAIL AUTH] Credentials stored securely in database server-side for user ${userId} / email ${verifiedEmail} (historyId: ${gmailProfile?.historyId || "N/A"})`);
 
     return NextResponse.json({
       success: true,
@@ -162,6 +182,7 @@ export async function POST(req: NextRequest) {
       name,
       status: "CONNECTED",
       messagesCount: initialMessagesCount,
+      historyId: gmailProfile?.historyId || null,
       message: `Gmail account ${verifiedEmail} connected successfully.`,
     });
   } catch (error: any) {

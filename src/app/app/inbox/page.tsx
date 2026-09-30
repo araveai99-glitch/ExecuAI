@@ -32,6 +32,9 @@ export default function UnifiedInboxPage() {
     searchQuery,
     setSearchQuery,
     toggleFlagged,
+    hasMore,
+    isLoadingMore,
+    loadMoreEmails,
   } = useUserData();
 
   // Set category filter from URL search param if present
@@ -436,6 +439,22 @@ export default function UnifiedInboxPage() {
                 </div>
               );
             })}
+
+            {/* Pagination / Load More Button */}
+            {hasMore && (
+              <div className="pt-2 text-center">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  isLoading={isLoadingMore}
+                  onClick={() => loadMoreEmails()}
+                  className="w-full cursor-pointer"
+                  leftIcon={<span className="material-symbols-outlined text-[16px]">history</span>}
+                >
+                  Load More Historical Emails
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Right Email Detail Pane */}

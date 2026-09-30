@@ -8,6 +8,12 @@ export async function GET(req: NextRequest) {
   try {
     const userId = req.nextUrl.searchParams.get("userId");
     const accountFilter = req.nextUrl.searchParams.get("accountEmail") || "ALL";
+    const userEmailsParam = req.nextUrl.searchParams.get("userEmails") || "";
+    const pageToken = req.nextUrl.searchParams.get("pageToken") || undefined;
+    const maxResults = parseInt(req.nextUrl.searchParams.get("maxResults") || "30", 10);
+    const qParam = req.nextUrl.searchParams.get("q") || undefined;
+
+    const userEmails = userEmailsParam ? userEmailsParam.split(",").map((e) => e.trim()) : [];
 
     if (!userId || userId === "usr_current_session") {
       return NextResponse.json({
@@ -29,10 +35,10 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // 1. Retrieve all server-stored Gmail credentials strictly for this user session
-    const credentials = await ServerGmailTokenStore.getAllUserCredentials(userId);
+    // 1. Retrieve all server-stored Gmail credentials strictly for this user session or connected emails
+    const credentials = await ServerGmailTokenStore.getAllUserCredentials(userId, userEmails);
 
-    console.log(`[GMAIL SYNC] GET /api/v1/inbox — Found ${credentials.length} server-stored credential(s)`);
+    console.log(`[GMAIL SYNC] GET /api/v1/inbox — Found ${credentials.length} server-stored credential(s) for user ${userId}`);
 
     if (credentials.length === 0) {
       return NextResponse.json({
@@ -59,6 +65,7 @@ export async function GET(req: NextRequest) {
     const accountsStatusList: Array<{ email: string; provider: string; status: string; lastSync: string; syncError?: string }> = [];
     let validSyncedCount = 0;
     let globalError: string | null = null;
+    let returnedNextPageToken: string | undefined = undefined;
 
     for (const cred of credentials) {
       const cleanEmail = cred.email.toLowerCase();
@@ -88,11 +95,11 @@ export async function GET(req: NextRequest) {
       try {
         console.log(`[GMAIL SYNC] Fetching Gmail INBOX for ${cleanEmail} via server API...`);
         let activeToken = tokenResult.accessToken;
-        let messages: UnifiedEmailItem[] = [];
+        let fetchResult: { messages: UnifiedEmailItem[]; nextPageToken?: string } = { messages: [] };
         let drafts: any[] = [];
 
         try {
-          messages = await GmailApiService.fetchRealGmailMessages(activeToken, cleanEmail, 30);
+          fetchResult = await GmailApiService.fetchRealGmailMessages(activeToken, cleanEmail, maxResults, pageToken, qParam);
           drafts = await GmailApiService.fetchRealGmailDrafts(activeToken, cleanEmail);
         } catch (fetchErr: any) {
           if (fetchErr.message?.includes("401") || fetchErr.message?.toLowerCase().includes("expired")) {
@@ -102,7 +109,7 @@ export async function GET(req: NextRequest) {
             if (refreshRes.accessToken) {
               activeToken = refreshRes.accessToken;
               console.log(`[GMAIL SYNC] Token refreshed successfully for ${cleanEmail}. Retrying Gmail API call ONCE...`);
-              messages = await GmailApiService.fetchRealGmailMessages(activeToken, cleanEmail, 30);
+              fetchResult = await GmailApiService.fetchRealGmailMessages(activeToken, cleanEmail, maxResults, pageToken, qParam);
               drafts = await GmailApiService.fetchRealGmailDrafts(activeToken, cleanEmail);
             } else {
               throw new Error(refreshRes.error || "401 Unauthorized: Unable to refresh expired access token. Please re-authorize Gmail.");
@@ -112,8 +119,19 @@ export async function GET(req: NextRequest) {
           }
         }
 
+        const messages = fetchResult.messages || [];
+        if (fetchResult.nextPageToken) {
+          returnedNextPageToken = fetchResult.nextPageToken;
+        }
+
         console.log(`[GMAIL SYNC] Account ${cleanEmail}: ${messages.length} messages, ${drafts.length} drafts fetched`);
         allFetchedEmails.push(...messages);
+
+        // Persist messages in database & server cache
+        if (messages.length > 0) {
+          const { ServerEmailStore } = await import("@/lib/server/gmail-email-store");
+          await ServerEmailStore.saveEmails(userId, cleanEmail, messages);
+        }
 
         const convertedDrafts: DraftItem[] = drafts.map((d) => {
           const orig = messages.find((m) => m.id === d.messageId || m.threadId === d.messageId) || {
@@ -151,6 +169,14 @@ export async function GET(req: NextRequest) {
 
         allFetchedDrafts.push(...convertedDrafts);
         validSyncedCount++;
+
+        // Update historyId from profile if missing
+        if (!cred.historyId) {
+          try {
+            const profile = await GmailApiService.fetchGmailProfile(activeToken);
+            cred.historyId = profile.historyId;
+          } catch (_) {}
+        }
 
         cred.status = "CONNECTED";
         cred.lastSyncedAt = new Date().toISOString();
@@ -197,6 +223,7 @@ export async function GET(req: NextRequest) {
       emails: deduplicatedEmails,
       drafts: allFetchedDrafts,
       accounts: accountsStatusList,
+      nextPageToken: returnedNextPageToken || null,
       counts: {
         critical,
         urgent,

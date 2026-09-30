@@ -32,6 +32,10 @@ interface UserDataContextType {
   lastSyncedAt: Date | null;
   lastSyncedAgo: string;
   refreshGmailSync: () => Promise<void>;
+  nextPageToken: string | null;
+  isLoadingMore: boolean;
+  hasMore: boolean;
+  loadMoreEmails: () => Promise<void>;
 
   // Add/Remove Account Actions
   addAccount: (provider: string, accountEmail: string) => void;
@@ -85,6 +89,8 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [syncError, setSyncError] = React.useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
   const [validSyncedMailboxCount, setValidSyncedMailboxCount] = React.useState<number>(0);
+  const [nextPageToken, setNextPageToken] = React.useState<string | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = React.useState<boolean>(false);
 
   const connectedAccounts = user?.connectedAccounts || [];
 
@@ -103,7 +109,12 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setSyncError(null);
 
     try {
-      const res = await fetch(`/api/v1/inbox?userId=${encodeURIComponent(user.id)}&accountEmail=${encodeURIComponent(selectedAccountFilter)}`);
+      const userEmails = user.connectedAccounts.map((a) => a.email).join(",");
+      const res = await fetch(
+        `/api/v1/inbox?userId=${encodeURIComponent(user.id)}&accountEmail=${encodeURIComponent(
+          selectedAccountFilter
+        )}&userEmails=${encodeURIComponent(userEmails)}`
+      );
       if (!res.ok) {
         throw new Error(`Server API inbox endpoint error (${res.status})`);
       }
@@ -120,6 +131,8 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const deduplicatedEmails = Array.from(uniqueMap.values());
 
         setEmails(deduplicatedEmails);
+        setNextPageToken(data.nextPageToken || null);
+
         if (storageKey) {
           localStorage.setItem(storageKey, JSON.stringify(deduplicatedEmails));
         }
@@ -152,7 +165,41 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } finally {
       setIsLoading(false);
     }
-  }, [user, selectedAccountFilter, storageKey, storageDraftsKey]);
+  }, [user, selectedAccountFilter, connectAccount, storageKey, storageDraftsKey]);
+
+  // Load older historical emails using Gmail API nextPageToken
+  const loadMoreEmails = React.useCallback(async () => {
+    if (!user || !nextPageToken || isLoadingMore) return;
+    setIsLoadingMore(true);
+
+    try {
+      const userEmails = user.connectedAccounts.map((a) => a.email).join(",");
+      const res = await fetch(
+        `/api/v1/inbox?userId=${encodeURIComponent(user.id)}&accountEmail=${encodeURIComponent(
+          selectedAccountFilter
+        )}&userEmails=${encodeURIComponent(userEmails)}&pageToken=${encodeURIComponent(nextPageToken)}`
+      );
+      if (!res.ok) throw new Error("Failed to load older emails");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.emails)) {
+        setEmails((prev) => {
+          const uniqueMap = new Map<string, UnifiedEmailItem>();
+          prev.forEach((e) => uniqueMap.set(e.id, e));
+          data.emails.forEach((e: UnifiedEmailItem) => uniqueMap.set(e.id, e));
+          const updated = Array.from(uniqueMap.values());
+          if (storageKey) {
+            localStorage.setItem(storageKey, JSON.stringify(updated));
+          }
+          return updated;
+        });
+        setNextPageToken(data.nextPageToken || null);
+      }
+    } catch (e: any) {
+      console.error("Load more emails error:", e);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [user, nextPageToken, isLoadingMore, selectedAccountFilter, storageKey]);
 
   // Initial load & automatic sync on component mount / account change
   React.useEffect(() => {
@@ -458,6 +505,10 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         lastSyncedAt,
         lastSyncedAgo,
         refreshGmailSync,
+        nextPageToken,
+        isLoadingMore,
+        hasMore: Boolean(nextPageToken),
+        loadMoreEmails,
         addAccount,
         removeAccount,
         searchQuery,
