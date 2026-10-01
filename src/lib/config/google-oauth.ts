@@ -34,10 +34,13 @@ export function isGoogleOAuthConfigured(): boolean {
 }
 
 export function getGoogleRedirectUri(): string {
+  if (process.env.GOOGLE_REDIRECT_URI) return process.env.GOOGLE_REDIRECT_URI.trim();
+  if (process.env.GMAIL_REDIRECT_URI) return process.env.GMAIL_REDIRECT_URI.trim();
   if (typeof window !== "undefined") {
     return `${window.location.origin}/auth/google-callback`;
   }
-  return process.env.GOOGLE_REDIRECT_URI || process.env.GMAIL_REDIRECT_URI || "http://localhost:3000/auth/google-callback";
+  const port = process.env.PORT || "3000";
+  return `http://localhost:${port}/auth/google-callback`;
 }
 
 /**

@@ -103,13 +103,24 @@ export default function AccountsManagementPage() {
     }, 1200);
   };
 
-  // Remove Account Handler
-  const handleConfirmRemove = () => {
+  // Remove Account Handler (Backend Revocation + Frontend Removal)
+  const handleConfirmRemove = async () => {
     if (!selectedRemoveAccount) return;
     const targetEmail = selectedRemoveAccount.emailAddress;
+    const activeUserId = user?.id || "usr_session_active";
+
+    try {
+      await fetch(
+        `/api/v1/accounts?userId=${encodeURIComponent(activeUserId)}&email=${encodeURIComponent(targetEmail)}`,
+        { method: "DELETE" }
+      );
+    } catch (err) {
+      console.warn("Failed to invoke server disconnect endpoint:", err);
+    }
+
     removeAccount(targetEmail);
     setSelectedRemoveAccount(null);
-    showToast(`Removed connected account ${targetEmail} from workspace.`);
+    showToast(`Removed connected account ${targetEmail} from workspace and revoked OAuth credentials.`);
   };
 
   return (

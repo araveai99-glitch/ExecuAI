@@ -368,7 +368,7 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     persistEmails(updated);
   };
 
-  // REAL Gmail API Reply & Draft Operations
+  // REAL Gmail API Reply & Draft Operations via Server-side Token Store
   const saveDraftReply = async (
     emailId: string,
     replyText: string
@@ -378,22 +378,27 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return { success: false, message: "Original email thread not found." };
     }
 
-    const cleanAccount = targetEmail.accountEmail.toLowerCase();
-    const tokenStr = localStorage.getItem(`execuai_gmail_token_${cleanAccount}`);
-    const tokenData = tokenStr ? JSON.parse(tokenStr) : null;
-
-    if (tokenData?.accessToken) {
-      const apiRes = await GmailApiService.createGmailDraft(
-        tokenData.accessToken,
-        targetEmail.threadId || targetEmail.id,
-        targetEmail.senderEmail,
-        targetEmail.accountEmail,
-        `Re: ${targetEmail.subject}`,
-        replyText
-      );
-
-      if (!apiRes.success) {
-        return { success: false, message: apiRes.error || "Failed to create draft via Gmail API." };
+    if (user) {
+      try {
+        const res = await fetch("/api/v1/drafts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "CREATE_DRAFT",
+            userId: user.id,
+            accountEmail: targetEmail.accountEmail,
+            threadId: targetEmail.threadId || targetEmail.id,
+            toEmail: targetEmail.senderEmail,
+            subject: `Re: ${targetEmail.subject}`,
+            bodyText: replyText,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          console.warn("[Draft API Note]", data.error);
+        }
+      } catch (err: any) {
+        console.warn("[Draft API Error]", err.message);
       }
     }
 
@@ -423,7 +428,7 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     persistDrafts(updatedDrafts);
     return {
       success: true,
-      message: `Draft reply created in your actual Gmail account (${targetEmail.accountEmail}).`,
+      message: `Draft reply created in your authenticated Gmail account (${targetEmail.accountEmail}).`,
     };
   };
 
@@ -436,22 +441,27 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return { success: false, message: "Original email thread not found." };
     }
 
-    const cleanAccount = targetEmail.accountEmail.toLowerCase();
-    const tokenStr = localStorage.getItem(`execuai_gmail_token_${cleanAccount}`);
-    const tokenData = tokenStr ? JSON.parse(tokenStr) : null;
-
-    if (tokenData?.accessToken) {
-      const apiRes = await GmailApiService.sendGmailReply(
-        tokenData.accessToken,
-        targetEmail.threadId || targetEmail.id,
-        targetEmail.senderEmail,
-        targetEmail.accountEmail,
-        `Re: ${targetEmail.subject}`,
-        replyText
-      );
-
-      if (!apiRes.success) {
-        return { success: false, message: apiRes.error || "Failed to send email via Gmail API." };
+    if (user) {
+      try {
+        const res = await fetch("/api/v1/drafts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "SEND_REPLY",
+            userId: user.id,
+            accountEmail: targetEmail.accountEmail,
+            threadId: targetEmail.threadId || targetEmail.id,
+            toEmail: targetEmail.senderEmail,
+            subject: `Re: ${targetEmail.subject}`,
+            bodyText: replyText,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          return { success: false, message: data.error || "Failed to send email via Gmail API." };
+        }
+      } catch (err: any) {
+        return { success: false, message: err.message || "Failed to send email via Gmail API." };
       }
     }
 

@@ -170,8 +170,8 @@ export class ServerGmailTokenStore {
    * Retrieves stored OAuth credential for user from Database (stateless per request)
    */
   public static async getCredential(userId: string, email: string): Promise<StoredGmailCredential | null> {
-    const cleanEmail = email.toLowerCase();
-    const cleanUserId = userId.toLowerCase();
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanUserId = (userId || "usr_session_active").toLowerCase().trim();
 
     // 1. Fetch from Database via Prisma
     const db = getPrismaClient();
@@ -181,13 +181,8 @@ export class ServerGmailTokenStore {
           where: { email: cleanEmail },
         });
 
-        if (
-          tokenRow &&
-          (tokenRow.userId.toLowerCase() === cleanUserId ||
-            tokenRow.userId.toLowerCase() === "usr_session_active" ||
-            tokenRow.userId.toLowerCase() === "usr_default_session" ||
-            cleanUserId === "usr_session_active")
-        ) {
+        if (tokenRow) {
+          console.log(`[GMAIL TOKENS STORE] Found Prisma DB token for ${cleanEmail} (DB userId: ${tokenRow.userId}, query userId: ${cleanUserId})`);
           return {
             userId: tokenRow.userId,
             email: tokenRow.email,
@@ -200,7 +195,7 @@ export class ServerGmailTokenStore {
           };
         }
       } catch (dbErr: any) {
-        console.warn(`[GMAIL TOKENS DB] Database query fallback for ${cleanEmail}: ${dbErr.message}`);
+        console.warn(`[GMAIL TOKENS DB] Database query note for ${cleanEmail}: ${dbErr.message}`);
       }
     }
 
@@ -210,13 +205,8 @@ export class ServerGmailTokenStore {
       try {
         const query = supabase.from("gmail_tokens").select("*").eq("email", cleanEmail);
         const { data: sbRow } = await query.single();
-        if (
-          sbRow &&
-          (sbRow.user_id?.toLowerCase() === cleanUserId ||
-            sbRow.user_id?.toLowerCase() === "usr_session_active" ||
-            sbRow.user_id?.toLowerCase() === "usr_default_session" ||
-            cleanUserId === "usr_session_active")
-        ) {
+        if (sbRow) {
+          console.log(`[GMAIL TOKENS STORE] Found Supabase DB token for ${cleanEmail}`);
           return {
             userId: sbRow.user_id,
             email: sbRow.email,
@@ -235,18 +225,15 @@ export class ServerGmailTokenStore {
     try {
       if (fs.existsSync(STORAGE_FILE_PATH)) {
         const localRecords: StoredGmailCredential[] = JSON.parse(fs.readFileSync(STORAGE_FILE_PATH, "utf-8"));
-        const match = localRecords.find(
-          (r) =>
-            r.email.toLowerCase() === cleanEmail &&
-            (r.userId.toLowerCase() === cleanUserId ||
-              r.userId.toLowerCase() === "usr_session_active" ||
-              r.userId.toLowerCase() === "usr_default_session" ||
-              cleanUserId === "usr_session_active")
-        );
-        if (match) return match;
+        const match = localRecords.find((r) => r.email.toLowerCase() === cleanEmail);
+        if (match) {
+          console.log(`[GMAIL TOKENS STORE] Found disk store token for ${cleanEmail} (Disk userId: ${match.userId})`);
+          return match;
+        }
       }
     } catch (_) {}
 
+    console.warn(`[GMAIL TOKENS STORE] No token found in any store for ${cleanEmail} (query userId: ${cleanUserId})`);
     return null;
   }
 
@@ -254,20 +241,33 @@ export class ServerGmailTokenStore {
    * Retrieves all stored credentials for a user from Database
    */
   public static async getAllUserCredentials(userId: string, userEmails: string[] = []): Promise<StoredGmailCredential[]> {
-    const cleanUserId = userId.toLowerCase();
-    const cleanUserEmails = userEmails.map((e) => e.toLowerCase());
+    const cleanUserId = (userId || "usr_session_active").toLowerCase().trim();
+    const cleanUserEmails = userEmails.map((e) => e.toLowerCase().trim());
     const map = new Map<string, StoredGmailCredential>();
 
     const matchesUser = (recUserId: string, recEmail: string) => {
-      const rId = recUserId.toLowerCase();
-      const rEm = recEmail.toLowerCase();
-      return (
+      const rId = (recUserId || "").toLowerCase();
+      const rEm = (recEmail || "").toLowerCase();
+
+      // 1. If explicit email list provided, match email
+      if (cleanUserEmails.length > 0 && cleanUserEmails.includes(rEm)) {
+        return true;
+      }
+      // 2. Match user ID or default session aliases
+      if (
         rId === cleanUserId ||
         rId === "usr_session_active" ||
         rId === "usr_default_session" ||
         cleanUserId === "usr_session_active" ||
-        cleanUserEmails.includes(rEm)
-      );
+        cleanUserId === "usr_default_session"
+      ) {
+        return true;
+      }
+      // 3. Fallback: If no explicit email list provided, match all stored credentials
+      if (cleanUserEmails.length === 0) {
+        return true;
+      }
+      return false;
     };
 
     // 1. Prisma DB
@@ -331,7 +331,9 @@ export class ServerGmailTokenStore {
       }
     } catch (_) {}
 
-    return Array.from(map.values());
+    const results = Array.from(map.values());
+    console.log(`[GMAIL TOKENS STORE] getAllUserCredentials(userId=${cleanUserId}, emails=[${cleanUserEmails.join(", ")}]) -> Found ${results.length} credential(s): [${results.map((c) => c.email).join(", ")}]`);
+    return results;
   }
 
   /**
@@ -443,6 +445,25 @@ export class ServerGmailTokenStore {
 
   public static async removeCredential(userId: string, email: string): Promise<void> {
     const cleanEmail = email.toLowerCase();
+
+    // 1. Attempt token revocation with Google OAuth Revocation Endpoint
+    try {
+      const cred = await this.getCredential(userId, cleanEmail);
+      const tokenToRevoke = cred?.refreshToken || cred?.accessToken;
+      if (tokenToRevoke) {
+        await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(tokenToRevoke)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        }).catch((revErr) => {
+          console.warn(`[GMAIL DISCONNECT] Token revocation note for ${cleanEmail}:`, revErr.message);
+        });
+        console.log(`[GMAIL DISCONNECT] Revoked Google OAuth token for ${cleanEmail}`);
+      }
+    } catch (err: any) {
+      console.warn(`[GMAIL DISCONNECT] Revocation pre-check note for ${cleanEmail}:`, err.message);
+    }
+
+    // 2. Remove from Prisma DB
     const db = getPrismaClient();
     if (db) {
       try {
@@ -450,6 +471,7 @@ export class ServerGmailTokenStore {
       } catch (_) {}
     }
 
+    // 3. Remove from Supabase DB
     const supabase = getSupabaseServerClient();
     if (supabase) {
       try {
@@ -457,6 +479,7 @@ export class ServerGmailTokenStore {
       } catch (_) {}
     }
 
+    // 4. Remove from local disk cache
     try {
       if (fs.existsSync(STORAGE_FILE_PATH)) {
         let localRecords: StoredGmailCredential[] = JSON.parse(fs.readFileSync(STORAGE_FILE_PATH, "utf-8"));

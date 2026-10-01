@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ServerGmailTokenStore } from "@/lib/server/gmail-token-store";
 import { GmailApiService } from "@/lib/services/GmailApiService";
+import { getGoogleRedirectUri } from "@/lib/config/google-oauth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
       client_id: clientId.trim(),
       code: code.trim(),
       grant_type: "authorization_code",
-      redirect_uri: redirectUri || "http://localhost:3000/auth/google-callback",
+      redirect_uri: redirectUri || getGoogleRedirectUri(),
     });
 
     if (clientSecret) {

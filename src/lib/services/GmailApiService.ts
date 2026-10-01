@@ -311,11 +311,17 @@ export class GmailApiService {
     if (listRes.status === 403) {
       throw new Error("403 Forbidden: Insufficient Gmail scope or Gmail API disabled in Google Cloud Console. Scope required: https://www.googleapis.com/auth/gmail.readonly");
     }
-    if (listRes.status === 400) {
-      throw new Error("400 Bad Request: Invalid request sent to Gmail API.");
-    }
     if (listRes.status === 404) {
       throw new Error("404 Not Found: Gmail user resource not found.");
+    }
+    if (listRes.status === 429) {
+      throw new Error("429 Too Many Requests: Gmail API rate limit exceeded. Please retry after exponential backoff.");
+    }
+    if (listRes.status >= 500) {
+      throw new Error(`5xx Server Error (${listRes.status}): Google Gmail API internal server error. Please retry later.`);
+    }
+    if (listRes.status === 400) {
+      throw new Error("400 Bad Request: Invalid request sent to Gmail API.");
     }
     if (!listRes.ok) {
       throw new Error(`Gmail API error (${listRes.status}): ${listRes.statusText}`);
