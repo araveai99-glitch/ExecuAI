@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ServerGmailTokenStore } from "@/lib/server/gmail-token-store";
 import { GmailApiService } from "@/lib/services/GmailApiService";
+import { getCanonicalUserId } from "@/lib/server/auth-session";
 
 // Controlled Send & AI Draft Generation API Endpoint
 export async function POST(req: NextRequest) {
@@ -9,10 +10,17 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     const { action, userId, accountEmail, threadId, toEmail, subject, bodyText, recipient } = body;
+    const cleanUserId = getCanonicalUserId(req, userId);
+
+    if (!cleanUserId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthenticated session: Valid user session required." },
+        { status: 401 }
+      );
+    }
 
     // Action 1: Create Draft in Gmail via Server OAuth Token Store
     if (action === "CREATE_DRAFT") {
-      const cleanUserId = userId || "usr_session_active";
       const cleanEmail = accountEmail ? accountEmail.toLowerCase() : "";
 
       const tokenResult = await ServerGmailTokenStore.getValidAccessToken(cleanUserId, cleanEmail);
@@ -46,7 +54,6 @@ export async function POST(req: NextRequest) {
 
     // Action 2: Send Reply via Gmail API using Server OAuth Token Store
     if (action === "SEND_REPLY" || action === "CONTROLLED_SEND") {
-      const cleanUserId = userId || "usr_session_active";
       const cleanEmail = accountEmail ? accountEmail.toLowerCase() : "";
 
       const tokenResult = await ServerGmailTokenStore.getValidAccessToken(cleanUserId, cleanEmail);

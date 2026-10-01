@@ -43,61 +43,56 @@ function ensureDirectoryExists(filePath: string) {
 
 export class ServerGmailTokenStore {
   /**
-   * Persists OAuth credentials in the Database (`gmail_tokens` table / Prisma `GmailToken`)
+   * Persists OAuth credentials in Database / Storage bound strictly to the canonical user ID and email
    */
   public static async saveCredential(cred: StoredGmailCredential): Promise<void> {
-    const cleanEmail = cred.email.toLowerCase();
-    const cleanUserId = cred.userId || "usr_default_session";
+    const cleanEmail = cred.email.toLowerCase().trim();
+    const cleanUserId = cred.userId.trim();
     const expiresAtBigInt = BigInt(cred.expiresAt || Date.now() + 3600 * 1000);
+
+    console.log(`[GMAIL TOKENS STORE] saveCredential — Persisting OAuth token for userId: ${cleanUserId}, email: ${cleanEmail}`);
 
     // 1. Try Prisma Database Persistence (`gmail_tokens` table)
     const db = getPrismaClient();
     if (db) {
       try {
-        const existing = await db.gmailToken.findUnique({
-          where: { email: cleanEmail },
+        const existing = await db.gmailToken.findFirst({
+          where: { userId: cleanUserId, email: cleanEmail },
         });
 
         const finalRefreshToken = cred.refreshToken || existing?.refreshToken || undefined;
         const finalHistoryId = cred.historyId || existing?.historyId || undefined;
 
-        const updateData: any = {
-          userId: cleanUserId,
-          accessToken: cred.accessToken,
-          ...(finalRefreshToken ? { refreshToken: finalRefreshToken } : {}),
-          expiresAt: expiresAtBigInt,
-          status: cred.status || "CONNECTED",
-          scope: cred.scope || "https://www.googleapis.com/auth/gmail.readonly",
-          updatedAt: new Date(),
-        };
-        if (finalHistoryId) {
-          updateData.historyId = finalHistoryId;
-        }
-
-        const createData: any = {
-          userId: cleanUserId,
-          email: cleanEmail,
-          accessToken: cred.accessToken,
-          refreshToken: finalRefreshToken,
-          expiresAt: expiresAtBigInt,
-          status: cred.status || "CONNECTED",
-          scope: cred.scope || "https://www.googleapis.com/auth/gmail.readonly",
-        };
-        if (finalHistoryId) {
-          createData.historyId = finalHistoryId;
-        }
-
         await db.gmailToken.upsert({
-          where: { email: cleanEmail },
-          update: updateData,
-          create: createData,
+          where: {
+            userId_email: { userId: cleanUserId, email: cleanEmail },
+          },
+          update: {
+            accessToken: cred.accessToken,
+            ...(finalRefreshToken ? { refreshToken: finalRefreshToken } : {}),
+            expiresAt: expiresAtBigInt,
+            status: cred.status || "CONNECTED",
+            scope: cred.scope || "https://www.googleapis.com/auth/gmail.readonly",
+            ...(finalHistoryId ? { historyId: finalHistoryId } : {}),
+            updatedAt: new Date(),
+          },
+          create: {
+            userId: cleanUserId,
+            email: cleanEmail,
+            accessToken: cred.accessToken,
+            refreshToken: finalRefreshToken,
+            expiresAt: expiresAtBigInt,
+            status: cred.status || "CONNECTED",
+            scope: cred.scope || "https://www.googleapis.com/auth/gmail.readonly",
+            ...(finalHistoryId ? { historyId: finalHistoryId } : {}),
+          },
         });
 
-        console.log(`[GMAIL TOKENS DB] Saved OAuth tokens in database for ${cleanEmail} (Refresh token present: ${!!finalRefreshToken}, historyId: ${finalHistoryId || "N/A"})`);
+        console.log(`[GMAIL TOKENS DB] Saved OAuth tokens in Prisma DB for userId: ${cleanUserId}, email: ${cleanEmail}`);
         cred.refreshToken = finalRefreshToken;
         cred.historyId = finalHistoryId;
       } catch (dbErr: any) {
-        console.warn(`[GMAIL TOKENS DB] Prisma write note/fallback for ${cleanEmail}: ${dbErr.message}`);
+        console.warn(`[GMAIL TOKENS DB] Prisma write note for ${cleanEmail}: ${dbErr.message}`);
       }
     }
 
@@ -105,23 +100,32 @@ export class ServerGmailTokenStore {
     const supabase = getSupabaseServerClient();
     if (supabase) {
       try {
-        const { data: existingSb } = await supabase.from("gmail_tokens").select("*").eq("email", cleanEmail).single();
+        const { data: existingSb } = await supabase
+          .from("gmail_tokens")
+          .select("*")
+          .eq("user_id", cleanUserId)
+          .eq("email", cleanEmail)
+          .single();
+
         const finalRefreshToken = cred.refreshToken || existingSb?.refresh_token || undefined;
         const finalHistoryId = cred.historyId || existingSb?.history_id || undefined;
 
-        await supabase.from("gmail_tokens").upsert({
-          user_id: cleanUserId,
-          email: cleanEmail,
-          access_token: cred.accessToken,
-          refresh_token: finalRefreshToken,
-          expires_at: cred.expiresAt,
-          status: cred.status || "CONNECTED",
-          scope: cred.scope || "https://www.googleapis.com/auth/gmail.readonly",
-          history_id: finalHistoryId,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "email" });
+        await supabase.from("gmail_tokens").upsert(
+          {
+            user_id: cleanUserId,
+            email: cleanEmail,
+            access_token: cred.accessToken,
+            refresh_token: finalRefreshToken,
+            expires_at: cred.expiresAt,
+            status: cred.status || "CONNECTED",
+            scope: cred.scope || "https://www.googleapis.com/auth/gmail.readonly",
+            history_id: finalHistoryId,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,email" }
+        );
 
-        console.log(`[GMAIL TOKENS DB] Saved OAuth tokens in Supabase DB for ${cleanEmail}`);
+        console.log(`[GMAIL TOKENS DB] Saved OAuth tokens in Supabase DB for userId: ${cleanUserId}, email: ${cleanEmail}`);
         cred.refreshToken = finalRefreshToken;
         cred.historyId = finalHistoryId;
       } catch (sbErr: any) {
@@ -129,7 +133,7 @@ export class ServerGmailTokenStore {
       }
     }
 
-    // 3. File-system sync (fallback for local offline dev)
+    // 3. File-system store fallback (bound to cleanUserId and cleanEmail)
     try {
       ensureDirectoryExists(STORAGE_FILE_PATH);
       let localRecords: StoredGmailCredential[] = [];
@@ -139,8 +143,9 @@ export class ServerGmailTokenStore {
         } catch (_) {}
       }
 
-      const key = `${cleanUserId}_${cleanEmail}`;
-      const existingIdx = localRecords.findIndex((r) => `${r.userId.toLowerCase()}_${r.email.toLowerCase()}` === key || r.email.toLowerCase() === cleanEmail);
+      const existingIdx = localRecords.findIndex(
+        (r) => r.userId.toLowerCase() === cleanUserId.toLowerCase() && r.email.toLowerCase() === cleanEmail
+      );
 
       const existingRecord = existingIdx >= 0 ? localRecords[existingIdx] : null;
       const finalRefreshToken = cred.refreshToken || existingRecord?.refreshToken;
@@ -161,28 +166,30 @@ export class ServerGmailTokenStore {
       }
 
       fs.writeFileSync(STORAGE_FILE_PATH, JSON.stringify(localRecords, null, 2), "utf-8");
+      console.log(`[GMAIL TOKENS DISK] Saved credential to disk store for userId: ${cleanUserId}, email: ${cleanEmail}`);
     } catch (fsErr: any) {
-      console.warn(`[GMAIL TOKENS STORE] Local disk save note: ${fsErr.message}`);
+      console.warn(`[GMAIL TOKENS STORE] Disk save note: ${fsErr.message}`);
     }
   }
 
   /**
-   * Retrieves stored OAuth credential for user from Database (stateless per request)
+   * Retrieves stored OAuth credential strictly belonging to specified user ID and email
    */
   public static async getCredential(userId: string, email: string): Promise<StoredGmailCredential | null> {
+    if (!userId || !email) return null;
     const cleanEmail = email.toLowerCase().trim();
-    const cleanUserId = (userId || "usr_session_active").toLowerCase().trim();
+    const cleanUserId = userId.toLowerCase().trim();
 
-    // 1. Fetch from Database via Prisma
+    // 1. Prisma DB
     const db = getPrismaClient();
     if (db) {
       try {
-        const tokenRow = await db.gmailToken.findUnique({
-          where: { email: cleanEmail },
+        const tokenRow = await db.gmailToken.findFirst({
+          where: { userId: cleanUserId, email: cleanEmail },
         });
 
         if (tokenRow) {
-          console.log(`[GMAIL TOKENS STORE] Found Prisma DB token for ${cleanEmail} (DB userId: ${tokenRow.userId}, query userId: ${cleanUserId})`);
+          console.log(`[GMAIL TOKENS STORE] getCredential — Found Prisma DB token for userId: ${cleanUserId}, email: ${cleanEmail}`);
           return {
             userId: tokenRow.userId,
             email: tokenRow.email,
@@ -195,18 +202,23 @@ export class ServerGmailTokenStore {
           };
         }
       } catch (dbErr: any) {
-        console.warn(`[GMAIL TOKENS DB] Database query note for ${cleanEmail}: ${dbErr.message}`);
+        console.warn(`[GMAIL TOKENS DB] Query note for ${cleanEmail}: ${dbErr.message}`);
       }
     }
 
-    // 2. Fetch from Supabase DB
+    // 2. Supabase DB
     const supabase = getSupabaseServerClient();
     if (supabase) {
       try {
-        const query = supabase.from("gmail_tokens").select("*").eq("email", cleanEmail);
-        const { data: sbRow } = await query.single();
+        const { data: sbRow } = await supabase
+          .from("gmail_tokens")
+          .select("*")
+          .eq("user_id", cleanUserId)
+          .eq("email", cleanEmail)
+          .single();
+
         if (sbRow) {
-          console.log(`[GMAIL TOKENS STORE] Found Supabase DB token for ${cleanEmail}`);
+          console.log(`[GMAIL TOKENS STORE] getCredential — Found Supabase DB token for userId: ${cleanUserId}, email: ${cleanEmail}`);
           return {
             userId: sbRow.user_id,
             email: sbRow.email,
@@ -221,64 +233,49 @@ export class ServerGmailTokenStore {
       } catch (_) {}
     }
 
-    // 3. Fallback: Fetch from local disk store
+    // 3. Disk store fallback
     try {
       if (fs.existsSync(STORAGE_FILE_PATH)) {
         const localRecords: StoredGmailCredential[] = JSON.parse(fs.readFileSync(STORAGE_FILE_PATH, "utf-8"));
-        const match = localRecords.find((r) => r.email.toLowerCase() === cleanEmail);
+        const match = localRecords.find(
+          (r) => r.userId.toLowerCase() === cleanUserId && r.email.toLowerCase() === cleanEmail
+        );
         if (match) {
-          console.log(`[GMAIL TOKENS STORE] Found disk store token for ${cleanEmail} (Disk userId: ${match.userId})`);
+          console.log(`[GMAIL TOKENS STORE] getCredential — Found disk token for userId: ${cleanUserId}, email: ${cleanEmail}`);
           return match;
         }
       }
     } catch (_) {}
 
-    console.warn(`[GMAIL TOKENS STORE] No token found in any store for ${cleanEmail} (query userId: ${cleanUserId})`);
+    console.log(`[GMAIL TOKENS STORE] getCredential — No token found for userId: ${cleanUserId}, email: ${cleanEmail}`);
     return null;
   }
 
   /**
-   * Retrieves all stored credentials for a user from Database
+   * Retrieves all stored Gmail credentials belonging strictly to the specified canonical user ID
    */
   public static async getAllUserCredentials(userId: string, userEmails: string[] = []): Promise<StoredGmailCredential[]> {
-    const cleanUserId = (userId || "usr_session_active").toLowerCase().trim();
+    if (!userId || !userId.trim()) {
+      console.warn("[GMAIL TOKENS STORE] getAllUserCredentials called with empty userId — returning 0 credentials");
+      return [];
+    }
+
+    const cleanUserId = userId.toLowerCase().trim();
     const cleanUserEmails = userEmails.map((e) => e.toLowerCase().trim());
     const map = new Map<string, StoredGmailCredential>();
-
-    const matchesUser = (recUserId: string, recEmail: string) => {
-      const rId = (recUserId || "").toLowerCase();
-      const rEm = (recEmail || "").toLowerCase();
-
-      // 1. If explicit email list provided, match email
-      if (cleanUserEmails.length > 0 && cleanUserEmails.includes(rEm)) {
-        return true;
-      }
-      // 2. Match user ID or default session aliases
-      if (
-        rId === cleanUserId ||
-        rId === "usr_session_active" ||
-        rId === "usr_default_session" ||
-        cleanUserId === "usr_session_active" ||
-        cleanUserId === "usr_default_session"
-      ) {
-        return true;
-      }
-      // 3. Fallback: If no explicit email list provided, match all stored credentials
-      if (cleanUserEmails.length === 0) {
-        return true;
-      }
-      return false;
-    };
 
     // 1. Prisma DB
     const db = getPrismaClient();
     if (db) {
       try {
-        const rows = await db.gmailToken.findMany();
+        const rows = await db.gmailToken.findMany({
+          where: { userId: cleanUserId },
+        });
         rows.forEach((r: any) => {
-          if (matchesUser(r.userId, r.email)) {
-            map.set(r.email.toLowerCase(), {
-              userId: cleanUserId !== "usr_session_active" ? cleanUserId : r.userId,
+          const recEmail = r.email.toLowerCase();
+          if (cleanUserEmails.length === 0 || cleanUserEmails.includes(recEmail)) {
+            map.set(recEmail, {
+              userId: r.userId,
               email: r.email,
               accessToken: r.accessToken,
               refreshToken: r.refreshToken || undefined,
@@ -296,12 +293,13 @@ export class ServerGmailTokenStore {
     const supabase = getSupabaseServerClient();
     if (supabase) {
       try {
-        const { data: sbRows } = await supabase.from("gmail_tokens").select("*");
+        const { data: sbRows } = await supabase.from("gmail_tokens").select("*").eq("user_id", cleanUserId);
         if (sbRows && Array.isArray(sbRows)) {
           sbRows.forEach((r: any) => {
-            if (!map.has(r.email.toLowerCase()) && matchesUser(r.user_id || "", r.email || "")) {
-              map.set(r.email.toLowerCase(), {
-                userId: cleanUserId !== "usr_session_active" ? cleanUserId : r.user_id,
+            const recEmail = (r.email || "").toLowerCase();
+            if (!map.has(recEmail) && (cleanUserEmails.length === 0 || cleanUserEmails.includes(recEmail))) {
+              map.set(recEmail, {
+                userId: r.user_id,
                 email: r.email,
                 accessToken: r.access_token,
                 refreshToken: r.refresh_token || undefined,
@@ -316,23 +314,25 @@ export class ServerGmailTokenStore {
       } catch (_) {}
     }
 
-    // 3. Local Disk Fallback
+    // 3. Disk store fallback
     try {
       if (fs.existsSync(STORAGE_FILE_PATH)) {
         const localRecords: StoredGmailCredential[] = JSON.parse(fs.readFileSync(STORAGE_FILE_PATH, "utf-8"));
         localRecords.forEach((r: StoredGmailCredential) => {
-          if (!map.has(r.email.toLowerCase()) && matchesUser(r.userId, r.email)) {
-            map.set(r.email.toLowerCase(), {
-              ...r,
-              userId: cleanUserId !== "usr_session_active" ? cleanUserId : r.userId,
-            });
+          const recEmail = (r.email || "").toLowerCase();
+          if (
+            r.userId.toLowerCase() === cleanUserId &&
+            !map.has(recEmail) &&
+            (cleanUserEmails.length === 0 || cleanUserEmails.includes(recEmail))
+          ) {
+            map.set(recEmail, r);
           }
         });
       }
     } catch (_) {}
 
     const results = Array.from(map.values());
-    console.log(`[GMAIL TOKENS STORE] getAllUserCredentials(userId=${cleanUserId}, emails=[${cleanUserEmails.join(", ")}]) -> Found ${results.length} credential(s): [${results.map((c) => c.email).join(", ")}]`);
+    console.log(`[GMAIL TOKENS STORE] getAllUserCredentials(userId=${cleanUserId}, userEmails=[${cleanUserEmails.join(", ")}]) -> Matched ${results.length} credential(s)`);
     return results;
   }
 

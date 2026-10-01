@@ -77,15 +77,19 @@ model EmailAccount {
 model GmailToken {
   id           String   @id @default(uuid())
   userId       String   @map("user_id")
-  email        String   @unique
+  email        String
   accessToken  String   @map("access_token")
   refreshToken String?  @map("refresh_token")
   expiresAt    BigInt   @map("expires_at")
   scope        String?  @default("https://www.googleapis.com/auth/gmail.readonly")
   status       String   @default("CONNECTED")
+  historyId    String?  @map("history_id")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  @@unique([userId, email])
+  @@index([userId])
+  @@index([email])
   @@map("gmail_tokens")
 }
 

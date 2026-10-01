@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ServerGmailTokenStore } from "@/lib/server/gmail-token-store";
 import { GmailApiService } from "@/lib/services/GmailApiService";
 import { getGoogleRedirectUri } from "@/lib/config/google-oauth";
+import { getCanonicalUserId } from "@/lib/server/auth-session";
 
 export async function POST(req: NextRequest) {
   try {
@@ -132,16 +133,21 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 4. Flow 2: Connect Gmail Mailbox Account
-    if (!userId || userId === "usr_current_session") {
+    // 4. Flow 2: Connect Gmail Mailbox Account — Resolve Canonical Authenticated User ID
+    const targetUserId = getCanonicalUserId(req, userId);
+
+    if (!targetUserId) {
+      console.warn("[GOOGLE AUTH] Failed to resolve canonical authenticated user ID for Gmail connection");
       return NextResponse.json(
         {
           success: false,
-          error: "Unauthenticated: Valid user session required to connect Gmail account.",
+          error: "Unauthenticated session: Valid authenticated application user required to connect Gmail account.",
         },
         { status: 401 }
       );
     }
+
+    console.log(`[GMAIL AUTH] Connecting Gmail ${verifiedEmail} to canonical userId: ${targetUserId}`);
 
     // Perform initial fetch to verify token & ingest messages
     let initialMessagesCount = 0;
@@ -154,7 +160,7 @@ export async function POST(req: NextRequest) {
       // Save initial messages into persistent Email Store (DB + disk cache)
       if (fetchedMessages.length > 0) {
         const { ServerEmailStore } = await import("@/lib/server/gmail-email-store");
-        await ServerEmailStore.saveEmails(userId, verifiedEmail, fetchedMessages);
+        await ServerEmailStore.saveEmails(targetUserId, verifiedEmail, fetchedMessages);
       }
     } catch (fetchErr: any) {
       console.warn(`[GMAIL AUTH] Initial fetch warning for ${verifiedEmail}: ${fetchErr.message}`);
@@ -162,7 +168,7 @@ export async function POST(req: NextRequest) {
 
     // Securely save credentials on SERVER ONLY into Database — include historyId
     await ServerGmailTokenStore.saveCredential({
-      userId,
+      userId: targetUserId,
       email: verifiedEmail,
       name,
       accessToken,
@@ -174,7 +180,7 @@ export async function POST(req: NextRequest) {
       messagesCount: initialMessagesCount,
     });
 
-    console.log(`[GMAIL AUTH] Credentials stored securely in database server-side for user ${userId} / email ${verifiedEmail} (historyId: ${gmailProfile?.historyId || "N/A"})`);
+    console.log(`[GMAIL AUTH] Credentials stored securely in database server-side for canonical user ${targetUserId} / email ${verifiedEmail} (historyId: ${gmailProfile?.historyId || "N/A"})`);
 
     return NextResponse.json({
       success: true,

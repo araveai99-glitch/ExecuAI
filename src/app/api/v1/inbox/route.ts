@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { ServerGmailTokenStore } from "@/lib/server/gmail-token-store";
 import { GmailApiService } from "@/lib/services/GmailApiService";
 import { UnifiedEmailItem, DraftItem } from "@/lib/types/execuai";
+import { getCanonicalUserId } from "@/lib/server/auth-session";
 
 // Server-side Unified Inbox API
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get("userId");
+    const searchParamsUserId = req.nextUrl.searchParams.get("userId");
     const accountFilter = req.nextUrl.searchParams.get("accountEmail") || "ALL";
     const userEmailsParam = req.nextUrl.searchParams.get("userEmails") || "";
     const pageToken = req.nextUrl.searchParams.get("pageToken") || undefined;
@@ -15,30 +16,20 @@ export async function GET(req: NextRequest) {
 
     const userEmails = userEmailsParam ? userEmailsParam.split(",").map((e) => e.trim()) : [];
 
-    if (!userId || userId === "usr_current_session") {
-      return NextResponse.json({
-        success: true,
-        emails: [],
-        drafts: [],
-        accounts: [],
-        counts: {
-          critical: 0,
-          urgent: 0,
-          needReview: 0,
-          safeToDraft: 0,
-          lowPriority: 0,
-          totalDrafts: 0,
-          syncedMailboxes: 0,
-        },
-        syncStatus: "idle",
-        syncError: null,
-      });
+    const activeUserId = getCanonicalUserId(req, searchParamsUserId);
+
+    if (!activeUserId) {
+      console.warn("[GMAIL SYNC] GET /api/v1/inbox — Unauthenticated request (no canonical user ID)");
+      return NextResponse.json(
+        { success: false, error: "Unauthenticated session: Valid user session required." },
+        { status: 401 }
+      );
     }
 
     // 1. Retrieve all server-stored Gmail credentials strictly for this user session or connected emails
-    const credentials = await ServerGmailTokenStore.getAllUserCredentials(userId, userEmails);
+    const credentials = await ServerGmailTokenStore.getAllUserCredentials(activeUserId, userEmails);
 
-    console.log(`[GMAIL SYNC] GET /api/v1/inbox — Found ${credentials.length} server-stored credential(s) for user ${userId}`);
+    console.log(`[GMAIL SYNC] GET /api/v1/inbox — userId: ${activeUserId}, userEmails: [${userEmails.join(", ")}] -> Found ${credentials.length} server-stored credential(s)`);
 
     if (credentials.length === 0) {
       return NextResponse.json({
@@ -130,7 +121,7 @@ export async function GET(req: NextRequest) {
         // Persist messages in database & server cache
         if (messages.length > 0) {
           const { ServerEmailStore } = await import("@/lib/server/gmail-email-store");
-          await ServerEmailStore.saveEmails(userId, cleanEmail, messages);
+          await ServerEmailStore.saveEmails(activeUserId, cleanEmail, messages);
         }
 
         const convertedDrafts: DraftItem[] = drafts.map((d) => {

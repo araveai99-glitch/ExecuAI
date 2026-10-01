@@ -143,9 +143,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(sessionData);
     if (sessionData) {
       localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(sessionData));
+      document.cookie = `execuai_user_id=${encodeURIComponent(sessionData.id)}; path=/; max-age=86400; SameSite=Lax`;
+      document.cookie = `execuai_user_email=${encodeURIComponent(sessionData.email)}; path=/; max-age=86400; SameSite=Lax`;
       document.cookie = `execuai_auth=true; path=/; max-age=86400; SameSite=Lax`;
     } else {
       localStorage.removeItem(STORAGE_SESSION_KEY);
+      document.cookie = `execuai_user_id=; path=/; max-age=0`;
+      document.cookie = `execuai_user_email=; path=/; max-age=0`;
       document.cookie = `execuai_auth=; path=/; max-age=0`;
     }
   };
