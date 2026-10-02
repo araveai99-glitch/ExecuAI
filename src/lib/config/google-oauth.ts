@@ -18,24 +18,62 @@ export const GMAIL_CONNECT_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
 ].join(" ");
 
+export function sanitizeEnvVal(val?: string | null): string {
+  if (!val) return "";
+  let clean = val.trim();
+  if ((clean.startsWith('"') && clean.endsWith('"')) || (clean.startsWith("'") && clean.endsWith("'"))) {
+    clean = clean.slice(1, -1).trim();
+  }
+  return clean;
+}
+
 export function getGoogleClientId(): string {
   const envId =
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.GOOGLE_CLIENT_ID ||
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.GMAIL_CLIENT_ID ||
     "";
 
-  return envId.trim();
+  return sanitizeEnvVal(envId);
+}
+
+export function getGoogleClientSecret(): string {
+  const envSecret =
+    process.env.GOOGLE_CLIENT_SECRET ||
+    process.env.GMAIL_CLIENT_SECRET ||
+    "";
+
+  return sanitizeEnvVal(envSecret);
+}
+
+export function getGoogleOAuthDiagnostics(): {
+  clientIdLast6: string;
+  hasClientSecret: boolean;
+  clientSecretLength: number;
+  isSecretMasked: boolean;
+  redirectUri: string;
+} {
+  const clientId = getGoogleClientId();
+  const clientSecret = getGoogleClientSecret();
+  const redirectUri = getGoogleRedirectUri();
+
+  return {
+    clientIdLast6: clientId.length >= 6 ? clientId.slice(-6) : clientId,
+    hasClientSecret: Boolean(clientSecret && clientSecret.length > 0),
+    clientSecretLength: clientSecret ? clientSecret.length : 0,
+    isSecretMasked: clientSecret.includes("*"),
+    redirectUri,
+  };
 }
 
 export function isGoogleOAuthConfigured(): boolean {
   const clientId = getGoogleClientId();
-  return Boolean(clientId && clientId.trim().length > 0);
+  return Boolean(clientId && clientId.length > 0);
 }
 
 export function getGoogleRedirectUri(): string {
-  if (process.env.GOOGLE_REDIRECT_URI) return process.env.GOOGLE_REDIRECT_URI.trim();
-  if (process.env.GMAIL_REDIRECT_URI) return process.env.GMAIL_REDIRECT_URI.trim();
+  if (process.env.GOOGLE_REDIRECT_URI) return sanitizeEnvVal(process.env.GOOGLE_REDIRECT_URI);
+  if (process.env.GMAIL_REDIRECT_URI) return sanitizeEnvVal(process.env.GMAIL_REDIRECT_URI);
   if (typeof window !== "undefined") {
     return `${window.location.origin}/auth/google-callback`;
   }

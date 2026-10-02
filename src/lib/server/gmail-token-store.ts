@@ -384,8 +384,9 @@ export class ServerGmailTokenStore {
       return { accessToken: null, error: "No refresh_token available for token refresh." };
     }
 
-    const clientId = process.env.GMAIL_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GMAIL_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+    const { getGoogleClientId, getGoogleClientSecret } = await import("@/lib/config/google-oauth");
+    const clientId = getGoogleClientId();
+    const clientSecret = getGoogleClientSecret();
 
     if (!clientId || !clientSecret) {
       console.error("[GMAIL TOKENS REFRESH ERROR] Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET in server environment variables.");
@@ -396,8 +397,8 @@ export class ServerGmailTokenStore {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
-          client_id: (clientId || "").trim(),
-          client_secret: (clientSecret || "").trim(),
+          client_id: clientId,
+          client_secret: clientSecret,
           refresh_token: refreshToken.trim(),
           grant_type: "refresh_token",
         }),

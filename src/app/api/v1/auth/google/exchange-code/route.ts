@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ServerGmailTokenStore } from "@/lib/server/gmail-token-store";
 import { GmailApiService } from "@/lib/services/GmailApiService";
-import { getGoogleRedirectUri } from "@/lib/config/google-oauth";
+import {
+  getGoogleClientId,
+  getGoogleClientSecret,
+  getGoogleRedirectUri,
+  getGoogleOAuthDiagnostics,
+} from "@/lib/config/google-oauth";
 import { getCanonicalUserId } from "@/lib/server/auth-session";
 
 export async function POST(req: NextRequest) {
@@ -16,16 +21,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const clientId =
-      process.env.GMAIL_CLIENT_ID ||
-      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-      process.env.GOOGLE_CLIENT_ID ||
-      "";
+    const clientId = getGoogleClientId();
+    const clientSecret = getGoogleClientSecret();
+    const resolvedRedirectUri = redirectUri || getGoogleRedirectUri();
+    const diagnostics = getGoogleOAuthDiagnostics();
 
-    const clientSecret =
-      process.env.GMAIL_CLIENT_SECRET ||
-      process.env.GOOGLE_CLIENT_SECRET ||
-      "";
+    console.log(
+      `[DIAGNOSTIC LOG] Google OAuth Diagnostics — Client ID (last 6): ...${diagnostics.clientIdLast6} | Secret Exists: ${diagnostics.hasClientSecret} | Secret Length: ${diagnostics.clientSecretLength} | Secret Masked: ${diagnostics.isSecretMasked} | Redirect URI: ${resolvedRedirectUri}`
+    );
 
     if (!clientId) {
       return NextResponse.json(
@@ -34,19 +37,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!clientSecret || diagnostics.isSecretMasked) {
+      console.error(
+        `[GOOGLE AUTH] Invalid Client Secret: ${
+          diagnostics.isSecretMasked ? "Secret is masked with '*'" : "Secret is missing"
+        }`
+      );
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Google OAuth Client Secret in .env.local is invalid or masked (contains '*'). Please update GOOGLE_CLIENT_SECRET in .env.local with your real Google Cloud Console OAuth Client Secret.",
+        },
+        { status: 400 }
+      );
+    }
+
     console.log(`[GOOGLE AUTH] Exchanging OAuth authorization code (flow: ${flow}, userId: ${userId || "N/A"})...`);
 
     // 1. Exchange authorization code for Google tokens
     const tokenParams = new URLSearchParams({
-      client_id: clientId.trim(),
+      client_id: clientId,
+      client_secret: clientSecret,
       code: code.trim(),
       grant_type: "authorization_code",
-      redirect_uri: redirectUri || getGoogleRedirectUri(),
+      redirect_uri: resolvedRedirectUri,
     });
-
-    if (clientSecret) {
-      tokenParams.append("client_secret", clientSecret.trim());
-    }
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
