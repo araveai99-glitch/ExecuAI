@@ -143,14 +143,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(sessionData);
     if (sessionData) {
       localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(sessionData));
-      document.cookie = `execuai_user_id=${encodeURIComponent(sessionData.id)}; path=/; max-age=86400; SameSite=Lax`;
-      document.cookie = `execuai_user_email=${encodeURIComponent(sessionData.email)}; path=/; max-age=86400; SameSite=Lax`;
-      document.cookie = `execuai_auth=true; path=/; max-age=86400; SameSite=Lax`;
+      fetch("/api/v1/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: sessionData.id, email: sessionData.email }),
+      }).catch((err) => console.warn("[AUTH CONTEXT] Session cookie sync warning:", err));
     } else {
       localStorage.removeItem(STORAGE_SESSION_KEY);
-      document.cookie = `execuai_user_id=; path=/; max-age=0`;
-      document.cookie = `execuai_user_email=; path=/; max-age=0`;
-      document.cookie = `execuai_auth=; path=/; max-age=0`;
+      fetch("/api/v1/auth/session", { method: "DELETE" }).catch((err) =>
+        console.warn("[AUTH CONTEXT] Session cookie clear warning:", err)
+      );
     }
   };
 

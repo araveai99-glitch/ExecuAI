@@ -3,18 +3,20 @@ import { ServerGmailTokenStore } from "@/lib/server/gmail-token-store";
 import { ServerEmailStore } from "@/lib/server/gmail-email-store";
 import { GmailApiService } from "@/lib/services/GmailApiService";
 import { UnifiedEmailItem } from "@/lib/types/execuai";
+import { getCanonicalUserId } from "@/lib/server/auth-session";
 
 // Polling-Based Incremental Live Sync API Endpoint (Gmail historyId)
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get("userId");
+    const searchUserId = req.nextUrl.searchParams.get("userId");
     const accountFilter = req.nextUrl.searchParams.get("accountEmail") || "ALL";
     const userEmailsParam = req.nextUrl.searchParams.get("userEmails") || "";
     const forceFullSync = req.nextUrl.searchParams.get("fullSync") === "true";
 
     const userEmails = userEmailsParam ? userEmailsParam.split(",").map((e) => e.trim()) : [];
+    const activeUserId = getCanonicalUserId(req, searchUserId);
 
-    if (!userId || userId === "usr_current_session") {
+    if (!activeUserId) {
       return NextResponse.json({
         success: true,
         emails: [],
@@ -24,7 +26,8 @@ export async function GET(req: NextRequest) {
     }
 
     // 1. Retrieve server-stored credentials for this user
-    const credentials = await ServerGmailTokenStore.getAllUserCredentials(userId, userEmails);
+    const credentials = await ServerGmailTokenStore.getAllUserCredentials(activeUserId, userEmails);
+    console.log(`[DIAGNOSTIC LOG] /api/v1/sync — authenticated userId: ${activeUserId}, GmailToken lookup userId: ${activeUserId}, credential count: ${credentials.length}`);
 
     if (credentials.length === 0) {
       return NextResponse.json({
@@ -165,7 +168,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Return current dataset from store
-    const storedEmails = await ServerEmailStore.getStoredEmails(userId, accountFilter);
+    const storedEmails = await ServerEmailStore.getStoredEmails(activeUserId, accountFilter);
 
     return NextResponse.json({
       success: true,

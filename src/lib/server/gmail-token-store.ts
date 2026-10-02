@@ -50,6 +50,7 @@ export class ServerGmailTokenStore {
     const cleanUserId = cred.userId.trim();
     const expiresAtBigInt = BigInt(cred.expiresAt || Date.now() + 3600 * 1000);
 
+    console.log(`[DIAGNOSTIC LOG] GmailToken stored userId: ${cleanUserId}, email: ${cleanEmail}`);
     console.log(`[GMAIL TOKENS STORE] saveCredential — Persisting OAuth token for userId: ${cleanUserId}, email: ${cleanEmail}`);
 
     // 1. Try Prisma Database Persistence (`gmail_tokens` table)
@@ -332,6 +333,7 @@ export class ServerGmailTokenStore {
     } catch (_) {}
 
     const results = Array.from(map.values());
+    console.log(`[DIAGNOSTIC LOG] GmailToken lookup userId: ${cleanUserId}, credential count: ${results.length}`);
     console.log(`[GMAIL TOKENS STORE] getAllUserCredentials(userId=${cleanUserId}, userEmails=[${cleanUserEmails.join(", ")}]) -> Matched ${results.length} credential(s)`);
     return results;
   }

@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     const userEmails = userEmailsParam ? userEmailsParam.split(",").map((e) => e.trim()) : [];
 
     const credentials = await ServerGmailTokenStore.getAllUserCredentials(activeUserId, userEmails);
+    console.log(`[DIAGNOSTIC LOG] /api/v1/accounts — authenticated userId: ${activeUserId}, GmailToken lookup userId: ${activeUserId}, credential count: ${credentials.length}`);
     console.log(`[ACCOUNTS API] GET /api/v1/accounts — userId: ${activeUserId}, userEmails: [${userEmails.join(", ")}] -> Found ${credentials.length} credential(s)`);
 
     const accounts = credentials.map((cred: any, idx: number) => ({

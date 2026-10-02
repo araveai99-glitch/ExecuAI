@@ -136,6 +136,8 @@ export async function POST(req: NextRequest) {
     // 4. Flow 2: Connect Gmail Mailbox Account — Resolve Canonical Authenticated User ID
     const targetUserId = getCanonicalUserId(req, userId);
 
+    console.log(`[DIAGNOSTIC LOG] OAuth Exchange — authenticated userId: ${targetUserId || "UNAUTHENTICATED"}, OAuth exchange userId parameter: ${userId || "N/A"}`);
+
     if (!targetUserId) {
       console.warn("[GOOGLE AUTH] Failed to resolve canonical authenticated user ID for Gmail connection");
       return NextResponse.json(

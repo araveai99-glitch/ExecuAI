@@ -64,8 +64,12 @@ export default function GoogleCallbackPage() {
           const savedSession = savedSessionStr ? JSON.parse(savedSessionStr) : null;
           const activeUserId = user?.id || savedSession?.id || null;
 
-          if (activeUserId && typeof document !== "undefined") {
-            document.cookie = `execuai_user_id=${encodeURIComponent(activeUserId)}; path=/; max-age=86400; SameSite=Lax`;
+          if (activeUserId) {
+            await fetch("/api/v1/auth/session", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: activeUserId, email: user?.email || savedSession?.email }),
+            }).catch(() => {});
           }
 
           setStatus("Connecting Gmail mailbox to your ExecuAI account...");
