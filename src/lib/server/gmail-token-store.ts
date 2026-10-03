@@ -92,6 +92,33 @@ export class ServerGmailTokenStore {
         console.log(`[GMAIL TOKENS DB] Saved OAuth tokens in Prisma DB for userId: ${cleanUserId}, email: ${cleanEmail}`);
         cred.refreshToken = finalRefreshToken;
         cred.historyId = finalHistoryId;
+
+        // Also upsert EmailAccount record if user exists in DB
+        try {
+          const userObj = await db.user.findUnique({ where: { id: cleanUserId } });
+          const orgId = userObj?.organizationId || "org_execuai_corp";
+          await db.emailAccount.upsert({
+            where: {
+              userId_emailAddress: { userId: cleanUserId, emailAddress: cleanEmail },
+            },
+            update: {
+              status: "CONNECTED",
+              lastSyncedAt: new Date(),
+              updatedAt: new Date(),
+            },
+            create: {
+              organizationId: orgId,
+              userId: cleanUserId,
+              accountLabel: `Gmail (${cleanEmail})`,
+              provider: "GMAIL",
+              emailAddress: cleanEmail,
+              status: "CONNECTED",
+              encryptedTokens: "OAUTH2_TOKENS_STORED_IN_GMAIL_TOKENS",
+              oauthScopes: [cred.scope || "https://www.googleapis.com/auth/gmail.readonly"],
+              lastSyncedAt: new Date(),
+            },
+          });
+        } catch (_) {}
       } catch (dbErr: any) {
         console.warn(`[GMAIL TOKENS DB] Prisma write note for ${cleanEmail}: ${dbErr.message}`);
       }

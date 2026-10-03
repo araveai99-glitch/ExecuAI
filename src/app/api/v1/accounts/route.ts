@@ -5,8 +5,9 @@ import { getCanonicalUserId } from "@/lib/server/auth-session";
 // Server-side Accounts API Route
 export async function GET(req: NextRequest) {
   try {
+    const canonicalSessionId = getCanonicalUserId(req);
     const searchUserId = req.nextUrl.searchParams.get("userId");
-    const activeUserId = getCanonicalUserId(req, searchUserId);
+    const activeUserId = canonicalSessionId || searchUserId;
 
     if (!activeUserId) {
       return NextResponse.json(
@@ -15,15 +16,22 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // PRIVACY SAFEGUARD: User-to-user data isolation
+    if (canonicalSessionId && searchUserId && canonicalSessionId !== searchUserId) {
+      console.warn(`[SECURITY AUDIT] Blocked cross-user accounts access attempt. Session: ${canonicalSessionId}, Target: ${searchUserId}`);
+      return NextResponse.json(
+        { success: false, error: "Access Denied: You cannot view another user's email accounts." },
+        { status: 403 }
+      );
+    }
+
     const userEmailsParam = req.nextUrl.searchParams.get("userEmails") || "";
     const userEmails = userEmailsParam ? userEmailsParam.split(",").map((e) => e.trim()) : [];
 
     const credentials = await ServerGmailTokenStore.getAllUserCredentials(activeUserId, userEmails);
-    console.log(`[DIAGNOSTIC LOG] /api/v1/accounts — authenticated userId: ${activeUserId}, GmailToken lookup userId: ${activeUserId}, credential count: ${credentials.length}`);
-    console.log(`[ACCOUNTS API] GET /api/v1/accounts — userId: ${activeUserId}, userEmails: [${userEmails.join(", ")}] -> Found ${credentials.length} credential(s)`);
 
     const accounts = credentials.map((cred: any, idx: number) => ({
-      id: `acc_g_${idx + 1}`,
+      id: `acc_g_${cred.email.replace(/[^a-z0-9]/gi, "_")}`,
       accountLabel: `Gmail (${cred.email})`,
       provider: "GMAIL",
       emailAddress: cred.email,
@@ -45,14 +53,24 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const canonicalSessionId = getCanonicalUserId(req);
     const searchUserId = req.nextUrl.searchParams.get("userId");
-    const activeUserId = getCanonicalUserId(req, searchUserId);
+    const activeUserId = canonicalSessionId || searchUserId;
     const email = req.nextUrl.searchParams.get("email");
 
     if (!activeUserId || !email) {
       return NextResponse.json(
-        { success: false, error: "Authenticated user session and email are required" },
+        { success: false, error: "Authenticated user session and email address are required" },
         { status: 400 }
+      );
+    }
+
+    // PRIVACY SAFEGUARD: Prevent disconnecting another user's email account
+    if (canonicalSessionId && searchUserId && canonicalSessionId !== searchUserId) {
+      console.warn(`[SECURITY AUDIT] Blocked cross-user account disconnect attempt. Session: ${canonicalSessionId}, Target: ${searchUserId}`);
+      return NextResponse.json(
+        { success: false, error: "Access Denied: You cannot disconnect another user's email account." },
+        { status: 403 }
       );
     }
 
@@ -66,4 +84,3 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
-

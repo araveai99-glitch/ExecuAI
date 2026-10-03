@@ -95,6 +95,7 @@ model EmailAccount {
   emails             Email[]
 
   @@unique([organizationId, emailAddress])
+  @@unique([userId, emailAddress])
   @@map("email_accounts")
 }
 

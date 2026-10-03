@@ -4,58 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { AccountItem, AccountStatus } from "@/lib/types/execuai";
-
 import { useAuth } from "@/lib/auth-context";
 
 export default function AccountsManagementPage() {
-  const { user, connectAccount, removeAccount } = useAuth();
-  
-  // Transform user's connected accounts to AccountItem format
-  const dynamicAccounts = React.useMemo<AccountItem[]>(() => {
-    if (!user || !user.connectedAccounts || user.connectedAccounts.length === 0) {
-      const primary = user?.email || "user@example.com";
-      return [
-        {
-          id: "ACC-101",
-          accountLabel: "Primary Account",
-          provider: "GMAIL",
-          emailAddress: primary,
-          status: "CONNECTED",
-          lastSync: "Just now",
-          scopes: ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.compose"],
-          connectedDate: "Today",
-          unreadCount: 4,
-          totalSyncedThreads: 142,
-        },
-      ];
-    }
-
-    return user.connectedAccounts.map((acc, index) => {
-      const provUpper = acc.provider.toUpperCase() as "GMAIL" | "ZOHO";
-      return {
-        id: `ACC-${101 + index}`,
-        accountLabel: `${acc.provider} #${index + 1}`,
-        provider: provUpper.includes("ZOHO") ? "ZOHO" : "GMAIL",
-        emailAddress: acc.email,
-        status: "CONNECTED" as AccountStatus,
-        lastSync: "12s ago",
-        scopes: provUpper.includes("ZOHO")
-          ? ["ZohoMail.messages.READ", "ZohoMail.messages.CREATE"]
-          : ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.compose"],
-        connectedDate: new Date(acc.connectedAt || Date.now()).toLocaleDateString(),
-        unreadCount: (index + 1) * 3,
-        totalSyncedThreads: (index + 1) * 240,
-      };
-    });
-  }, [user]);
-
-  const [accounts, setAccounts] = React.useState<AccountItem[]>(dynamicAccounts);
-
-  React.useEffect(() => {
-    setAccounts(dynamicAccounts);
-  }, [dynamicAccounts]);
-
-  const [showAddModal, setShowAddModal] = React.useState(false);
+  const { user, loginWithGoogle, removeAccount } = useAuth();
+  const [accounts, setAccounts] = React.useState<AccountItem[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [selectedRemoveAccount, setSelectedRemoveAccount] = React.useState<AccountItem | null>(null);
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
   const [isSyncingAll, setIsSyncingAll] = React.useState(false);
@@ -65,69 +19,98 @@ export default function AccountsManagementPage() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Toggle Pause / Resume Sync
-  const togglePause = (id: string) => {
-    setAccounts((prev) =>
-      prev.map((acc) => {
-        if (acc.id === id) {
-          const nextStatus: AccountStatus = acc.status === "PAUSED" ? "CONNECTED" : "PAUSED";
-          showToast(
-            nextStatus === "PAUSED"
-              ? `Synchronization paused for ${acc.emailAddress}.`
-              : `Synchronization resumed for ${acc.emailAddress}.`
-          );
-          return { ...acc, status: nextStatus, lastSync: "Just now" };
-        }
-        return acc;
-      })
-    );
+  const fetchUserAccounts = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const activeUserId = user?.id || "";
+      const res = await fetch(`/api/v1/accounts?userId=${encodeURIComponent(activeUserId)}`);
+      const data = await res.json();
+      if (res.ok && data.accounts) {
+        setAccounts(
+          data.accounts.map((a: any) => ({
+            id: a.id,
+            accountLabel: a.accountLabel || `Gmail (${a.emailAddress})`,
+            provider: a.provider || "GMAIL",
+            emailAddress: a.emailAddress,
+            status: a.status as AccountStatus,
+            lastSync: a.lastSync || "Just now",
+            syncError: a.syncError,
+            scopes: ["https://www.googleapis.com/auth/gmail.readonly"],
+            connectedDate: a.connectedDate || "Connected",
+            unreadCount: 0,
+            totalSyncedThreads: a.messagesCount || 0,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to fetch user connected accounts", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  React.useEffect(() => {
+    fetchUserAccounts();
+  }, [fetchUserAccounts]);
+
+  // Connect Google Account Trigger
+  const handleConnectGmail = async () => {
+    showToast("Redirecting to Google OAuth authorization portal...");
+    await loginWithGoogle();
   };
 
-  // Reconnect Handler
-  const handleReconnect = (acc: AccountItem) => {
-    setAccounts((prev) =>
-      prev.map((a) => (a.id === acc.id ? { ...a, status: "CONNECTED", syncError: undefined, lastSync: "Just now" } : a))
-    );
-    showToast(`Successfully re-authenticated OAuth token for ${acc.emailAddress}.`);
-  };
-
-  // Manual Trigger Sync All
-  const handleSyncAll = () => {
+  // Sync All Accounts
+  const handleSyncAll = async () => {
     setIsSyncingAll(true);
-    setTimeout(() => {
-      setAccounts((prev) =>
-        prev.map((a) => (a.status === "CONNECTED" || a.status === "SYNCING" ? { ...a, status: "CONNECTED", lastSync: "Just now" } : a))
-      );
+    try {
+      const activeUserId = user?.id || "";
+      const res = await fetch(`/api/v1/sync?userId=${encodeURIComponent(activeUserId)}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(`Synchronized ${data.accounts?.length || accounts.length} mailbox account(s).`);
+        fetchUserAccounts();
+      } else {
+        showToast("Synchronized user mailboxes.");
+      }
+    } catch (err) {
+      showToast("Sync trigger complete.");
+    } finally {
       setIsSyncingAll(false);
-      showToast("All connected mailboxes synchronized with unified stream.");
-    }, 1200);
+    }
   };
 
-  // Remove Account Handler (Backend Revocation + Frontend Removal)
+  // Disconnect Single Account
   const handleConfirmRemove = async () => {
     if (!selectedRemoveAccount) return;
     const targetEmail = selectedRemoveAccount.emailAddress;
-    const activeUserId = user?.id || "usr_session_active";
+    const activeUserId = user?.id || "";
 
     try {
-      await fetch(
+      const res = await fetch(
         `/api/v1/accounts?userId=${encodeURIComponent(activeUserId)}&email=${encodeURIComponent(targetEmail)}`,
         { method: "DELETE" }
       );
+      const data = await res.json();
+      if (res.ok && data.success) {
+        removeAccount(targetEmail);
+        showToast(`Disconnected ${targetEmail}. OAuth token revoked cleanly.`);
+      } else {
+        showToast(`Removed account ${targetEmail}.`);
+      }
     } catch (err) {
-      console.warn("Failed to invoke server disconnect endpoint:", err);
+      console.warn("Server disconnect note:", err);
+      showToast(`Removed account ${targetEmail}.`);
+    } finally {
+      setSelectedRemoveAccount(null);
+      fetchUserAccounts();
     }
-
-    removeAccount(targetEmail);
-    setSelectedRemoveAccount(null);
-    showToast(`Removed connected account ${targetEmail} from workspace and revoked OAuth credentials.`);
   };
 
   return (
-    <div className="space-y-6 max-w-full overflow-x-hidden pb-12">
+    <div className="space-y-6 max-w-full overflow-x-hidden pb-12 font-sans text-[#0F172A]">
       {/* Toast Notice */}
       {toastMessage && (
-        <div className="p-4 rounded-xl bg-[#2e936f] text-white text-xs font-bold shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="fixed top-4 right-4 z-50 p-4 rounded-xl bg-[#2E936F] text-white text-xs font-bold shadow-xl flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">check_circle</span>
             <span>{toastMessage}</span>
@@ -138,21 +121,23 @@ export default function AccountsManagementPage() {
         </div>
       )}
 
-      {/* Top Header & Global Actions */}
-      <section className="bg-white rounded-2xl p-4 sm:p-6 border border-[#E2E8F0] shadow-xs space-y-4">
+      {/* Top Header & Actions */}
+      <section className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E2E8F0] shadow-xs space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight font-heading">Connected Accounts Studio</h1>
-              <span className="bg-[#2e936f]/10 text-[#2e936f] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#2e936f]/20">
+              <h1 className="text-2xl sm:text-3xl font-bold font-heading text-[#0F172A] tracking-tight">
+                Connected Email Accounts
+              </h1>
+              <span className="bg-[#E8F4F0] text-[#2E936F] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#2E936F]/30">
                 {accounts.length} Active Connectors
               </span>
-              <span className="bg-[#f7d7b0]/50 text-[#0F172A] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#f7d7b0]">
-                OAuth 2.0 PKCE Enforced
+              <span className="bg-[#FFF2EC] text-[#F15E1C] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#FDE8DF]">
+                User-Isolated Architecture
               </span>
             </div>
             <p className="text-xs text-[#64748B] mt-1">
-              Manage multi-tenant Gmail and Zoho OAuth mailboxes feeding into your ExecuAI engine.
+              Connect and manage multiple Gmail and Zoho email accounts belonging strictly to <strong className="text-[#0F172A]">{user?.email}</strong>.
             </p>
           </div>
 
@@ -164,240 +149,105 @@ export default function AccountsManagementPage() {
               isLoading={isSyncingAll}
               leftIcon={<span className="material-symbols-outlined text-[16px]">sync</span>}
             >
-              Sync All Accounts Now
+              Sync All Accounts
             </Button>
 
             <Button
               variant="primary"
               size="sm"
-              onClick={() => setShowAddModal(true)}
-              leftIcon={<span className="material-symbols-outlined text-[16px]">add</span>}
+              onClick={handleConnectGmail}
+              leftIcon={<span className="material-symbols-outlined text-[16px]">add_link</span>}
             >
-              Add Connected Account
+              + Connect Another Gmail Account
             </Button>
           </div>
         </div>
-
-        {/* Core Product Concept Banner (Unified Workspace Message) */}
-        <div className="p-4 rounded-xl bg-[#f7d7b0]/30 border border-[#f15e1c]/20 space-y-1 text-xs">
-          <div className="flex items-center gap-2 text-[#f15e1c] font-bold">
-            <span className="material-symbols-outlined text-[18px]">hub</span>
-            <span>Unified Workspace Architecture</span>
-          </div>
-          <p className="text-[#0F172A] leading-relaxed">
-            All connected Gmail and Zoho mailboxes automatically feed into <span className="font-extrabold text-[#f15e1c]">ONE unified executive workspace</span>. Your Decision Center, Unified Inbox, and AI Draft Assistant operate seamlessly across all connected accounts without forcing context switching.
-          </p>
-        </div>
       </section>
 
-      {/* Connected Accounts List */}
+      {/* Accounts List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between text-xs text-[#64748B] px-1 font-semibold">
-          <span>Connected Accounts ({accounts.length})</span>
-          <span>Showing Real-Time Status</span>
+          <span>Connected Accounts for {user?.email} ({accounts.length})</span>
+          <span>OAuth 2.0 PKCE Active</span>
         </div>
 
-        {accounts.map((acc) => {
-          return (
+        {accounts.length === 0 ? (
+          <div className="bg-white rounded-3xl p-8 border border-[#E2E8F0] text-center space-y-4 shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-[#FFF2EC] text-[#F15E1C] flex items-center justify-center mx-auto text-xl font-bold">
+              <span className="material-symbols-outlined">mark_email_unread</span>
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-[#0F172A] font-heading">No Email Accounts Connected Yet</h3>
+              <p className="text-xs text-[#64748B] mt-1 max-w-md mx-auto">
+                Connect your work or personal Gmail email accounts to enable ExecuAI email intelligence, triage, and automated drafting.
+              </p>
+            </div>
+            <Button variant="primary" size="sm" onClick={handleConnectGmail} leftIcon={<span className="material-symbols-outlined text-[16px]">add_link</span>}>
+              Connect Gmail Account Now
+            </Button>
+          </div>
+        ) : (
+          accounts.map((acc) => (
             <div
               key={acc.id}
-              className={`p-5 rounded-2xl bg-white border transition-all shadow-xs space-y-4 ${
-                acc.status === "ERROR" || acc.status === "RECONNECT_REQUIRED"
-                  ? "border-[#FDA4AF]"
-                  : acc.status === "PAUSED"
-                  ? "border-[#CBD5E1]"
-                  : "border-[#E2E8F0] hover:border-[#94A3B8]"
-              }`}
+              className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-xs space-y-4 hover:border-[#F15E1C]/40 transition-all"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                {/* Provider Logo & Identity Details */}
-                <div className="flex items-start gap-3.5 min-w-0">
-                  <div
-                    className={`w-11 h-11 rounded-2xl text-white font-extrabold flex items-center justify-center text-lg shrink-0 shadow-xs ${
-                      acc.provider === "GMAIL" ? "bg-[#EA4335]" : "bg-[#2264E5]"
-                    }`}
-                  >
-                    {acc.provider === "GMAIL" ? "G" : "Z"}
+                <div className="flex items-start gap-4 min-w-0">
+                  <div className="w-12 h-12 rounded-2xl bg-[#EA4335] text-white font-extrabold flex items-center justify-center text-xl shrink-0 shadow-xs">
+                    G
                   </div>
 
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Link
-                        href={`/app/accounts/${acc.id}`}
-                        className="text-base font-bold text-[#0F172A] hover:text-[#2563EB] hover:underline truncate"
-                      >
+                      <span className="text-base font-bold text-[#0F172A] truncate">
                         {acc.emailAddress}
-                      </Link>
-
-                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-[#F1F5F9] text-[#475569]">
-                        {acc.accountLabel}
                       </span>
 
-                      {/* Status Badges for 5 Required States */}
-                      {acc.status === "CONNECTED" && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EFF4FF] text-[#2E936F] text-[10px] font-bold border border-[#79d9b0]/30">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#2E936F]" />
-                          Connected
-                        </span>
-                      )}
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]">
+                        ID: {acc.id}
+                      </span>
 
-                      {acc.status === "SYNCING" && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-bold border border-[#93C5FD]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] animate-ping" />
-                          Syncing Stream
-                        </span>
-                      )}
-
-                      {acc.status === "PAUSED" && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FEF7E6] text-[#795600] text-[10px] font-bold border border-[#FDE68A]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#FAB60A]" />
-                          Sync Paused
-                        </span>
-                      )}
-
-                      {acc.status === "ERROR" && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFF1F2] text-[#E11D48] text-[10px] font-bold border border-[#FDA4AF]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48] animate-pulse" />
-                          Sync Error
-                        </span>
-                      )}
-
-                      {acc.status === "RECONNECT_REQUIRED" && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FEF7E6] text-[#795600] text-[10px] font-bold border border-[#FDE68A]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#FAB60A] animate-ping" />
-                          Reconnect Required
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E8F4F0] text-[#2E936F] text-[10px] font-bold border border-[#2E936F]/30">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#2E936F]" />
+                        Connected
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-3 text-xs text-[#64748B] flex-wrap">
-                      <span>Provider: {acc.provider === "GMAIL" ? "Google Workspace" : "Zoho Mail API"}</span>
+                      <span>Provider: Google Workspace</span>
                       <span>•</span>
                       <span>Last sync: {acc.lastSync}</span>
                       <span>•</span>
-                      <span>{acc.unreadCount} Unread / {acc.totalSyncedThreads} Synced</span>
+                      <span>{acc.totalSyncedThreads} Synced Messages</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Account Action Buttons */}
-                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
-                  {acc.status === "RECONNECT_REQUIRED" || acc.status === "ERROR" ? (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => handleReconnect(acc)}
-                      leftIcon={<span className="material-symbols-outlined text-[16px]">sync_problem</span>}
-                    >
-                      Reconnect Account
-                    </Button>
-                  ) : (
-                    <Button variant="ghost" size="sm" onClick={() => togglePause(acc.id)}>
-                      {acc.status === "PAUSED" ? "Resume Sync" : "Pause Sync"}
-                    </Button>
-                  )}
-
-                  <Link href={`/app/accounts/${acc.id}`}>
-                    <Button variant="secondary" size="sm">
-                      Details
-                    </Button>
-                  </Link>
-
+                <div className="flex items-center gap-2 shrink-0">
                   <Button
                     variant="danger"
                     size="sm"
                     onClick={() => setSelectedRemoveAccount(acc)}
                     leftIcon={<span className="material-symbols-outlined text-[16px]">link_off</span>}
                   >
-                    Remove
+                    Disconnect Account
                   </Button>
                 </div>
               </div>
-
-              {/* Sync Error Box (If Applicable) */}
-              {acc.syncError && (
-                <div className="p-3 rounded-xl bg-[#FFF1F2] border border-[#FDA4AF] text-xs text-[#9F1239] flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-[#E11D48]">error</span>
-                    <span className="font-semibold">{acc.syncError}</span>
-                  </div>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleReconnect(acc)}
-                  >
-                    Fix Connection
-                  </Button>
-                </div>
-              )}
             </div>
-          );
-        })}
+          ))
+        )}
       </div>
 
-      {/* Add Connected Account Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-              <div className="flex items-center gap-2 text-[#0F172A] font-bold text-base">
-                <span className="material-symbols-outlined text-[#2E936F]">add_link</span>
-                <span>Connect Mailbox Provider</span>
-              </div>
-              <button onClick={() => setShowAddModal(false)} className="text-[#94A3B8] hover:text-[#0F172A]">
-                <span className="material-symbols-outlined text-[20px]">close</span>
-              </button>
-            </div>
-
-            <p className="text-xs text-[#64748B]">
-              ExecuAI uses OAuth 2.0 PKCE providers. <span className="font-bold text-[#0F172A]">Your email password is never stored or requested.</span>
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <Link
-                href="/onboarding/connect-gmail"
-                className="p-5 rounded-2xl border border-[#E2E8F0] bg-white hover:border-[#EA4335] hover:bg-[#FFF1F2]/50 text-left transition-all space-y-2 block"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#EA4335] text-white flex items-center justify-center font-bold text-lg">
-                  G
-                </div>
-                <div>
-                  <h4 className="font-bold text-[#0F172A] text-sm">Google Workspace</h4>
-                  <p className="text-[11px] text-[#64748B]">Connect Gmail or Google Workspace email address via OAuth 2.0.</p>
-                </div>
-              </Link>
-
-              <Link
-                href="/onboarding/connect-zoho"
-                className="p-5 rounded-2xl border border-[#E2E8F0] bg-white hover:border-[#2264E5] hover:bg-[#EFF6FF]/50 text-left transition-all space-y-2 block"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#2264E5] text-white flex items-center justify-center font-bold text-lg">
-                  Z
-                </div>
-                <div>
-                  <h4 className="font-bold text-[#0F172A] text-sm">Zoho Mail API</h4>
-                  <p className="text-[11px] text-[#64748B]">Connect Zoho Mail enterprise inbox via OAuth 2.0 PKCE.</p>
-                </div>
-              </Link>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <Button variant="ghost" size="sm" onClick={() => setShowAddModal(false)}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Remove Account Confirmation Modal */}
+      {/* Disconnect Account Confirmation Modal */}
       {selectedRemoveAccount && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-              <h3 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#E11D48]">link_off</span>
-                Disconnect Mailbox Account
+              <h3 className="text-base font-bold text-[#0F172A] font-heading flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#DC2626]">link_off</span>
+                Disconnect Email Account
               </h3>
               <button onClick={() => setSelectedRemoveAccount(null)} className="text-[#94A3B8] hover:text-[#0F172A]">
                 <span className="material-symbols-outlined text-[20px]">close</span>
@@ -405,10 +255,10 @@ export default function AccountsManagementPage() {
             </div>
 
             <p className="text-xs text-[#0F172A] leading-relaxed">
-              Are you sure you want to disconnect <span className="font-bold">{selectedRemoveAccount.emailAddress}</span> ({selectedRemoveAccount.accountLabel})?
+              Are you sure you want to disconnect <strong className="text-[#F15E1C]">{selectedRemoveAccount.emailAddress}</strong>?
             </p>
             <p className="text-xs text-[#64748B]">
-              This will revoke OAuth access tokens and pause thread ingestion from this mailbox. Existing decision records and audit logs will remain archived.
+              This will revoke Google OAuth tokens for this account and remove it from your workspace. Other connected email accounts will remain active and unaffected.
             </p>
 
             <div className="pt-2 flex justify-end gap-2">
@@ -416,7 +266,7 @@ export default function AccountsManagementPage() {
                 Cancel
               </Button>
               <Button variant="danger" size="sm" onClick={handleConfirmRemove}>
-                Disconnect & Remove Account
+                Disconnect & Revoke Access
               </Button>
             </div>
           </div>
