@@ -42,18 +42,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
     email: a.email,
   })) || connectedMailboxes;
 
-  const navItems: NavItem[] = [
+  const isAdmin = user?.role === "ADMIN";
+  const isManager = user?.role === "MANAGER" || isAdmin;
+
+  const baseNavItems: NavItem[] = [
     { id: "dashboard", label: "Dashboard", href: "/app/dashboard", icon: "space_dashboard" },
     { id: "unified-inbox", label: "Unified Inbox", href: "/app/inbox", icon: "move_to_inbox", badge: 14, badgeVariant: "neutral" },
     { id: "decision-center", label: "Decision Center", href: "/app/decisions", icon: "gavel", badge: "5 Gates", badgeVariant: "danger" },
     { id: "drafts", label: "Drafts", href: "/app/drafts", icon: "edit_note", badge: 3, badgeVariant: "neutral" },
     { id: "accounts", label: "Accounts", href: "/app/accounts", icon: "supervisor_account" },
     { id: "analytics", label: "Analytics", href: "/app/analytics", icon: "insights" },
+  ];
+
+  const orgNavItems: NavItem[] = [
+    { id: "organization", label: "Organization Hub", href: "/app/organization", icon: "corporate_fare", section: "Organization & RBAC" },
+    ...(isManager ? [{ id: "organization-team", label: "Team & Roles", href: "/app/organization/team", icon: "group", section: "Organization & RBAC" }] : []),
+    { id: "organization-audit", label: "Audit Logs", href: "/app/organization/audit-logs", icon: "receipt_long", section: "Organization & RBAC" },
+  ];
+
+  const governanceNavItems: NavItem[] = [
     { id: "rules-and-policies", label: "Rules & Policies", href: "/app/rules", icon: "policy", section: "Governance" },
     { id: "security-and-audit-log", label: "Security & Audit", href: "/app/security", icon: "verified_user", section: "Governance" },
     { id: "settings", label: "Settings", href: "/app/settings", icon: "settings", section: "Governance" },
-    { id: "admin", label: "Admin Console", href: "/admin", icon: "admin_panel_settings", section: "Governance" },
+    ...(isAdmin ? [{ id: "admin", label: "Admin Console", href: "/admin", icon: "admin_panel_settings", section: "Governance" }] : []),
   ];
+
+  const navItems = [...baseNavItems, ...orgNavItems, ...governanceNavItems];
 
   return (
     <aside

@@ -11,40 +11,66 @@ datasource db {
 
 // 1. ORGANIZATIONS (Tenant Scoping)
 model Organization {
-  id                   String                 @id @default(uuid())
-  name                 String
-  slug                 String                 @unique
-  createdAt            DateTime               @default(now()) @map("created_at")
-  updatedAt            DateTime               @updatedAt @map("updated_at")
+  id                    String                 @id @default(uuid())
+  name                  String
+  slug                  String                 @unique
+  ownerId               String?                @map("owner_id")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
 
-  users                User[]
-  emailAccounts        EmailAccount[]
-  userRules            UserRule[]
+  users                 User[]
+  emailAccounts         EmailAccount[]
+  userRules             UserRule[]
   communicationProfiles CommunicationProfile[]
-  auditLogs            AuditLog[]
+  auditLogs             AuditLog[]
+  accessRequests        AccessRequest[]
 
   @@map("organizations")
 }
 
 // 2. USERS
 model User {
-  id             String        @id @default(uuid())
-  organizationId String        @map("organization_id")
-  email          String        @unique
-  fullName       String        @map("full_name")
-  role           String        @default("Executive CEO")
-  passwordHash   String?       @map("password_hash")
-  avatarUrl      String?       @map("avatar_url")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
+  id             String          @id @default(uuid())
+  organizationId String          @map("organization_id")
+  email          String          @unique
+  fullName       String          @map("full_name")
+  role           String          @default("USER") // ADMIN | MANAGER | USER
+  status         String          @default("ACTIVE") // ACTIVE | PENDING_APPROVAL | INVITED | DISABLED
+  passwordHash   String?         @map("password_hash")
+  avatarUrl      String?         @map("avatar_url")
+  managerId      String?         @map("manager_id")
+  emailVerified  Boolean         @default(false) @map("email_verified")
+  lastActivityAt DateTime?       @map("last_activity_at")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
 
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  manager        User?           @relation("ManagerUsers", fields: [managerId], references: [id], onDelete: SetNull)
+  subordinates   User[]          @relation("ManagerUsers")
   emailAccounts  EmailAccount[]
   drafts         Draft[]
   auditLogs      AuditLog[]
   feedback       Feedback[]
 
   @@map("users")
+}
+
+// 2b. ACCESS REQUESTS & INVITATIONS
+model AccessRequest {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  email          String
+  fullName       String       @map("full_name")
+  role           String       @default("USER") // ADMIN | MANAGER | USER
+  status         String       @default("PENDING") // PENDING | APPROVED | REJECTED
+  invitedByUserId String?     @map("invited_by_user_id")
+  processedByUserId String?   @map("processed_by_user_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("access_requests")
 }
 
 // 3. EMAIL ACCOUNTS (Belongs to Organization & User)

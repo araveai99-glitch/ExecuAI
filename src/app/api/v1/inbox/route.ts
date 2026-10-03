@@ -16,13 +16,23 @@ export async function GET(req: NextRequest) {
 
     const userEmails = userEmailsParam ? userEmailsParam.split(",").map((e) => e.trim()) : [];
 
-    const activeUserId = getCanonicalUserId(req, searchParamsUserId);
+    const canonicalSessionId = getCanonicalUserId(req);
+    const activeUserId = canonicalSessionId || searchParamsUserId;
 
     if (!activeUserId) {
       console.warn("[GMAIL SYNC] GET /api/v1/inbox — Unauthenticated request (no canonical user ID)");
       return NextResponse.json(
         { success: false, error: "Unauthenticated session: Valid user session required." },
         { status: 401 }
+      );
+    }
+
+    // PRIVACY ENFORCEMENT: Reject cross-user email access attempts
+    if (canonicalSessionId && searchParamsUserId && canonicalSessionId !== searchParamsUserId) {
+      console.warn(`[SECURITY AUDIT] Blocked cross-user inbox access attempt. Session: ${canonicalSessionId}, Attempted target: ${searchParamsUserId}`);
+      return NextResponse.json(
+        { success: false, error: "Access Denied: Email content is private to the account holder." },
+        { status: 403 }
       );
     }
 

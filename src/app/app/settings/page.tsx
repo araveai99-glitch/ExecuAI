@@ -46,7 +46,7 @@ export default function SettingsPage() {
   const [themeMode, setThemeMode] = React.useState<"light" | "system">("light");
 
   const handleSave = () => {
-    updateProfile({ name: fullName, role: execRole });
+    updateProfile({ name: fullName, role: (user?.role || "USER") as any });
     showToast("Settings and executive preferences saved successfully.");
   };
 

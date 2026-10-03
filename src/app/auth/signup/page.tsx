@@ -64,6 +64,15 @@ export default function SignUpPage() {
             <p className="text-xs text-[#475569]">
               Start your 14-day free trial. Connect, triage, and draft across multiple Gmail & Zoho accounts.
             </p>
+            <div className="pt-2">
+              <Link
+                href="/auth/register-org"
+                className="w-full py-2.5 px-3 rounded-xl bg-[#FFF2EC] border border-[#F15E1C]/30 text-[#F15E1C] font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#F15E1C] hover:text-white transition-all shadow-xs"
+              >
+                <span className="material-symbols-outlined text-[18px]">corporate_fare</span>
+                <span>Need an Enterprise Tenant? Register as Organization →</span>
+              </Link>
+            </div>
           </div>
 
           {/* Feedback Message */}
