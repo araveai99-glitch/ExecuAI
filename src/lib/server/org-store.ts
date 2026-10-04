@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { getPrismaClient } from "@/lib/server/prisma-client";
 
 export interface StoredOrganization {
   id: string;
@@ -43,18 +44,7 @@ const ORG_FILE_PATH = path.join(process.cwd(), ".data", "organizations_v1.json")
 const USER_FILE_PATH = path.join(process.cwd(), ".data", "users_v1.json");
 const ACCESS_FILE_PATH = path.join(process.cwd(), ".data", "access_requests_v1.json");
 
-function getPrismaClient(): any {
-  try {
-    const { PrismaClient } = require("@prisma/client");
-    const globalForPrisma = global as unknown as { prisma: any };
-    if (!globalForPrisma.prisma) {
-      globalForPrisma.prisma = new PrismaClient();
-    }
-    return globalForPrisma.prisma;
-  } catch (_) {
-    return null;
-  }
-}
+
 
 function ensureDir(filePath: string) {
   const dirname = path.dirname(filePath);

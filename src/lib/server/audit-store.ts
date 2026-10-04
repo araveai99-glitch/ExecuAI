@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getPrismaClient } from "@/lib/server/prisma-client";
 
 export interface StoredAuditEntry {
   id: string;
@@ -18,18 +19,7 @@ export interface StoredAuditEntry {
 
 const AUDIT_FILE_PATH = path.join(process.cwd(), ".data", "audit_logs_v1.json");
 
-function getPrismaClient(): any {
-  try {
-    const { PrismaClient } = require("@prisma/client");
-    const globalForPrisma = global as unknown as { prisma: any };
-    if (!globalForPrisma.prisma) {
-      globalForPrisma.prisma = new PrismaClient();
-    }
-    return globalForPrisma.prisma;
-  } catch (_) {
-    return null;
-  }
-}
+
 
 function ensureDir(filePath: string) {
   const dirname = path.dirname(filePath);

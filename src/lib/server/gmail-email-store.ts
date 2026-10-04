@@ -1,22 +1,10 @@
 import { UnifiedEmailItem } from "@/lib/types/execuai";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getPrismaClient } from "@/lib/server/prisma-client";
 import fs from "fs";
 import path from "path";
 
 const EMAIL_STORAGE_FILE_PATH = path.join(process.cwd(), ".data", "gmail_emails_v1.json");
-
-function getPrismaClient(): any {
-  try {
-    const { PrismaClient } = require("@prisma/client");
-    const globalForPrisma = global as unknown as { prisma: any };
-    if (!globalForPrisma.prisma) {
-      globalForPrisma.prisma = new PrismaClient();
-    }
-    return globalForPrisma.prisma;
-  } catch (_) {
-    return null;
-  }
-}
 
 function ensureDirectoryExists(filePath: string) {
   const dirname = path.dirname(filePath);

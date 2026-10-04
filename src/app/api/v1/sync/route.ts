@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 
     // 1. Retrieve server-stored credentials for this user
     const credentials = await ServerGmailTokenStore.getAllUserCredentials(activeUserId, userEmails);
-    console.log(`[DIAGNOSTIC LOG] /api/v1/sync — authenticated userId: ${activeUserId}, GmailToken lookup userId: ${activeUserId}, credential count: ${credentials.length}`);
+    console.log(`[SAFE DIAGNOSTIC LOG] /api/v1/sync — authenticatedUserPresent: ${Boolean(activeUserId)}, requestedEmailCount: ${userEmails.length}, matchingTokensCount: ${credentials.length}, lookupCompleted: true`);
 
     if (credentials.length === 0) {
       return NextResponse.json({

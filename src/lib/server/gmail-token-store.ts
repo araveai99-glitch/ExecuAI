@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getPrismaClient } from "@/lib/server/prisma-client";
 import fs from "fs";
 import path from "path";
 
@@ -19,19 +20,7 @@ export interface StoredGmailCredential {
 
 const STORAGE_FILE_PATH = path.join(process.cwd(), ".data", "gmail_credentials_v1.json");
 
-// Safe Prisma client getter (supports both dynamic and static module resolution)
-function getPrismaClient(): any {
-  try {
-    const { PrismaClient } = require("@prisma/client");
-    const globalForPrisma = global as unknown as { prisma: any };
-    if (!globalForPrisma.prisma) {
-      globalForPrisma.prisma = new PrismaClient();
-    }
-    return globalForPrisma.prisma;
-  } catch (e) {
-    return null;
-  }
-}
+
 
 function ensureDirectoryExists(filePath: string) {
   const dirname = path.dirname(filePath);
@@ -551,7 +540,7 @@ export class ServerGmailTokenStore {
     const db = getPrismaClient();
     if (db) {
       try {
-        await db.gmailToken.delete({ where: { email: cleanEmail } }).catch(() => {});
+        await db.gmailToken.deleteMany({ where: { email: cleanEmail } }).catch(() => {});
       } catch (_) {}
     }
 
