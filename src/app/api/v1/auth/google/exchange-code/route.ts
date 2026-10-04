@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Securely save credentials on SERVER ONLY into Database — include historyId
-    await ServerGmailTokenStore.saveCredential({
+    const saveTelemetry = await ServerGmailTokenStore.saveCredential({
       userId: targetUserId,
       email: verifiedEmail,
       name,
@@ -198,24 +198,7 @@ export async function POST(req: NextRequest) {
       messagesCount: initialMessagesCount,
     });
 
-    console.log(`[GMAIL AUTH] Credentials stored securely in database server-side for canonical user ${targetUserId} / email ${verifiedEmail} (historyId: ${gmailProfile?.historyId || "N/A"})`);
-
-    // Explicit post-save PostgreSQL verification check
-    let dbVerifiedTokenExists = false;
-    let dbVerifiedAccountExists = false;
-    const { getPrismaClient } = await import("@/lib/server/prisma-client");
-    const dbCheck = getPrismaClient();
-    if (dbCheck) {
-      try {
-        const tRow = await dbCheck.gmailToken.findFirst({ where: { email: verifiedEmail } });
-        const aRow = await dbCheck.emailAccount.findFirst({ where: { emailAddress: verifiedEmail } });
-        dbVerifiedTokenExists = Boolean(tRow);
-        dbVerifiedAccountExists = Boolean(aRow);
-        console.log(`[EXCHANGE-CODE DB VERIFICATION] tokenExistsInDb: ${dbVerifiedTokenExists}, accountExistsInDb: ${dbVerifiedAccountExists} for ${verifiedEmail}`);
-      } catch (checkErr: any) {
-        console.warn(`[EXCHANGE-CODE DB VERIFICATION ERROR]: ${checkErr.message}`);
-      }
-    }
+    console.log(`[GMAIL AUTH TELEMETRY] targetUserId: ${targetUserId}, verifiedEmail: ${verifiedEmail}, saveTelemetry:`, JSON.stringify(saveTelemetry));
 
     return NextResponse.json({
       success: true,
@@ -225,8 +208,7 @@ export async function POST(req: NextRequest) {
       status: "CONNECTED",
       messagesCount: initialMessagesCount,
       historyId: gmailProfile?.historyId || null,
-      dbVerifiedTokenExists,
-      dbVerifiedAccountExists,
+      saveTelemetry,
       message: `Gmail account ${verifiedEmail} connected successfully.`,
     });
   } catch (error: any) {

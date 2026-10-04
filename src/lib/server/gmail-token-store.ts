@@ -30,25 +30,63 @@ function ensureDirectoryExists(filePath: string) {
   }
 }
 
+export interface SaveCredentialTelemetry {
+  databaseUrlPresent: boolean;
+  prismaClientInitialized: boolean;
+  cleanUserId: string;
+  cleanEmail: string;
+  orgLookupSucceeded: boolean;
+  userLookupSucceeded: boolean;
+  activeDbUserId: string;
+  gmailTokenUpsertSucceeded: boolean;
+  emailAccountUpsertSucceeded: boolean;
+  gmailTokenError: string | null;
+  emailAccountError: string | null;
+  verifyGmailTokenRowExists: boolean;
+  verifyEmailAccountRowExists: boolean;
+  verifyUserRowExists: boolean;
+  verifyOrgRowExists: boolean;
+}
+
 export class ServerGmailTokenStore {
   /**
    * Persists OAuth credentials in Database / Storage bound strictly to the canonical user ID and email
    */
-  public static async saveCredential(cred: StoredGmailCredential): Promise<void> {
+  public static async saveCredential(cred: StoredGmailCredential): Promise<SaveCredentialTelemetry> {
     const cleanEmail = cred.email.toLowerCase().trim();
     const cleanUserId = cred.userId.trim();
     const expiresAtBigInt = BigInt(cred.expiresAt || Date.now() + 3600 * 1000);
 
-    console.log(`[DIAGNOSTIC LOG] GmailToken stored userId: ${cleanUserId}, email: ${cleanEmail}`);
-    console.log(`[GMAIL TOKENS STORE] saveCredential — Persisting OAuth token for userId: ${cleanUserId}, email: ${cleanEmail}`);
+    const telemetry: SaveCredentialTelemetry = {
+      databaseUrlPresent: Boolean(process.env.DATABASE_URL),
+      prismaClientInitialized: false,
+      cleanUserId,
+      cleanEmail,
+      orgLookupSucceeded: false,
+      userLookupSucceeded: false,
+      activeDbUserId: cleanUserId,
+      gmailTokenUpsertSucceeded: false,
+      emailAccountUpsertSucceeded: false,
+      gmailTokenError: null,
+      emailAccountError: null,
+      verifyGmailTokenRowExists: false,
+      verifyEmailAccountRowExists: false,
+      verifyUserRowExists: false,
+      verifyOrgRowExists: false,
+    };
+
+    console.log(`[OAUTH SAVE TELEMETRY START] cleanUserId: ${cleanUserId}, cleanEmail: ${cleanEmail}`);
 
     // 1. Try Prisma Database Persistence (`gmail_tokens` table)
     const db = getPrismaClient();
     if (!db) {
-      console.error(`[OAUTH DB SAVE CRITICAL ERROR] getPrismaClient() returned null. process.env.DATABASE_URL present: ${Boolean(process.env.DATABASE_URL)}`);
+      console.error(`[OAUTH SAVE TELEMETRY ERROR] getPrismaClient() returned null. DATABASE_URL present: ${telemetry.databaseUrlPresent}`);
     } else {
+      telemetry.prismaClientInitialized = true;
+      let orgId = "org_execuai_corp";
+
+      // Step A: Ensure Organization exists
       try {
-        // Step A: Ensure Organization exists
         let defaultOrg = await db.organization.findFirst({ where: { id: "org_execuai_corp" } });
         if (!defaultOrg) {
           defaultOrg = await db.organization.create({
@@ -57,14 +95,17 @@ export class ServerGmailTokenStore {
               name: "ExecuAI Corporation",
               slug: "execuai-corp",
             },
-          }).catch((err) => {
-            console.warn(`[OAUTH DB SAVE] Org creation note: ${err.message}`);
-            return null;
           });
         }
-        const orgId = defaultOrg?.id || "org_execuai_corp";
+        orgId = defaultOrg.id;
+        telemetry.orgLookupSucceeded = true;
+        console.log(`[OAUTH SAVE TELEMETRY] Step A: Organization resolved: ${orgId}`);
+      } catch (orgErr: any) {
+        console.error(`[OAUTH SAVE TELEMETRY ERROR] Step A: Organization resolution failed: ${orgErr.message}`);
+      }
 
-        // Step B: Ensure User exists
+      // Step B: Ensure User exists
+      try {
         let userObj = await db.user.findUnique({ where: { id: cleanUserId } });
         if (!userObj) {
           userObj = await db.user.findUnique({ where: { email: cleanEmail } });
@@ -80,15 +121,21 @@ export class ServerGmailTokenStore {
               status: "ACTIVE",
               emailVerified: true,
             },
-          }).catch((err) => {
-            console.warn(`[OAUTH DB SAVE] User creation note: ${err.message}`);
-            return null;
           });
         }
+        if (userObj) {
+          telemetry.userLookupSucceeded = true;
+          telemetry.activeDbUserId = userObj.id;
+          console.log(`[OAUTH SAVE TELEMETRY] Step B: User resolved in DB: ${userObj.id}`);
+        }
+      } catch (userErr: any) {
+        console.error(`[OAUTH SAVE TELEMETRY ERROR] Step B: User resolution failed: ${userErr.message}`);
+      }
 
-        const activeDbUserId = userObj?.id || cleanUserId;
+      const activeDbUserId = telemetry.activeDbUserId;
 
-        // Step C: Upsert GmailToken record
+      // Step C: Upsert GmailToken record
+      try {
         const existingToken = await db.gmailToken.findFirst({
           where: { userId: activeDbUserId, email: cleanEmail },
         });
@@ -121,11 +168,17 @@ export class ServerGmailTokenStore {
           },
         });
 
-        console.log(`[GMAIL TOKENS DB] Saved OAuth tokens in Prisma DB for userId: ${activeDbUserId}, email: ${cleanEmail}`);
+        telemetry.gmailTokenUpsertSucceeded = true;
+        console.log(`[OAUTH SAVE TELEMETRY] Step C: GmailToken upsert succeeded for userId: ${activeDbUserId}, email: ${cleanEmail}`);
         cred.refreshToken = finalRefreshToken;
         cred.historyId = finalHistoryId;
+      } catch (tokenErr: any) {
+        telemetry.gmailTokenError = tokenErr.message;
+        console.error(`[OAUTH SAVE TELEMETRY ERROR] Step C: GmailToken upsert failed: ${tokenErr.message}`, tokenErr);
+      }
 
-        // Step D: Upsert EmailAccount record
+      // Step D: Upsert EmailAccount record
+      try {
         await db.emailAccount.upsert({
           where: {
             userId_emailAddress: { userId: activeDbUserId, emailAddress: cleanEmail },
@@ -148,15 +201,28 @@ export class ServerGmailTokenStore {
           },
         });
 
-        // Step E: Immediate Post-Save DB Query Verification Telemetry
+        telemetry.emailAccountUpsertSucceeded = true;
+        console.log(`[OAUTH SAVE TELEMETRY] Step D: EmailAccount upsert succeeded for userId: ${activeDbUserId}, email: ${cleanEmail}`);
+      } catch (accErr: any) {
+        telemetry.emailAccountError = accErr.message;
+        console.error(`[OAUTH SAVE TELEMETRY ERROR] Step D: EmailAccount upsert failed: ${accErr.message}`, accErr);
+      }
+
+      // Step E: Immediate Post-Save Direct DB Verification Query
+      try {
         const verifyToken = await db.gmailToken.findFirst({ where: { userId: activeDbUserId, email: cleanEmail } });
         const verifyAccount = await db.emailAccount.findFirst({ where: { userId: activeDbUserId, emailAddress: cleanEmail } });
         const verifyUser = await db.user.findUnique({ where: { id: activeDbUserId } });
         const verifyOrg = await db.organization.findUnique({ where: { id: orgId } });
 
-        console.log(`[POST-SAVE VERIFICATION TELEMETRY] userExists: ${Boolean(verifyUser)}, orgExists: ${Boolean(verifyOrg)}, gmailTokenRowExists: ${Boolean(verifyToken)}, emailAccountRowExists: ${Boolean(verifyAccount)}`);
-      } catch (dbErr: any) {
-        console.error(`[GMAIL TOKENS DB SAVE ERROR] Exception persisting OAuth token to PostgreSQL: ${dbErr.message}`, dbErr);
+        telemetry.verifyGmailTokenRowExists = Boolean(verifyToken);
+        telemetry.verifyEmailAccountRowExists = Boolean(verifyAccount);
+        telemetry.verifyUserRowExists = Boolean(verifyUser);
+        telemetry.verifyOrgRowExists = Boolean(verifyOrg);
+
+        console.log(`[OAUTH SAVE TELEMETRY END] verifyUserRowExists: ${telemetry.verifyUserRowExists}, verifyOrgRowExists: ${telemetry.verifyOrgRowExists}, verifyGmailTokenRowExists: ${telemetry.verifyGmailTokenRowExists}, verifyEmailAccountRowExists: ${telemetry.verifyEmailAccountRowExists}`);
+      } catch (verifyErr: any) {
+        console.error(`[OAUTH SAVE TELEMETRY ERROR] Step E: Direct verification query failed: ${verifyErr.message}`);
       }
     }
 
@@ -234,6 +300,8 @@ export class ServerGmailTokenStore {
     } catch (fsErr: any) {
       console.warn(`[GMAIL TOKENS STORE] Disk save note: ${fsErr.message}`);
     }
+
+    return telemetry;
   }
 
   /**
