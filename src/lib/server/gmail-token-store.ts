@@ -86,6 +86,9 @@ export class ServerGmailTokenStore {
         try {
           let userObj = await db.user.findUnique({ where: { id: cleanUserId } });
           if (!userObj) {
+            userObj = await db.user.findUnique({ where: { email: cleanEmail } });
+          }
+          if (!userObj) {
             let defaultOrg = await db.organization.findFirst({ where: { id: "org_execuai_corp" } });
             if (!defaultOrg) {
               defaultOrg = await db.organization.create({
@@ -110,10 +113,11 @@ export class ServerGmailTokenStore {
             }).catch(() => null);
           }
 
+          const targetUserForAccount = userObj?.id || cleanUserId;
           const orgId = userObj?.organizationId || "org_execuai_corp";
           await db.emailAccount.upsert({
             where: {
-              userId_emailAddress: { userId: cleanUserId, emailAddress: cleanEmail },
+              userId_emailAddress: { userId: targetUserForAccount, emailAddress: cleanEmail },
             },
             update: {
               status: "CONNECTED",
@@ -122,7 +126,7 @@ export class ServerGmailTokenStore {
             },
             create: {
               organizationId: orgId,
-              userId: cleanUserId,
+              userId: targetUserForAccount,
               accountLabel: `Gmail (${cleanEmail})`,
               provider: "GMAIL",
               emailAddress: cleanEmail,
@@ -132,7 +136,9 @@ export class ServerGmailTokenStore {
               lastSyncedAt: new Date(),
             },
           });
-        } catch (_) {}
+        } catch (eaErr: any) {
+          console.warn(`[GMAIL TOKENS DB] EmailAccount upsert note for ${cleanEmail}: ${eaErr.message}`);
+        }
       } catch (dbErr: any) {
         console.warn(`[GMAIL TOKENS DB] Prisma write note for ${cleanEmail}: ${dbErr.message}`);
       }
