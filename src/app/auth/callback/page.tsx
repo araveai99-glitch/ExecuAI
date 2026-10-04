@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase/client";
 
+import { getGoogleRedirectUri } from "@/lib/config/google-oauth";
+
 export default function AuthCallbackPage() {
   const router = useRouter();
   const { user, loginWithGoogle, connectAccount } = useAuth();
@@ -68,7 +70,7 @@ export default function AuthCallbackPage() {
 
         // Send to Server API to exchange code/persist tokens in Database (gmail_tokens table)
         const currentUserId = user?.id || "usr_session_active";
-        const redirectUri = `${window.location.origin}/auth/callback`;
+        const redirectUri = getGoogleRedirectUri();
 
         setStatus("Exchanging OAuth tokens and saving to database server-side...");
 
