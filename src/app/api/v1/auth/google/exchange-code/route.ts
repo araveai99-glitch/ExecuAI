@@ -200,6 +200,23 @@ export async function POST(req: NextRequest) {
 
     console.log(`[GMAIL AUTH] Credentials stored securely in database server-side for canonical user ${targetUserId} / email ${verifiedEmail} (historyId: ${gmailProfile?.historyId || "N/A"})`);
 
+    // Explicit post-save PostgreSQL verification check
+    let dbVerifiedTokenExists = false;
+    let dbVerifiedAccountExists = false;
+    const { getPrismaClient } = await import("@/lib/server/prisma-client");
+    const dbCheck = getPrismaClient();
+    if (dbCheck) {
+      try {
+        const tRow = await dbCheck.gmailToken.findFirst({ where: { email: verifiedEmail } });
+        const aRow = await dbCheck.emailAccount.findFirst({ where: { emailAddress: verifiedEmail } });
+        dbVerifiedTokenExists = Boolean(tRow);
+        dbVerifiedAccountExists = Boolean(aRow);
+        console.log(`[EXCHANGE-CODE DB VERIFICATION] tokenExistsInDb: ${dbVerifiedTokenExists}, accountExistsInDb: ${dbVerifiedAccountExists} for ${verifiedEmail}`);
+      } catch (checkErr: any) {
+        console.warn(`[EXCHANGE-CODE DB VERIFICATION ERROR]: ${checkErr.message}`);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       flow: "connect_gmail",
@@ -208,6 +225,8 @@ export async function POST(req: NextRequest) {
       status: "CONNECTED",
       messagesCount: initialMessagesCount,
       historyId: gmailProfile?.historyId || null,
+      dbVerifiedTokenExists,
+      dbVerifiedAccountExists,
       message: `Gmail account ${verifiedEmail} connected successfully.`,
     });
   } catch (error: any) {

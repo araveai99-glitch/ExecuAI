@@ -44,18 +44,61 @@ export class ServerGmailTokenStore {
 
     // 1. Try Prisma Database Persistence (`gmail_tokens` table)
     const db = getPrismaClient();
-    if (db) {
+    if (!db) {
+      console.error(`[OAUTH DB SAVE CRITICAL ERROR] getPrismaClient() returned null. process.env.DATABASE_URL present: ${Boolean(process.env.DATABASE_URL)}`);
+    } else {
       try {
-        const existing = await db.gmailToken.findFirst({
-          where: { userId: cleanUserId, email: cleanEmail },
+        // Step A: Ensure Organization exists
+        let defaultOrg = await db.organization.findFirst({ where: { id: "org_execuai_corp" } });
+        if (!defaultOrg) {
+          defaultOrg = await db.organization.create({
+            data: {
+              id: "org_execuai_corp",
+              name: "ExecuAI Corporation",
+              slug: "execuai-corp",
+            },
+          }).catch((err) => {
+            console.warn(`[OAUTH DB SAVE] Org creation note: ${err.message}`);
+            return null;
+          });
+        }
+        const orgId = defaultOrg?.id || "org_execuai_corp";
+
+        // Step B: Ensure User exists
+        let userObj = await db.user.findUnique({ where: { id: cleanUserId } });
+        if (!userObj) {
+          userObj = await db.user.findUnique({ where: { email: cleanEmail } });
+        }
+        if (!userObj) {
+          userObj = await db.user.create({
+            data: {
+              id: cleanUserId,
+              organizationId: orgId,
+              email: cleanEmail,
+              fullName: cred.name || cleanEmail.split("@")[0],
+              role: "USER",
+              status: "ACTIVE",
+              emailVerified: true,
+            },
+          }).catch((err) => {
+            console.warn(`[OAUTH DB SAVE] User creation note: ${err.message}`);
+            return null;
+          });
+        }
+
+        const activeDbUserId = userObj?.id || cleanUserId;
+
+        // Step C: Upsert GmailToken record
+        const existingToken = await db.gmailToken.findFirst({
+          where: { userId: activeDbUserId, email: cleanEmail },
         });
 
-        const finalRefreshToken = cred.refreshToken || existing?.refreshToken || undefined;
-        const finalHistoryId = cred.historyId || existing?.historyId || undefined;
+        const finalRefreshToken = cred.refreshToken || existingToken?.refreshToken || undefined;
+        const finalHistoryId = cred.historyId || existingToken?.historyId || undefined;
 
         await db.gmailToken.upsert({
           where: {
-            userId_email: { userId: cleanUserId, email: cleanEmail },
+            userId_email: { userId: activeDbUserId, email: cleanEmail },
           },
           update: {
             accessToken: cred.accessToken,
@@ -67,7 +110,7 @@ export class ServerGmailTokenStore {
             updatedAt: new Date(),
           },
           create: {
-            userId: cleanUserId,
+            userId: activeDbUserId,
             email: cleanEmail,
             accessToken: cred.accessToken,
             refreshToken: finalRefreshToken,
@@ -78,69 +121,42 @@ export class ServerGmailTokenStore {
           },
         });
 
-        console.log(`[GMAIL TOKENS DB] Saved OAuth tokens in Prisma DB for userId: ${cleanUserId}, email: ${cleanEmail}`);
+        console.log(`[GMAIL TOKENS DB] Saved OAuth tokens in Prisma DB for userId: ${activeDbUserId}, email: ${cleanEmail}`);
         cred.refreshToken = finalRefreshToken;
         cred.historyId = finalHistoryId;
 
-        // Also upsert EmailAccount record in DB (ensure User and Organization exist)
-        try {
-          let userObj = await db.user.findUnique({ where: { id: cleanUserId } });
-          if (!userObj) {
-            userObj = await db.user.findUnique({ where: { email: cleanEmail } });
-          }
-          if (!userObj) {
-            let defaultOrg = await db.organization.findFirst({ where: { id: "org_execuai_corp" } });
-            if (!defaultOrg) {
-              defaultOrg = await db.organization.create({
-                data: {
-                  id: "org_execuai_corp",
-                  name: "ExecuAI Corporation",
-                  slug: "execuai-corp",
-                },
-              }).catch(() => null);
-            }
-            const orgId = defaultOrg?.id || "org_execuai_corp";
-            userObj = await db.user.create({
-              data: {
-                id: cleanUserId,
-                organizationId: orgId,
-                email: cleanEmail,
-                fullName: cred.name || cleanEmail.split("@")[0],
-                role: "USER",
-                status: "ACTIVE",
-                emailVerified: true,
-              },
-            }).catch(() => null);
-          }
+        // Step D: Upsert EmailAccount record
+        await db.emailAccount.upsert({
+          where: {
+            userId_emailAddress: { userId: activeDbUserId, emailAddress: cleanEmail },
+          },
+          update: {
+            status: "CONNECTED",
+            lastSyncedAt: new Date(),
+            updatedAt: new Date(),
+          },
+          create: {
+            organizationId: orgId,
+            userId: activeDbUserId,
+            accountLabel: `Gmail (${cleanEmail})`,
+            provider: "GMAIL",
+            emailAddress: cleanEmail,
+            status: "CONNECTED",
+            encryptedTokens: "OAUTH2_TOKENS_STORED_IN_GMAIL_TOKENS",
+            oauthScopes: [cred.scope || "https://www.googleapis.com/auth/gmail.readonly"],
+            lastSyncedAt: new Date(),
+          },
+        });
 
-          const targetUserForAccount = userObj?.id || cleanUserId;
-          const orgId = userObj?.organizationId || "org_execuai_corp";
-          await db.emailAccount.upsert({
-            where: {
-              userId_emailAddress: { userId: targetUserForAccount, emailAddress: cleanEmail },
-            },
-            update: {
-              status: "CONNECTED",
-              lastSyncedAt: new Date(),
-              updatedAt: new Date(),
-            },
-            create: {
-              organizationId: orgId,
-              userId: targetUserForAccount,
-              accountLabel: `Gmail (${cleanEmail})`,
-              provider: "GMAIL",
-              emailAddress: cleanEmail,
-              status: "CONNECTED",
-              encryptedTokens: "OAUTH2_TOKENS_STORED_IN_GMAIL_TOKENS",
-              oauthScopes: [cred.scope || "https://www.googleapis.com/auth/gmail.readonly"],
-              lastSyncedAt: new Date(),
-            },
-          });
-        } catch (eaErr: any) {
-          console.warn(`[GMAIL TOKENS DB] EmailAccount upsert note for ${cleanEmail}: ${eaErr.message}`);
-        }
+        // Step E: Immediate Post-Save DB Query Verification Telemetry
+        const verifyToken = await db.gmailToken.findFirst({ where: { userId: activeDbUserId, email: cleanEmail } });
+        const verifyAccount = await db.emailAccount.findFirst({ where: { userId: activeDbUserId, emailAddress: cleanEmail } });
+        const verifyUser = await db.user.findUnique({ where: { id: activeDbUserId } });
+        const verifyOrg = await db.organization.findUnique({ where: { id: orgId } });
+
+        console.log(`[POST-SAVE VERIFICATION TELEMETRY] userExists: ${Boolean(verifyUser)}, orgExists: ${Boolean(verifyOrg)}, gmailTokenRowExists: ${Boolean(verifyToken)}, emailAccountRowExists: ${Boolean(verifyAccount)}`);
       } catch (dbErr: any) {
-        console.warn(`[GMAIL TOKENS DB] Prisma write note for ${cleanEmail}: ${dbErr.message}`);
+        console.error(`[GMAIL TOKENS DB SAVE ERROR] Exception persisting OAuth token to PostgreSQL: ${dbErr.message}`, dbErr);
       }
     }
 
