@@ -93,9 +93,34 @@ export class ServerGmailTokenStore {
         cred.refreshToken = finalRefreshToken;
         cred.historyId = finalHistoryId;
 
-        // Also upsert EmailAccount record if user exists in DB
+        // Also upsert EmailAccount record in DB (ensure User and Organization exist)
         try {
-          const userObj = await db.user.findUnique({ where: { id: cleanUserId } });
+          let userObj = await db.user.findUnique({ where: { id: cleanUserId } });
+          if (!userObj) {
+            let defaultOrg = await db.organization.findFirst({ where: { id: "org_execuai_corp" } });
+            if (!defaultOrg) {
+              defaultOrg = await db.organization.create({
+                data: {
+                  id: "org_execuai_corp",
+                  name: "ExecuAI Corporation",
+                  slug: "execuai-corp",
+                },
+              }).catch(() => null);
+            }
+            const orgId = defaultOrg?.id || "org_execuai_corp";
+            userObj = await db.user.create({
+              data: {
+                id: cleanUserId,
+                organizationId: orgId,
+                email: cleanEmail,
+                fullName: cred.name || cleanEmail.split("@")[0],
+                role: "USER",
+                status: "ACTIVE",
+                emailVerified: true,
+              },
+            }).catch(() => null);
+          }
+
           const orgId = userObj?.organizationId || "org_execuai_corp";
           await db.emailAccount.upsert({
             where: {
@@ -204,20 +229,23 @@ export class ServerGmailTokenStore {
    * Retrieves stored OAuth credential strictly belonging to specified user ID and email
    */
   public static async getCredential(userId: string, email: string): Promise<StoredGmailCredential | null> {
-    if (!userId || !email) return null;
+    if (!email) return null;
     const cleanEmail = email.toLowerCase().trim();
-    const cleanUserId = userId.toLowerCase().trim();
+    const rawUserId = userId ? userId.trim() : "";
+    const cleanUserId = userId ? userId.toLowerCase().trim() : "";
 
     // 1. Prisma DB
     const db = getPrismaClient();
     if (db) {
       try {
         const tokenRow = await db.gmailToken.findFirst({
-          where: { userId: cleanUserId, email: cleanEmail },
+          where: {
+            email: cleanEmail,
+          },
         });
 
         if (tokenRow) {
-          console.log(`[GMAIL TOKENS STORE] getCredential — Found Prisma DB token for userId: ${cleanUserId}, email: ${cleanEmail}`);
+          console.log(`[GMAIL TOKENS STORE] getCredential — Found Prisma DB token for email: ${cleanEmail}`);
           return {
             userId: tokenRow.userId,
             email: tokenRow.email,
@@ -241,12 +269,11 @@ export class ServerGmailTokenStore {
         const { data: sbRow } = await supabase
           .from("gmail_tokens")
           .select("*")
-          .eq("user_id", cleanUserId)
           .eq("email", cleanEmail)
           .single();
 
         if (sbRow) {
-          console.log(`[GMAIL TOKENS STORE] getCredential — Found Supabase DB token for userId: ${cleanUserId}, email: ${cleanEmail}`);
+          console.log(`[GMAIL TOKENS STORE] getCredential — Found Supabase DB token for email: ${cleanEmail}`);
           return {
             userId: sbRow.user_id,
             email: sbRow.email,
@@ -265,39 +292,53 @@ export class ServerGmailTokenStore {
     try {
       if (fs.existsSync(STORAGE_FILE_PATH)) {
         const localRecords: StoredGmailCredential[] = JSON.parse(fs.readFileSync(STORAGE_FILE_PATH, "utf-8"));
-        const match = localRecords.find(
-          (r) => r.userId.toLowerCase() === cleanUserId && r.email.toLowerCase() === cleanEmail
-        );
+        const match = localRecords.find((r) => r.email.toLowerCase() === cleanEmail);
         if (match) {
-          console.log(`[GMAIL TOKENS STORE] getCredential — Found disk token for userId: ${cleanUserId}, email: ${cleanEmail}`);
+          console.log(`[GMAIL TOKENS STORE] getCredential — Found disk token for email: ${cleanEmail}`);
           return match;
         }
       }
     } catch (_) {}
 
-    console.log(`[GMAIL TOKENS STORE] getCredential — No token found for userId: ${cleanUserId}, email: ${cleanEmail}`);
+    console.log(`[GMAIL TOKENS STORE] getCredential — No token found for email: ${cleanEmail}`);
     return null;
   }
 
   /**
-   * Retrieves all stored Gmail credentials belonging strictly to the specified canonical user ID
+   * Retrieves all stored Gmail credentials belonging strictly to the specified canonical user ID or connected email addresses
    */
   public static async getAllUserCredentials(userId: string, userEmails: string[] = []): Promise<StoredGmailCredential[]> {
-    if (!userId || !userId.trim()) {
-      console.warn("[GMAIL TOKENS STORE] getAllUserCredentials called with empty userId — returning 0 credentials");
+    const rawUserId = (userId || "").trim();
+    const cleanUserId = rawUserId.toLowerCase();
+    const cleanUserEmails = userEmails.map((e) => e.toLowerCase().trim()).filter(Boolean);
+
+    if (!rawUserId && cleanUserEmails.length === 0) {
+      console.warn("[GMAIL TOKENS STORE] getAllUserCredentials called with empty userId and no emails — returning 0 credentials");
       return [];
     }
 
-    const cleanUserId = userId.toLowerCase().trim();
-    const cleanUserEmails = userEmails.map((e) => e.toLowerCase().trim());
     const map = new Map<string, StoredGmailCredential>();
+
+    // Build OR conditions array for Prisma DB query
+    const prismaOrConditions: any[] = [];
+    if (rawUserId) {
+      prismaOrConditions.push({ userId: rawUserId });
+      prismaOrConditions.push({ userId: cleanUserId });
+    }
+    if (cleanUserEmails.length > 0) {
+      cleanUserEmails.forEach((em) => {
+        prismaOrConditions.push({ email: em });
+      });
+    }
 
     // 1. Prisma DB
     const db = getPrismaClient();
-    if (db) {
+    if (db && prismaOrConditions.length > 0) {
       try {
         const rows = await db.gmailToken.findMany({
-          where: { userId: cleanUserId },
+          where: {
+            OR: prismaOrConditions,
+          },
         });
         rows.forEach((r: any) => {
           const recEmail = r.email.toLowerCase();
@@ -321,7 +362,18 @@ export class ServerGmailTokenStore {
     const supabase = getSupabaseServerClient();
     if (supabase) {
       try {
-        const { data: sbRows } = await supabase.from("gmail_tokens").select("*").eq("user_id", cleanUserId);
+        let sbQuery = supabase.from("gmail_tokens").select("*");
+        const orClauses: string[] = [];
+        if (rawUserId) {
+          orClauses.push(`user_id.eq.${rawUserId}`, `user_id.eq.${cleanUserId}`);
+        }
+        if (cleanUserEmails.length > 0) {
+          cleanUserEmails.forEach((em) => orClauses.push(`email.eq.${em}`));
+        }
+        if (orClauses.length > 0) {
+          sbQuery = sbQuery.or(orClauses.join(","));
+        }
+        const { data: sbRows } = await sbQuery;
         if (sbRows && Array.isArray(sbRows)) {
           sbRows.forEach((r: any) => {
             const recEmail = (r.email || "").toLowerCase();
@@ -348,8 +400,10 @@ export class ServerGmailTokenStore {
         const localRecords: StoredGmailCredential[] = JSON.parse(fs.readFileSync(STORAGE_FILE_PATH, "utf-8"));
         localRecords.forEach((r: StoredGmailCredential) => {
           const recEmail = (r.email || "").toLowerCase();
+          const matchesUser = rawUserId ? (r.userId === rawUserId || r.userId.toLowerCase() === cleanUserId) : false;
+          const matchesEmail = cleanUserEmails.includes(recEmail);
           if (
-            r.userId.toLowerCase() === cleanUserId &&
+            (matchesUser || matchesEmail) &&
             !map.has(recEmail) &&
             (cleanUserEmails.length === 0 || cleanUserEmails.includes(recEmail))
           ) {
