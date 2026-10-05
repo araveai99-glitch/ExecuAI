@@ -37,12 +37,12 @@ export default function UnifiedInboxPage() {
     loadMoreEmails,
   } = useUserData();
 
-  // Set category filter from URL search param if present
+  // Set category filter from URL search param if present (skip if already set in context)
   React.useEffect(() => {
-    if (initialCategory) {
+    if (initialCategory && selectedCategoryFilter !== initialCategory) {
       setSelectedCategoryFilter(initialCategory);
     }
-  }, [initialCategory, setSelectedCategoryFilter]);
+  }, [initialCategory, selectedCategoryFilter, setSelectedCategoryFilter]);
 
   // Selection & Secondary Filter States
   const [selectedEmailId, setSelectedEmailId] = React.useState<string>("");

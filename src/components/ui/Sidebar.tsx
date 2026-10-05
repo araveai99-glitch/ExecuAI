@@ -120,17 +120,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Navigation List */}
-        <nav className="flex-1 px-3 py-2 space-y-1">
+        <nav className="flex-1 px-3 py-2 space-y-0.5">
           {navItems.map((item, index) => {
-            const isActive = currentPath === item.id || currentPath.includes(item.id);
+            const isActive = currentPath === item.id || (currentPath !== "dashboard" && currentPath.endsWith(item.id));
             const showSectionHeader =
               item.section && (index === 0 || navItems[index - 1].section !== item.section);
 
             return (
               <React.Fragment key={item.id}>
                 {showSectionHeader && (
-                  <div className="pt-4 pb-1 px-3">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8]">
+                  <div className="pt-3 pb-1 px-3">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#94A3B8]">
                       {item.section}
                     </span>
                   </div>
@@ -139,27 +139,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   href={item.href}
                   onClick={() => onNavigate?.(item.id)}
                   className={cn(
-                    "flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-xs font-semibold",
+                    "flex items-center justify-between px-3 py-2 rounded-xl transition-all text-xs font-semibold group",
                     isActive
                       ? "bg-[#F15E1C] text-white shadow-xs font-bold"
-                      : "text-[#475569] hover:bg-[#FDF7F0] hover:text-[#0F172A]"
+                      : "text-[#475569] hover:bg-[#FFF2EC]/60 hover:text-[#0F172A]"
                   )}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="material-symbols-outlined text-[20px]">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className={cn("material-symbols-outlined text-[18px]", isActive ? "text-white" : "text-[#64748B] group-hover:text-[#F15E1C]")}>
                       {item.icon}
                     </span>
-                    <span>{item.label}</span>
+                    <span className="truncate">{item.label}</span>
                   </div>
                   {item.badge !== undefined && (
                     <span
                       className={cn(
-                        "px-2 py-0.5 rounded-full text-[10px] font-bold",
+                        "px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0",
                         item.badgeVariant === "danger"
-                          ? "bg-[#FFF2EC] text-[#F15E1C] border border-[#FDE8DF]"
+                          ? isActive
+                            ? "bg-white/25 text-white"
+                            : "bg-[#FFF2EC] text-[#F15E1C] border border-[#FDE8DF]"
                           : isActive
                           ? "bg-white/20 text-white"
-                          : "bg-[#F1F5F9] text-[#0F172A]"
+                          : "bg-[#F1F5F9] text-[#475569]"
                       )}
                     >
                       {item.badge}
@@ -173,16 +175,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* User Profile & Logout Footer */}
-      <div className="p-3 bg-[#F8FAFC] border-t border-[#E2E8F0] space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#2E936F] text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">
+      <div className="p-3 bg-[#F8FAFC] border-t border-[#E2E8F0]">
+        <div className="flex items-center gap-2.5 p-1.5 rounded-xl bg-white border border-[#E2E8F0]/80 shadow-2xs">
+          <div className="w-8 h-8 rounded-lg bg-[#2E936F] text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-2xs">
             {activeUser.split(" ").map((n) => n[0]).join("")}
           </div>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-xs font-bold text-[#0F172A] truncate">
+            <span className="text-xs font-bold text-[#0F172A] truncate leading-tight">
               {activeUser}
             </span>
-            <span className="text-[11px] text-[#475569] truncate">
+            <span className="text-[10px] font-semibold text-[#64748B] truncate">
               {activeRole}
             </span>
           </div>
@@ -190,7 +192,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             type="button"
             onClick={logout}
             aria-label="Logout of workspace"
-            className="text-[#475569] hover:text-[#F15E1C] cursor-pointer p-1 rounded-lg hover:bg-white transition-colors"
+            className="text-[#94A3B8] hover:text-[#F15E1C] cursor-pointer p-1 rounded-lg hover:bg-[#FFF2EC] transition-colors shrink-0"
             title="Sign Out"
           >
             <span className="material-symbols-outlined text-[18px]">logout</span>
