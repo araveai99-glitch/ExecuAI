@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { useUserData, CategoryFilterType } from "@/lib/user-data-context";
 import { UnifiedEmailItem } from "@/lib/types/execuai";
+import { SafeEmailRenderer } from "@/components/execuai/SafeEmailRenderer";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -457,34 +458,38 @@ export default function DashboardPage() {
 
       {/* EMAIL DETAIL & DRAFT REPLY MODAL */}
       {activeEmail && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-[#E2E8F0] my-8 animate-in zoom-in-95 duration-200">
-            {/* Modal Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-[#F1F5F9]">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-[#E2E8F0] my-auto animate-in zoom-in-95 duration-200 flex flex-col max-h-[88vh]">
+            {/* Modal Header (Fixed / Non-scrolling top bar with prominent close button) */}
+            <div className="flex items-start justify-between pb-4 border-b border-[#F1F5F9] shrink-0 gap-4">
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="px-2.5 py-0.5 rounded-md bg-[#FFF2EC] text-[#F15E1C] text-xs font-bold border border-[#FDE8DF]">
                     {activeEmail.provider} · {activeEmail.accountEmail}
                   </span>
                   <PriorityBadge priority={activeEmail.priority} />
                 </div>
-                <h2 className="text-lg font-bold text-[#0F172A] mt-1">{activeEmail.subject}</h2>
-                <p className="text-xs text-[#64748B]">
+                <h2 className="text-base sm:text-lg font-bold text-[#0F172A] mt-1 break-words">{activeEmail.subject}</h2>
+                <p className="text-xs text-[#64748B] truncate">
                   From: <strong className="text-[#0F172A]">{activeEmail.senderName}</strong> (&lt;{activeEmail.senderEmail}&gt;)
                 </p>
               </div>
+
               <button
                 onClick={() => setActiveEmail(null)}
-                className="text-[#94A3B8] hover:text-[#0F172A] p-1 cursor-pointer"
+                className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-all cursor-pointer shrink-0 border border-[#E2E8F0] flex items-center gap-1 text-xs font-semibold"
+                title="Close Email Viewer"
+                aria-label="Close Email Viewer"
               >
-                <span className="material-symbols-outlined">close</span>
+                <span>Close</span>
+                <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
 
-            {/* Email Body */}
-            <div className="py-4 space-y-4">
-              <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0F172A] whitespace-pre-wrap leading-relaxed">
-                {activeEmail.body}
+            {/* Email Modal Scrollable Body */}
+            <div className="py-4 space-y-4 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                <SafeEmailRenderer content={activeEmail.body} />
               </div>
 
               {/* Action Feedback Banner */}
@@ -505,7 +510,7 @@ export default function DashboardPage() {
 
               {/* Reply Section */}
               {!isReplying ? (
-                <div className="flex items-center justify-between pt-2 border-t border-[#F1F5F9]">
+                <div className="flex items-center justify-between pt-2 border-t border-[#F1F5F9] shrink-0">
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => toggleUnread(activeEmail.id)}
@@ -532,7 +537,7 @@ export default function DashboardPage() {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-3 pt-2 border-t border-[#F1F5F9]">
+                <div className="space-y-3 pt-2 border-t border-[#F1F5F9] shrink-0">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-[#475569]">
                     Draft Reply (Dispatching from: {activeEmail.accountEmail})
                   </h4>
@@ -584,6 +589,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

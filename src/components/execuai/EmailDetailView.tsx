@@ -8,6 +8,7 @@ import { RiskBadge } from "@/components/ui/RiskBadge";
 import { IntentBadge } from "@/components/ui/IntentBadge";
 import { Card } from "@/components/ui/Card";
 import { UnifiedEmailItem } from "@/lib/types/execuai";
+import { SafeEmailRenderer } from "@/components/execuai/SafeEmailRenderer";
 
 interface EmailDetailViewProps {
   email: UnifiedEmailItem;
@@ -195,9 +196,10 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
             </div>
 
             {/* Email Message Body */}
-            <div className="p-5 rounded-xl bg-white border border-[#E2E8F0] text-xs sm:text-sm text-[#0F172A] leading-relaxed whitespace-pre-line font-normal space-y-4">
-              {email.body}
+            <div className="p-5 rounded-xl bg-white border border-[#E2E8F0] space-y-4">
+              <SafeEmailRenderer content={email.body} />
             </div>
+
 
             {/* Attachments Section */}
             {email.hasAttachment && (
@@ -266,9 +268,10 @@ export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
                       <span className="text-[11px] text-[#94A3B8]">{msg.timestamp}</span>
                     </div>
 
-                    <p className="text-xs text-[#0F172A] pt-3 leading-relaxed whitespace-pre-line">
-                      {msg.body}
-                    </p>
+                    <div className="pt-3">
+                      <SafeEmailRenderer content={msg.body} />
+                    </div>
+
                   </div>
                 ))}
               </div>

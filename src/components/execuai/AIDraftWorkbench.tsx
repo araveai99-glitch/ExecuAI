@@ -8,6 +8,7 @@ import { PriorityBadge } from "@/components/ui/PriorityBadge";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { IntentBadge } from "@/components/ui/IntentBadge";
 import { UnifiedEmailItem, DraftTone, DraftLength } from "@/lib/types/execuai";
+import { SafeEmailRenderer } from "@/components/execuai/SafeEmailRenderer";
 
 interface AIDraftWorkbenchProps {
   email: UnifiedEmailItem;
@@ -236,9 +237,10 @@ export const AIDraftWorkbench: React.FC<AIDraftWorkbenchProps> = ({ email, onBac
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0F172A] leading-relaxed whitespace-pre-line font-sans">
-              {email.body}
+            <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+              <SafeEmailRenderer content={email.body} />
             </div>
+
           </div>
 
           {/* AI Analysis & Explainability Card */}
